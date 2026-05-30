@@ -19,6 +19,8 @@ export interface AuthContextType {
   /** When set (super_admin only), the workflow UI behaves as this role. */
   actingRole: string | null;
   setActingRole: (role: string | null) => void;
+  /** True when signed in via Developer Login (mock) — no Firebase token, writes will be denied. */
+  isMock: boolean;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -29,4 +31,5 @@ export const AuthContext = createContext<AuthContextType>({
   effectiveRole: 'pending',
   actingRole: null,
   setActingRole: () => {},
+  isMock: false,
 });

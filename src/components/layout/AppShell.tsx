@@ -4,7 +4,7 @@ import { HOLDING_ROLES, WLI_ROLES, MPL_ROLES, EMS_ROLES } from '../../lib/permis
 import { Navbar } from './Sidebar';
 
 export function ProtectedRoute() {
-  const { user, loading } = useAuth();
+  const { user, loading, isMock } = useAuth();
   const location = useLocation();
 
   if (loading) return <div className="flex items-center justify-center h-screen text-text-secondary">Loading...</div>;
@@ -15,6 +15,11 @@ export function ProtectedRoute() {
     <div className="flex h-screen overflow-hidden">
       <Navbar />
       <main className="flex-1 overflow-y-auto bg-bg-base">
+        {isMock && (
+          <div className="bg-amber/15 border-b border-amber/30 text-amber px-4 py-1.5 text-[11px] text-center">
+            Developer Login (mock) — Firestore reads/writes are disabled. Sign in with Google to use live data.
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

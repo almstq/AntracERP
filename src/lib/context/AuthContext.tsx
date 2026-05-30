@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const effectiveRole = actingRole ?? user?.role ?? 'pending';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, effectiveRole, actingRole, setActingRole }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, effectiveRole, actingRole, setActingRole, isMock: !!devUser }}>
       {children}
     </AuthContext.Provider>
   );
