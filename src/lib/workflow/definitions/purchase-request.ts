@@ -40,12 +40,10 @@ export const purchaseRequestWorkflow: WorkflowDefinition<PRStatus> = {
       label: 'Accept PR', allowedRoles: ['proc_staff', 'super_admin'],
       notify: ['gm'],
     },
-    // Stage 6 — assign suppliers + send RFQs (one PDF per supplier)
+    // Stage 6 — begin sourcing (suppliers are added iteratively in this stage)
     {
       from: 'pr_accepted', to: 'rfq_sent', action: 'send_rfq',
-      label: 'Send RFQs', allowedRoles: ['proc_staff', 'super_admin'],
-      requiresFields: ['assignedSuppliers'],
-      sideEffects: ['GENERATE_RFQ'],
+      label: 'Start Sourcing', allowedRoles: ['proc_staff', 'super_admin'],
       notify: ['gm'],
     },
     // Stage 7 — proc forwards gathered quotes to GM for review

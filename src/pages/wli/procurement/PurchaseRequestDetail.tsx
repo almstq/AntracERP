@@ -19,9 +19,7 @@ export function PurchaseRequestDetail() {
   const { data: pr, loading, refresh } = useEntity<PurchaseRequest>('purchaseRequests', id);
   const { data: suppliers } = useSupplierList();
 
-  // Stage 6: per-line-item supplier assignment  { ref -> supplierId[] }
-  const [itemSuppliers, setItemSuppliers] = useState<Record<string, string[]>>({});
-  // Stage 7 quote entry: { supplierId -> { ref -> unitPrice } }
+  // Quote entry: { supplierId -> { ref -> unitPrice } }
   const [quoteDraft, setQuoteDraft] = useState<Record<string, Record<string, number>>>({});
   // Stage 7 GM selection: { ref -> supplierId }
   const [lineSel, setLineSel] = useState<Record<string, string>>({});
@@ -61,20 +59,17 @@ export function PurchaseRequestDetail() {
     refresh();
   }
 
-  function toggleItemSupplier(ref: string, sid: string, on: boolean) {
-    setItemSuppliers((m) => {
-      const cur = m[ref] ?? [];
-      return { ...m, [ref]: on ? [...cur, sid] : cur.filter((x) => x !== sid) };
-    });
-  }
-
-  // Stage 6 → send RFQs with per-item supplier assignment
-  function sendRfqs() {
-    const lineItems = pr!.lineItems.map((li) => ({ ...li, assignedSupplierIds: itemSuppliers[li.ref] ?? [] }));
-    const unassigned = lineItems.filter((li) => li.assignedSupplierIds.length === 0);
-    if (unassigned.length) { setErr(`Assign a supplier to: ${unassigned.map((l) => l.ref).join(', ')}`); return; }
-    const union = [...new Set(lineItems.flatMap((li) => li.assignedSupplierIds))];
-    run('rfq_sent', { lineItems, assignedSuppliers: union });
+  // Iteratively assign a supplier to a line item (issue another RFQ) — persists, no transition.
+  async function assignSupplier(ref: string, sid: string) {
+    if (!pr || !sid) return;
+    const lineItems = pr.lineItems.map((li) =>
+      li.ref === ref && !(li.assignedSupplierIds ?? []).includes(sid)
+        ? { ...li, assignedSupplierIds: [...(li.assignedSupplierIds ?? []), sid] }
+        : li);
+    setBusy(true); setErr(null);
+    try { await updateFields('purchaseRequests', pr.id, { lineItems }); refresh(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Failed to assign supplier'); }
+    finally { setBusy(false); }
   }
 
   // Build PRQuote[] from the entry grid (each supplier prices only its assigned items)
@@ -244,64 +239,79 @@ export function PurchaseRequestDetail() {
               <Button variant="primary" size="sm" className="w-full" onClick={() => run('pr_accepted')} disabled={busy}>Accept PR</Button>
             )}
 
-            {/* Stage 6 — assign suppliers PER ITEM */}
+            {/* Stage 6 — begin sourcing */}
             {can('send_rfq') && (
-              <div className="space-y-3">
-                <p className="text-xs text-text-secondary">Assign supplier(s) per item:</p>
-                {pr.lineItems.map((li) => (
-                  <div key={li.ref} className="border border-border rounded-lg p-2">
-                    <p className="text-[11px] font-medium text-text-primary mb-1">{li.ref}. {li.description}</p>
-                    <div className="space-y-0.5">
-                      {suppliers.map((s) => (
-                        <label key={s.id} className="flex items-center gap-2 text-[11px] text-text-secondary">
-                          <input type="checkbox" checked={(itemSuppliers[li.ref] ?? []).includes(s.id)}
-                            onChange={(e) => toggleItemSupplier(li.ref, s.id, e.target.checked)} />
-                          {s.name}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                <Button variant="primary" size="sm" className="w-full" onClick={sendRfqs} disabled={busy}>Send RFQs</Button>
-              </div>
+              <Button variant="primary" size="sm" className="w-full" onClick={() => run('rfq_sent')} disabled={busy}>Start Sourcing</Button>
             )}
 
-            {/* RFQ documents — download one per supplier, send out-of-band */}
-            {status === 'rfq_sent' && union.length > 0 && (
-              <div className="space-y-2 border-b border-border pb-3 mb-1">
-                <p className="text-xs text-text-secondary">RFQ documents — download & send to each supplier:</p>
-                {union.map((sid) => (
-                  <button key={sid} onClick={() => downloadRfq(sid)}
-                    className="w-full flex items-center justify-between text-[11px] px-2 py-1.5 rounded bg-bg-surface border border-border hover:bg-bg-base text-text-primary">
-                    <span>{rfqNumber(pr, sid)} · {supName(sid)}</span>
-                    <span className="text-blue">Download ↓</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Quote population — proc's job; stays on the proc desk (Save) until forwarded */}
+            {/* Iterative sourcing: add suppliers, issue RFQs, record quotes */}
             {canEnterQuotes && (
-              <div className="space-y-2">
-                <p className="text-xs text-text-secondary">Enter quotes received from suppliers:</p>
-                {union.map((sid) => {
-                  const itemsForSup = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-text-primary">Sourcing</p>
+
+                {/* Per item: assigned suppliers + add another (issues another RFQ) */}
+                {pr.lineItems.map((li) => {
+                  const assigned = li.assignedSupplierIds ?? [];
+                  const addable = suppliers.filter((s) => !assigned.includes(s.id));
                   return (
-                    <div key={sid} className="border border-border rounded-lg p-2 space-y-1">
-                      <p className="text-[11px] font-medium text-text-primary">{supName(sid)}</p>
-                      {itemsForSup.map((li) => (
-                        <div key={li.ref} className="flex items-center gap-2">
-                          <span className="text-[10px] text-text-muted flex-1 truncate">{li.ref}. {li.description}</span>
-                          <input type="number" className={`${fieldCls} w-20`} placeholder="unit"
-                            value={quoteDraft[sid]?.[li.ref] ?? ''}
-                            onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
-                        </div>
-                      ))}
+                    <div key={li.ref} className="border border-border rounded-lg p-2 space-y-1">
+                      <p className="text-[11px] font-medium text-text-primary">{li.ref}. {li.description}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {assigned.length === 0 && <span className="text-[10px] text-text-muted">no suppliers yet</span>}
+                        {assigned.map((sid) => (
+                          <span key={sid} className="text-[10px] px-2 py-0.5 rounded-full bg-bg-surface text-text-secondary">{supName(sid)}</span>
+                        ))}
+                      </div>
+                      {addable.length > 0 && (
+                        <select className={`${fieldCls} w-full`} value=""
+                          onChange={(e) => { if (e.target.value) assignSupplier(li.ref, e.target.value); }} disabled={busy}>
+                          <option value="">+ add supplier (issue RFQ)…</option>
+                          {addable.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </select>
+                      )}
                     </div>
                   );
                 })}
-                <Button variant="secondary" size="sm" className="w-full" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
-                {status === 'rfq_sent' && can('open_review') && (
+
+                {/* RFQ documents — one per solicited supplier */}
+                {union.length > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] text-text-secondary">RFQ documents — download & send:</p>
+                    {union.map((sid) => (
+                      <button key={sid} onClick={() => downloadRfq(sid)}
+                        className="w-full flex items-center justify-between text-[11px] px-2 py-1.5 rounded bg-bg-surface border border-border hover:bg-bg-base text-text-primary">
+                        <span>{rfqNumber(pr, sid)} · {supName(sid)}</span>
+                        <span className="text-blue">Download ↓</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Record quotes — only from solicited suppliers */}
+                {union.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[11px] text-text-secondary">Record quotes received:</p>
+                    {union.map((sid) => {
+                      const itemsForSup = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
+                      return (
+                        <div key={sid} className="border border-border rounded-lg p-2 space-y-1">
+                          <p className="text-[11px] font-medium text-text-primary">{supName(sid)}</p>
+                          {itemsForSup.map((li) => (
+                            <div key={li.ref} className="flex items-center gap-2">
+                              <span className="text-[10px] text-text-muted flex-1 truncate">{li.ref}. {li.description}</span>
+                              <input type="number" className={`${fieldCls} w-20`} placeholder="unit"
+                                value={quoteDraft[sid]?.[li.ref] ?? ''}
+                                onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                    <Button variant="secondary" size="sm" className="w-full" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
+                  </div>
+                )}
+
+                {status === 'rfq_sent' && can('open_review') && union.length > 0 && (
                   <Button variant="primary" size="sm" className="w-full" onClick={forwardToGm} disabled={busy}>Forward to GM for Review</Button>
                 )}
               </div>
