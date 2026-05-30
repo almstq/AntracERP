@@ -48,16 +48,17 @@ export const purchaseRequestWorkflow: WorkflowDefinition<PRStatus> = {
       sideEffects: ['GENERATE_RFQ'],
       notify: ['gm'],
     },
-    // Stage 7 — quotes arrive → review (Gemini comparison stub on 2+ quotes)
+    // Stage 7 — proc forwards gathered quotes to GM for review
     {
       from: 'rfq_sent', to: 'quotes_under_review', action: 'open_review',
-      label: 'Review Quotes', allowedRoles: ['proc_staff', 'gm', 'super_admin'],
+      label: 'Forward to GM for Review', allowedRoles: ['proc_staff', 'super_admin'],
       sideEffects: ['GENERATE_PRICE_COMPARE'],
       notify: ['gm'],
     },
+    // GM (or proc) can send it back to gather more quotes
     {
       from: 'quotes_under_review', to: 'rfq_sent', action: 'need_more_quotes',
-      label: 'Need More Quotes', allowedRoles: ['gm', 'super_admin'],
+      label: 'Re-open for Quotes', allowedRoles: ['gm', 'proc_staff', 'super_admin'],
       requiresNotes: true, isReject: true, notify: ['proc_staff'],
     },
     {

@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
+import { updateFields } from '../../../lib/firebase/db';
 import { useEntity, useSupplierList } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { useAuth } from '../../../lib/hooks/useAuth';
@@ -27,12 +28,24 @@ export function PurchaseRequestDetail() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Seed the quote-entry grid from any quotes already saved on the PR.
+  useEffect(() => {
+    if (!pr?.quotes?.length) return;
+    setQuoteDraft((cur) => {
+      if (Object.keys(cur).length) return cur;
+      const seed: Record<string, Record<string, number>> = {};
+      for (const q of pr.quotes) { seed[q.supplierId] = {}; for (const lp of q.linePrices) seed[q.supplierId][lp.ref] = lp.unitPrice; }
+      return seed;
+    });
+  }, [pr]);
+
   if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
   if (!pr) return <div className="p-6 text-xs text-text-muted">PR not found.</div>;
 
   const role = effectiveRole;
   const status = pr.status as PRStatus;
   const can = (action: string) => getAvailableTransitions(prWf, status, role).some((t) => t.action === action);
+  const canEnterQuotes = ['proc_staff', 'super_admin'].includes(role) && (status === 'rfq_sent' || status === 'quotes_under_review');
   const supName = (sid: string) => suppliers.find((s) => s.id === sid)?.name ?? sid;
   const fieldCls = 'text-xs p-1.5 rounded bg-bg-surface border border-border text-text-primary';
 
@@ -64,17 +77,28 @@ export function PurchaseRequestDetail() {
     run('rfq_sent', { lineItems, assignedSuppliers: union });
   }
 
-  // Stage 7 → record quotes (each supplier prices only its assigned items), open review
-  function submitQuotes() {
+  // Build PRQuote[] from the entry grid (each supplier prices only its assigned items)
+  function buildQuotes(): PRQuote[] {
     const union = [...new Set(pr!.lineItems.flatMap((li) => li.assignedSupplierIds ?? []))];
-    const quotes: PRQuote[] = union.map((sid) => {
+    return union.map((sid) => {
       const itemsForSup = pr!.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
       const linePrices = itemsForSup.map((li) => ({ ref: li.ref, unitPrice: Number(quoteDraft[sid]?.[li.ref]) || 0 }));
       const total = itemsForSup.reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
-      return { id: sid, supplierId: sid, supplierName: supName(sid), total, currency: 'MVR', receivedAt: new Date(), linePrices };
+      return { id: sid, supplierId: sid, supplierName: supName(sid), total, currency: 'MVR' as const, receivedAt: new Date(), linePrices };
     });
-    run('quotes_under_review', { quotes });
   }
+
+  // Proc populates quotes WITHOUT leaving their desk (no transition).
+  async function saveQuotes() {
+    if (!pr) return;
+    setBusy(true); setErr(null);
+    try { await updateFields('purchaseRequests', pr.id, { quotes: buildQuotes() }); refresh(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Failed to save quotes'); }
+    finally { setBusy(false); }
+  }
+
+  // Proc hands off to GM once quotes are gathered.
+  function forwardToGm() { run('quotes_under_review', { quotes: buildQuotes() }); }
 
   // Stage 7 → GM picks a supplier per line (split allowed)
   function approveSuppliers() {
@@ -256,8 +280,8 @@ export function PurchaseRequestDetail() {
               </div>
             )}
 
-            {/* Stage 7 — enter quotes (each supplier prices only its assigned items) */}
-            {can('open_review') && (
+            {/* Quote population — proc's job; stays on the proc desk (Save) until forwarded */}
+            {canEnterQuotes && (
               <div className="space-y-2">
                 <p className="text-xs text-text-secondary">Enter quotes received from suppliers:</p>
                 {union.map((sid) => {
@@ -276,7 +300,10 @@ export function PurchaseRequestDetail() {
                     </div>
                   );
                 })}
-                <Button variant="primary" size="sm" className="w-full" onClick={submitQuotes} disabled={busy}>Review Quotes</Button>
+                <Button variant="secondary" size="sm" className="w-full" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
+                {status === 'rfq_sent' && can('open_review') && (
+                  <Button variant="primary" size="sm" className="w-full" onClick={forwardToGm} disabled={busy}>Forward to GM for Review</Button>
+                )}
               </div>
             )}
 
