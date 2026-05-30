@@ -30,7 +30,7 @@ export interface UserRoles {
 export interface Site {
   id: string;
   name: string;
-  type: 'project' | 'office' | 'yard' | 'vessel' | 'depot';
+  type: 'project' | 'office' | 'yard' | 'vessel' | 'depot' | 'hq';
   orgId: string;
   sbuId: string;
   location?: { lat: number; lng: number };

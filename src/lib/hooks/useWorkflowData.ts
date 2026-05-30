@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { listAll, listWhere, getById, listSub } from '../firebase/db';
 import type { Ticket } from '../../types/workflow-entities';
 import type { Asset } from '../../types/asset';
+import type { Site, Staff } from '../../types/org';
 import type { TimelineEvent } from '../workflow/types';
 
 interface Loadable<T> {
@@ -63,6 +64,36 @@ export function useAssetList(sbuId = 'sbu-wli'): Loadable<(Asset & { id: string 
       .finally(() => setLoading(false));
   }, [sbuId]);
 
+  useEffect(load, [load]);
+  return { data, loading, error, refresh: load };
+}
+
+export function useSiteList(sbuId = 'sbu-wli'): Loadable<(Site & { id: string })[]> {
+  const [data, setData] = useState<(Site & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    setLoading(true);
+    listWhere<Site>('sites', 'sbuId', '==', sbuId)
+      .then((rows) => { setData(rows); setError(null); })
+      .catch((e) => setError(e?.message ?? 'Failed to load sites'))
+      .finally(() => setLoading(false));
+  }, [sbuId]);
+  useEffect(load, [load]);
+  return { data, loading, error, refresh: load };
+}
+
+export function useStaffList(sbuId = 'sbu-wli'): Loadable<(Staff & { id: string })[]> {
+  const [data, setData] = useState<(Staff & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    setLoading(true);
+    listWhere<Staff>('staff', 'sbuId', '==', sbuId)
+      .then((rows) => { setData(rows); setError(null); })
+      .catch((e) => setError(e?.message ?? 'Failed to load staff'))
+      .finally(() => setLoading(false));
+  }, [sbuId]);
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
 }

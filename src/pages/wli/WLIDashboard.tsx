@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { Ticket, Plus, List } from 'lucide-react';
+import { Ticket, Plus, List, MapPin, Truck, UserCog, Map as MapIcon } from 'lucide-react';
 import { useTicketList } from '../../lib/hooks/useWorkflowData';
 import { ticketWorkflow } from '../../lib/workflow/definitions';
 import type { TicketStatus } from '../../types/workflow-entities';
@@ -44,6 +44,24 @@ export function WLIDashboard() {
             <p className={`text-xl font-bold ${stat.colorClass}`}>{loading ? '—' : stat.value}</p>
             <p className="text-[10px] text-text-muted mt-0.5">{stat.label}</p>
           </Card>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { to: '/wli/locations', label: 'Locations', icon: MapPin },
+          { to: '/wli/assets', label: 'Asset Register', icon: Truck },
+          { to: '/wli/staff', label: 'Staff Register', icon: UserCog },
+          { to: '/wli/map', label: 'Fleet Map', icon: MapIcon },
+        ].map(({ to, label, icon: Icon }) => (
+          <Link key={to} to={to}>
+            <Card className="py-3 px-3 hover:bg-bg-surface transition-colors">
+              <div className="flex items-center gap-2">
+                <Icon size={16} className="text-blue" />
+                <span className="text-xs font-medium text-text-primary">{label}</span>
+              </div>
+            </Card>
+          </Link>
         ))}
       </div>
 

@@ -18,9 +18,21 @@ Git tags mark each release on its milestone commit (`git tag -l`).
 - Linked PR card on ticket detail (watch the PR auto-spawn on diagnosis).
 - `db.listSub` for subcollection reads; `/wli/tickets/new` route.
 
+### Added (Asset / Staff / Location module — GM master data)
+- **Location register** — GM adds/edits locations with geo-coordinates.
+- **Asset register** — GM adds assets (vehicle/vessel/equipment) and assigns
+  each to a location (per-row reassignment).
+- **Staff register** — GM adds staff and assigns them to sites.
+- **Fleet Map** — Google Maps view pinning sites with their assets + staff
+  (key-gated; shows setup steps until `VITE_GOOGLE_MAPS_API_KEY` is set).
+- Site type gains geo `location`; seeded sites now carry Maldives coordinates;
+  seeded 6 staff + 10 assets. Registry services + `useSiteList`/`useStaffList`.
+- WLI dashboard: quick-access cards to the four registers.
+
 ### In progress
-- Remaining WF Phase 4 slices: procurement (PR/PO) UI, fuel-request UI, role
-  inboxes, GM summary card, notifications bell. PDF + Gemini stay stubbed.
+- Google Maps API key (user to provide) to activate the map.
+- Remaining WF Phase 4 slices: procurement (PR/PO) UI + 4-tier payment chain,
+  fuel-request UI, role inboxes, GM summary card, notifications bell.
 
 ---
 

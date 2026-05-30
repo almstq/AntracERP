@@ -42,11 +42,20 @@ const ORGS = [
 ];
 
 const SITES = [
-  { id: 'thilafushi', name: 'Thilafushi Yard', type: 'yard', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', createdAt: now },
-  { id: 'bodufinolhu', name: 'Bodufinolhu Site', type: 'project', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', createdAt: now },
-  { id: 'muthaafushi', name: 'Muthaafushi Site', type: 'project', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', createdAt: now },
-  { id: 'goidhoo', name: 'Goidhoo Site', type: 'project', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', createdAt: now },
-  { id: 'male-hq', name: 'Malé HQ', type: 'hq', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', createdAt: now },
+  { id: 'thilafushi', name: 'Thilafushi Yard', type: 'yard', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', location: { lat: 4.1797, lng: 73.4360 }, createdAt: now },
+  { id: 'bodufinolhu', name: 'Bodufinolhu Site', type: 'project', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', location: { lat: 3.9200, lng: 73.5300 }, createdAt: now },
+  { id: 'muthaafushi', name: 'Muthaafushi Site', type: 'project', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', location: { lat: 4.9300, lng: 72.9600 }, createdAt: now },
+  { id: 'goidhoo', name: 'Goidhoo Site', type: 'project', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', location: { lat: 5.0247, lng: 72.9667 }, createdAt: now },
+  { id: 'male-hq', name: 'Malé HQ', type: 'hq', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', location: { lat: 4.1755, lng: 73.5093 }, createdAt: now },
+];
+
+const STAFF = [
+  { id: 'st-001', displayId: 'ST-001', name: 'Janaka Perera', role: 'operator', designation: 'Heavy Vehicle Operator', siteId: 'thilafushi' },
+  { id: 'st-002', displayId: 'ST-002', name: 'Sampath Silva', role: 'supervisor', designation: 'Site Supervisor', siteId: 'thilafushi' },
+  { id: 'st-003', displayId: 'ST-003', name: 'Hassan Ali', role: 'mechanic', designation: 'Senior Mechanic', siteId: 'thilafushi' },
+  { id: 'st-004', displayId: 'ST-004', name: 'Fathima Ibrahim', role: 'proc_staff', designation: 'Procurement Officer', siteId: 'male-hq' },
+  { id: 'st-005', displayId: 'ST-005', name: 'Nasheed Moosa', role: 'inventory_staff', designation: 'Inventory Controller', siteId: 'thilafushi' },
+  { id: 'st-006', displayId: 'ST-006', name: 'Ahmed Waheed', role: 'operator', designation: 'Crane Operator', siteId: 'bodufinolhu' },
 ];
 
 // WLI Fleet / Vessel register — representative heavy equipment across sites.
@@ -89,6 +98,13 @@ async function seed() {
     batch.set(db.collection('assets').doc(id), { ...data, orgId: 'antrac-holding', sbuId: 'sbu-wli', createdAt: now });
   }
   console.log(`[seed] Queued ${ASSETS.length} assets`);
+
+  // Staff register
+  for (const s of STAFF) {
+    const { id, ...data } = s;
+    batch.set(db.collection('staff').doc(id), { ...data, orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', documents: [], createdAt: now, updatedAt: now });
+  }
+  console.log(`[seed] Queued ${STAFF.length} staff`);
 
   // Super admin user doc
   batch.set(db.collection('users').doc(uid), {

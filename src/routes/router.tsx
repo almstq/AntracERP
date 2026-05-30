@@ -9,6 +9,10 @@ import { WLIDashboard } from '../pages/wli/WLIDashboard';
 import { TicketList } from '../pages/wli/tickets/TicketList';
 import { TicketDetail } from '../pages/wli/tickets/TicketDetail';
 import { NewTicket } from '../pages/wli/tickets/NewTicket';
+import { LocationRegister } from '../pages/wli/registers/LocationRegister';
+import { AssetRegister } from '../pages/wli/registers/AssetRegister';
+import { StaffRegister } from '../pages/wli/registers/StaffRegister';
+import { FleetMap } from '../pages/wli/registers/FleetMap';
 import { PurchaseRequestList } from '../pages/wli/procurement/PurchaseRequestList';
 import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestDetail';
 import { RFQList } from '../pages/wli/procurement/RFQList';
@@ -47,6 +51,10 @@ export const router = createBrowserRouter([
           { path: 'tickets', element: <TicketList /> },
           { path: 'tickets/new', element: <NewTicket /> },
           { path: 'tickets/:id', element: <TicketDetail /> },
+          { path: 'locations', element: <LocationRegister /> },
+          { path: 'assets', element: <AssetRegister /> },
+          { path: 'staff', element: <StaffRegister /> },
+          { path: 'map', element: <FleetMap /> },
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
           { path: 'procurement/rfqs', element: <RFQList /> },
