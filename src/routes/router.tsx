@@ -13,6 +13,7 @@ import { LocationRegister } from '../pages/wli/registers/LocationRegister';
 import { AssetRegister } from '../pages/wli/registers/AssetRegister';
 import { StaffRegister } from '../pages/wli/registers/StaffRegister';
 import { FleetMap } from '../pages/wli/registers/FleetMap';
+import { RoleInbox } from '../pages/wli/RoleInbox';
 import { PurchaseRequestList } from '../pages/wli/procurement/PurchaseRequestList';
 import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestDetail';
 import { RFQList } from '../pages/wli/procurement/RFQList';
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
         element: <RoleRoute allowedRoles={WLI_ROLES} />,
         children: [
           { index: true, element: <WLIDashboard /> },
+          { path: 'desk/:role', element: <RoleInbox /> },
           { path: 'tickets', element: <TicketList /> },
           { path: 'tickets/new', element: <NewTicket /> },
           { path: 'tickets/:id', element: <TicketDetail /> },

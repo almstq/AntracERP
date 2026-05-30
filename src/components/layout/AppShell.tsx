@@ -37,7 +37,7 @@ export function DeskRedirect() {
   const { user } = useAuth();
 
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'super_admin') return <Navigate to="/dashboard" replace />;
+  if (user.role === 'super_admin') return <Navigate to="/wli" replace />;
 
   const role = user.role as string;
   if ((HOLDING_ROLES as readonly string[]).includes(role)) return <Navigate to="/holding" replace />;

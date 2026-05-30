@@ -1,70 +1,135 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/hooks/useAuth';
-import { usePermissions } from '../../lib/hooks/usePermissions';
-import { LayoutDashboard, Package, Users, Settings, LogOut, Menu, X, Building2 } from 'lucide-react';
-import { ROLES } from '../../lib/permissions/roles';
+import {
+  LayoutDashboard, Ticket, ShoppingCart, MapPin, Truck, UserCog, Map as MapIcon,
+  Users, LogOut, Menu, X, Building2, Fuel, Wrench, HardHat, ClipboardCheck,
+  Boxes, Banknote, type LucideIcon,
+} from 'lucide-react';
+import { ROLE_LABELS } from '../../lib/permissions/roles';
 
-interface AuthUser {
-  displayName?: string;
-  role?: string;
+interface NavItem { to: string; label: string; icon: LucideIcon; end?: boolean }
+interface NavSection { title?: string; items: NavItem[] }
+interface ModuleNav { key: string; brand: string; subtitle: string; sections: NavSection[] }
+
+const WLI_NAV: ModuleNav = {
+  key: 'wli', brand: 'Well Land Investment', subtitle: 'Antrac Holding Group',
+  sections: [
+    { items: [{ to: '/wli', label: 'Command Center', icon: LayoutDashboard, end: true }] },
+    {
+      title: 'Dashboards',
+      items: [
+        { to: '/wli/desk/operator', label: 'Operator', icon: HardHat },
+        { to: '/wli/desk/mechanic', label: 'Mechanic', icon: Wrench },
+        { to: '/wli/desk/supervisor', label: 'Supervisor', icon: ClipboardCheck },
+        { to: '/wli/desk/gm', label: 'General Manager', icon: LayoutDashboard },
+        { to: '/wli/desk/proc_staff', label: 'Procurement', icon: ShoppingCart },
+        { to: '/wli/desk/finance_wli', label: 'WLI Finance', icon: Banknote },
+        { to: '/wli/desk/inventory_staff', label: 'Inventory', icon: Boxes },
+      ],
+    },
+    {
+      title: 'Operations',
+      items: [
+        { to: '/wli/tickets', label: 'Issue Tickets', icon: Ticket },
+        { to: '/wli/procurement/requests', label: 'Procurement', icon: ShoppingCart },
+      ],
+    },
+    {
+      title: 'Registers',
+      items: [
+        { to: '/wli/locations', label: 'Locations', icon: MapPin },
+        { to: '/wli/assets', label: 'Asset Register', icon: Truck },
+        { to: '/wli/staff', label: 'Staff Register', icon: UserCog },
+        { to: '/wli/map', label: 'Fleet Map', icon: MapIcon },
+      ],
+    },
+  ],
+};
+
+const HQ_NAV: ModuleNav = {
+  key: 'holding', brand: 'Antrac HQ', subtitle: 'Holding · Finance · Directors',
+  sections: [
+    { items: [{ to: '/holding', label: 'Group Overview', icon: Building2, end: true }] },
+    { title: 'Admin', items: [{ to: '/admin/users', label: 'Users', icon: Users }] },
+  ],
+};
+
+const MPL_NAV: ModuleNav = {
+  key: 'mpl', brand: 'Maldives Petroleum Link', subtitle: 'Fuel & Water Supply',
+  sections: [
+    { items: [
+      { to: '/mpl', label: 'Dashboard', icon: LayoutDashboard, end: true },
+      { to: '/mpl/dispatches', label: 'Fuel Requests', icon: Fuel },
+    ] },
+  ],
+};
+
+const EMS_NAV: ModuleNav = {
+  key: 'ems', brand: 'Expert Motor Services', subtitle: 'Antrac Holding Group',
+  sections: [{ items: [{ to: '/ems', label: 'Dashboard', icon: LayoutDashboard, end: true }] }],
+};
+
+function moduleForPath(path: string): ModuleNav {
+  if (path.startsWith('/holding') || path.startsWith('/admin')) return HQ_NAV;
+  if (path.startsWith('/mpl')) return MPL_NAV;
+  if (path.startsWith('/ems')) return EMS_NAV;
+  return WLI_NAV;
 }
 
-const navItems = [
-  { to: '/holding', label: 'Holding', icon: Building2, roles: [ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.CFO, ROLES.ANTRAC_FINANCE, ROLES.HOLDING_HR] },
-  { to: '/wli', label: 'WLI', icon: LayoutDashboard, roles: [ROLES.GM, ROLES.SUPERVISOR, ROLES.MECHANIC, ROLES.OPERATOR, ROLES.PROC_STAFF, ROLES.FINANCE_WLI, ROLES.INVENTORY_STAFF, ROLES.SUPER_ADMIN] },
-  { to: '/mpl', label: 'MPL', icon: Package, roles: [ROLES.MPL_MANAGER, ROLES.SUPER_ADMIN] },
-  { to: '/ems', label: 'EMS', icon: Settings, roles: [ROLES.EMS_MANAGER, ROLES.SUPER_ADMIN] },
-  { to: '/admin/users', label: 'Admin', icon: Users, roles: [ROLES.SUPER_ADMIN] },
-];
-
 export function Navbar() {
-  const { user, logout } = useAuth() as { user: AuthUser | null; logout: () => Promise<void> };
-  const { role } = usePermissions();
+  const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const mod = moduleForPath(location.pathname);
 
-  const filteredItems = navItems.filter(item => (item.roles as readonly string[]).includes(role as string));
-
-  const handleLogout = async () => {
-    await logout();
-  };
+  const isActive = (item: NavItem) =>
+    item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
 
   return (
     <>
       <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-bg-panel">
-        <span className="text-sm font-bold text-text-primary">Antrac ERP</span>
+        <span className="text-sm font-bold text-text-primary">{mod.brand}</span>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-text-secondary">
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      <aside className={`${mobileOpen ? 'block' : 'hidden'} md:block w-56 bg-bg-panel border-r border-border flex-shrink-0 overflow-y-auto`}>
+      <aside className={`${mobileOpen ? 'block' : 'hidden'} md:block w-60 bg-bg-panel border-r border-border flex-shrink-0 overflow-y-auto relative`}>
         <div className="p-4 border-b border-border">
-          <h1 className="text-base font-bold text-text-primary">Antrac ERP</h1>
-          <p className="text-[10px] text-text-muted mt-0.5">Antrac Holding</p>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue">A</div>
+            <div className="min-w-0">
+              <h1 className="text-sm font-bold text-text-primary leading-tight truncate">{mod.brand}</h1>
+              <p className="text-[10px] text-text-muted truncate">{mod.subtitle}</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="p-2 space-y-0.5">
-          {filteredItems.map(item => {
-            const Icon = item.icon;
-            const isActive = location.pathname.startsWith(item.to);
-            return (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                  isActive
-                    ? 'bg-blue/10 text-blue'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
-                }`}
-              >
-                <Icon size={16} />
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="p-2 pb-24 space-y-3">
+          {mod.sections.map((section, si) => (
+            <div key={si}>
+              {section.title && (
+                <p className="px-3 pt-2 pb-1 text-[9px] font-semibold uppercase tracking-wider text-text-muted">{section.title}</p>
+              )}
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item);
+                  return (
+                    <Link
+                      key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                        active ? 'bg-blue/10 text-blue' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                      }`}
+                    >
+                      <Icon size={15} /> {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border bg-bg-panel">
@@ -74,10 +139,10 @@ export function Navbar() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-text-primary truncate">{user?.displayName}</p>
-              <p className="text-[10px] text-text-muted truncate">{role}</p>
+              <p className="text-[10px] text-text-muted truncate">{user ? (ROLE_LABELS[user.role] ?? user.role) : ''}</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="flex items-center gap-2 text-xs text-text-muted hover:text-red transition-colors">
+          <button onClick={() => logout()} className="flex items-center gap-2 text-xs text-text-muted hover:text-red transition-colors">
             <LogOut size={14} /> Logout
           </button>
         </div>
