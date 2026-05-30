@@ -39,10 +39,22 @@ Git tags mark each release on its milestone commit (`git tag -l`).
   role's action, showing the available next-actions.
 - super_admin lands in the WLI module.
 
+### Added (Procurement + payment slice)
+- **Supplier Register** (type, 5 seeded suppliers, CRUD page, rule).
+- **PR detail** drives the procurement state machine: accept → assign suppliers
+  / send RFQs → enter quotes → GM selects supplier per line (split orders) →
+  raise PO. Writes lineItems/quotes through `executeTransition`.
+- **PO detail** drives the 10-state **4-tier payment chain** (WLI Finance →
+  Antrac Finance → CFO → Director → execute → confirm → close) via the generic
+  TransitionPanel, with a payment-chain progress tracker.
+- Live PR/PO lists; `useSupplierList`/`usePRList`/`usePOList`; sidebar links.
+
 ### In progress
 - Google Maps API key (user to provide) to activate the map.
-- Remaining WF Phase 4 slices: procurement (PR/PO) UI + 4-tier payment chain,
-  fuel-request UI, notifications bell, richer ticket fields per stage.
+- Prototype polish: Fleet Readiness "view all" detail, vessel-fleet split,
+  AI Advisor daily brief.
+- Remaining: fuel/water workflow UI, richer ticket fields per stage, mark-read
+  on notifications, PDF/Gemini (still stubbed).
 
 ---
 
