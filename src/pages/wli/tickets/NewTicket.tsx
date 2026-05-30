@@ -13,7 +13,7 @@ const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq']
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 
 export function NewTicket() {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const navigate = useNavigate();
   const { data: assets, loading: assetsLoading } = useAssetList();
 
@@ -48,7 +48,7 @@ export function NewTicket() {
           assetCode: selectedAsset.code, assetLabel: assetLabel(selectedAsset),
           urgency, operatorRecommendation: recommendation || undefined,
         },
-        { id: user.uid, role: user.role, name: user.displayName },
+        { id: user.uid, role: effectiveRole, name: user.displayName },
       );
       navigate(`/wli/tickets/${id}`);
     } catch (e) {
