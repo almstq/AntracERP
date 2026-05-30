@@ -4,6 +4,8 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { listAll, listWhere, getById, listSub } from '../firebase/db';
+import { ticketWorkflow, purchaseRequestWorkflow, purchaseOrderWorkflow } from '../workflow/definitions';
+import { getAvailableTransitions } from '../workflow/engine';
 import type { Ticket, PurchaseRequest, PurchaseOrder, Supplier } from '../../types/workflow-entities';
 import type { Asset } from '../../types/asset';
 import type { Site, Staff } from '../../types/org';
@@ -141,6 +143,39 @@ export function usePOList(): Loadable<(PurchaseOrder & { id: string })[]> {
   }, []);
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
+}
+
+export interface InboxItem {
+  kind: 'ticket' | 'pr' | 'po';
+  id: string;
+  displayId: string;
+  subtitle: string;
+  to: string;
+  actions: string[];
+  urgency?: string;
+}
+
+/** Aggregates everything awaiting `role` across tickets, PRs and POs. */
+export function useActionInbox(role: string): { items: InboxItem[]; loading: boolean } {
+  const t = useTicketList();
+  const pr = usePRList();
+  const po = usePOList();
+  const loading = t.loading || pr.loading || po.loading;
+
+  const items: InboxItem[] = [];
+  for (const x of t.data) {
+    const av = getAvailableTransitions(ticketWorkflow, x.status, role);
+    if (av.length) items.push({ kind: 'ticket', id: x.id, displayId: x.displayId, subtitle: `${x.assetCode || '—'} · ${x.siteId}`, to: `/wli/tickets/${x.id}`, actions: av.map((a) => a.label), urgency: x.urgency });
+  }
+  for (const x of pr.data) {
+    const av = getAvailableTransitions(purchaseRequestWorkflow, x.status, role);
+    if (av.length) items.push({ kind: 'pr', id: x.id, displayId: x.displayId, subtitle: `${x.lineItems?.length ?? 0} item(s)`, to: `/wli/procurement/requests/${x.id}`, actions: av.map((a) => a.label), urgency: x.urgency });
+  }
+  for (const x of po.data) {
+    const av = getAvailableTransitions(purchaseOrderWorkflow, x.status, role);
+    if (av.length) items.push({ kind: 'po', id: x.id, displayId: x.displayId, subtitle: `${x.supplierName} · ${x.currency} ${x.total?.toLocaleString?.() ?? x.total}`, to: `/wli/procurement/orders/${x.id}`, actions: av.map((a) => a.label) });
+  }
+  return { items, loading };
 }
 
 export function useNotifications(role: string | undefined): Loadable<(WorkflowNotification & { id: string })[]> {

@@ -4,11 +4,8 @@ import { Card } from '../../components/ui/Card';
 import { Sparkles, Truck, Ship, ChevronRight, AlertCircle } from 'lucide-react';
 import { NotificationBell } from '../../components/layout/NotificationBell';
 import { FleetMapView } from '../../components/workflow/FleetMapView';
-import { useTicketList, useAssetList, useSiteList, useStaffList } from '../../lib/hooks/useWorkflowData';
-import { ticketWorkflow } from '../../lib/workflow/definitions';
-import { getAvailableTransitions } from '../../lib/workflow/engine';
+import { useTicketList, useAssetList, useSiteList, useStaffList, useActionInbox } from '../../lib/hooks/useWorkflowData';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
-import type { TicketStatus } from '../../types/workflow-entities';
 
 export function WLIDashboard() {
   const { effectiveRole } = useAuth();
@@ -30,7 +27,7 @@ export function WLIDashboard() {
   const landReady = land.filter((a) => a.operationalStatus === 'operational').length;
   const vesselReady = vessels.filter((a) => a.operationalStatus === 'operational').length;
 
-  const inbox = tickets.filter((t) => getAvailableTransitions(ticketWorkflow, t.status as TicketStatus, role).length > 0);
+  const { items: inbox } = useActionInbox(role);
 
   const stats = [
     { label: 'SITES', value: sites.length, color: 'text-teal' },
@@ -79,24 +76,21 @@ export function WLIDashboard() {
               <p className="text-xs text-text-muted p-1">Nothing awaiting you right now.</p>
             ) : (
               <div className="space-y-1">
-                {inbox.slice(0, 8).map((t) => {
-                  const next = getAvailableTransitions(ticketWorkflow, t.status as TicketStatus, role);
-                  return (
-                    <Link key={t.id} to={`/wli/tickets/${t.id}`} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-bg-surface">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <AlertCircle size={15} className="text-amber flex-shrink-0" />
-                        <div className="min-w-0">
-                          <p className="text-xs font-medium text-text-primary truncate">{t.description || t.displayId}</p>
-                          <p className="text-[10px] text-text-muted">{t.displayId} · {t.assetCode || '—'} · {t.urgency}</p>
-                        </div>
+                {inbox.slice(0, 8).map((it) => (
+                  <Link key={`${it.kind}-${it.id}`} to={it.to} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-bg-surface">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <AlertCircle size={15} className="text-amber flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-text-primary truncate">{it.displayId} <span className="text-text-muted">· {it.subtitle}</span></p>
+                        <p className="text-[10px] text-text-muted uppercase">{it.kind === 'pr' ? 'Purchase Request' : it.kind === 'po' ? 'Purchase Order' : 'Issue Ticket'}</p>
                       </div>
-                      <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                        {next.slice(0, 2).map((tr) => <span key={tr.action} className="text-[9px] px-2 py-0.5 rounded-full bg-blue/10 text-blue">{tr.label}</span>)}
-                        <ChevronRight size={14} className="text-text-muted" />
-                      </div>
-                    </Link>
-                  );
-                })}
+                    </div>
+                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+                      {it.actions.slice(0, 2).map((a) => <span key={a} className="text-[9px] px-2 py-0.5 rounded-full bg-blue/10 text-blue">{a}</span>)}
+                      <ChevronRight size={14} className="text-text-muted" />
+                    </div>
+                  </Link>
+                ))}
               </div>
             )}
           </Card>
