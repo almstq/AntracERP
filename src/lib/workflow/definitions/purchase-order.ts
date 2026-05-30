@@ -97,7 +97,7 @@ export const purchaseOrderWorkflow: WorkflowDefinition<POStatus> = {
     {
       from: 'wli_finance_confirmed', to: 'po_closed', action: 'close_po',
       label: 'Close PO', allowedRoles: ['proc_staff', 'super_admin'],
-      sideEffects: ['TRIGGER_DELIVERY', 'MARK_TICKET_DELIVERED'],
+      sideEffects: ['TRIGGER_DELIVERY'],
       notify: ['gm', 'inventory_staff'],
     },
   ],

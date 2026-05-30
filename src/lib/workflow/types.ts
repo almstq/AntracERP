@@ -26,8 +26,7 @@ export type SideEffectTag =
   | 'GENERATE_RFQ'            // PR rfq_sent → produce one RFQ per supplier (PDF stub)
   | 'GENERATE_PRICE_COMPARE'  // PR quotes → Gemini comparison (stub)
   | 'CREATE_PO_PER_SUPPLIER'  // PR po_raised → one PO per selected supplier
-  | 'TRIGGER_DELIVERY'        // PO closed → create delivery task to requestee
-  | 'MARK_TICKET_DELIVERED'   // delivery confirmed → ticket → items_delivered
+  | 'TRIGGER_DELIVERY'        // PO closed → notify inventory to deliver to requestee
   | 'CLOSE_LINKED_PR_PO'      // ticket resolved → close linked PR/PO
   | 'SPAWN_CHILD_TICKET'      // ticket persists → new child ticket
   | 'DEDUCT_INVENTORY_BALANCE'; // fuel_request closed → deduct WLI balance
@@ -88,7 +87,7 @@ export interface TimelineEvent {
   timestamp: Date;
 }
 
-/** In-app notification (Phase 3 writes these to users/{uid}/notifications). */
+/** In-app notification (written to the top-level `notifications` collection). */
 export interface WorkflowNotification {
   id?: string;
   recipientRole: string;
@@ -101,3 +100,30 @@ export interface WorkflowNotification {
   read: boolean;
   createdAt: Date;
 }
+
+/** Actor performing a transition. */
+export interface WorkflowActor {
+  id: string;
+  role: string;
+  name?: string;
+}
+
+export interface ExecuteOptions<S extends string = string> {
+  workflowId: WorkflowId;
+  entityId: string;
+  to: S;
+  actor: WorkflowActor;
+  notes?: string;
+  /** Extra entity fields to write alongside the status change. */
+  fields?: Record<string, unknown>;
+}
+
+export interface ExecuteResult {
+  success: boolean;
+  message: string;
+  from?: string;
+  to?: string;
+}
+
+/** Signature of the executor (passed to side-effect handlers to drive linked transitions). */
+export type ExecuteFn = (opts: ExecuteOptions) => Promise<ExecuteResult>;

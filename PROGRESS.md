@@ -52,8 +52,20 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | Seed | admin-seed.ts (4 orgs, 5 WLI sites, super_admin) | ✅ Done | `22465be` |
 | **WF Phase 1** | Roles → 11-actor model; rules + dev users realigned | ✅ Done | `335330e` |
 | **WF Phase 2** | Workflow engine + 4 declarative state machines | ✅ Done | `1502a49` |
-| **WF Phase 3** | Wire `executeTransition` → Firestore + timeline + notifications + side-effects | ⬜ Next | — |
-| **WF Phase 4** | UI per stage: role inboxes, stage forms, GM summary card, timeline view | ⬜ Pending | — |
+| **WF Phase 3** | Wire `executeTransition` → Firestore + timeline + notifications + side-effects | ✅ Done | `pending` |
+| **WF Phase 4** | UI per stage: role inboxes, stage forms, GM summary card, timeline view | ⬜ Next | — |
+
+### Phase 3 detail (`src/lib/workflow/` + `src/lib/firebase/db.ts`)
+- `db.ts` — real Firestore SDK access layer (getById, listAll/Where, createAuto/WithId, updateFields, batch helpers; Timestamp→Date conversion)
+- `executor.ts` — `executeTransition`: read → validate → atomic batch (status + fields + timeline subdoc + notifications) → run side-effects post-commit
+- `notifications.ts` — top-level `notifications` collection, tagged by recipientRole
+- `side-effects.ts` — handlers: CREATE_PR_ON_HOLD, ACTIVATE_PR, CREATE_PO_PER_SUPPLIER, CLOSE_LINKED_PR_PO, SPAWN_CHILD_TICKET, DEDUCT_INVENTORY_BALANCE (GENERATE_RFQ/PRICE_COMPARE/TRIGGER_DELIVERY = stubs)
+- Rules: added timeline subcollections (PR/PO/fuel), `notifications` + `inventoryBalances` collections, `isWorkflowParticipant()` coarse gate. Deployed.
+
+**Known limitations (Phase 3):**
+- Side-effects run **client-side** under the actor's auth (not Cloud Functions). Rules are coarse (`isWorkflowParticipant`); fine-grained authority lives in the app transition tables. Hardening path: move side-effects to Cloud Functions later.
+- Side-effects are post-commit + best-effort (idempotent guards on PR/PO creation). Not in the main atomic batch.
+- Live behavioral verification deferred to Phase 4 (executor is client-SDK only; UI is the natural driver).
 
 ---
 

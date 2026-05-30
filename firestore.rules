@@ -39,6 +39,15 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['operator', 'mechanic', 'supervisor', 'gm', 'proc_staff', 'finance_wli', 'inventory_staff', 'super_admin'];
     }
 
+    // Any role that participates in a workflow (incl. HQ finance chain + MPL).
+    // Coarse gate only — per-stage authority is enforced by the app transition tables.
+    function isWorkflowParticipant() {
+      return isAuth() && getUserRole() in [
+        'operator', 'mechanic', 'supervisor', 'gm', 'proc_staff', 'finance_wli',
+        'inventory_staff', 'antrac_finance', 'cfo', 'director', 'mpl_manager', 'super_admin'
+      ];
+    }
+
     // Orgs — read by all authenticated users, write by super admin only
     match /orgs/{orgId} {
       allow read: if isAuth();
@@ -87,12 +96,17 @@ service cloud.firestore {
       }
     }
 
-    // Purchase requests
+    // Purchase requests (created on_hold at mechanic diagnosis; advanced by proc/gm)
     match /purchaseRequests/{prId} {
       allow read: if isAuth();
-      allow create: if isSiteManager() || isProcurement();
-      allow update: if isProcurement() || isGM();
+      allow create: if isWLIStaff();
+      allow update: if isWLIStaff();
       allow delete: if isSuperAdmin();
+      match /timeline/{eventId} {
+        allow read: if isAuth();
+        allow create: if isWorkflowParticipant();
+        allow update, delete: if false;
+      }
     }
 
     // RFQs
@@ -102,11 +116,17 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // Purchase orders
+    // Purchase orders (carry the 4-tier HQ payment chain → HQ roles must update)
     match /purchaseOrders/{poId} {
       allow read: if isAuth();
-      allow create, update: if isProcurement() || isGM() || isFinance();
+      allow create: if isWLIStaff();
+      allow update: if isWorkflowParticipant();
       allow delete: if isSuperAdmin();
+      match /timeline/{eventId} {
+        allow read: if isAuth();
+        allow create: if isWorkflowParticipant();
+        allow update, delete: if false;
+      }
     }
 
     // Inventory items
@@ -164,11 +184,30 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Fuel requests
+    // Fuel/water requests (WLI↔MPL; supervisor, inventory, gm, mpl_manager, director act)
     match /fuelRequests/{requestId} {
       allow read: if isAuth();
-      allow create: if isSiteManager();
-      allow update: if isGM();
+      allow create: if isWLIStaff();
+      allow update: if isWorkflowParticipant();
+      allow delete: if isSuperAdmin();
+      match /timeline/{eventId} {
+        allow read: if isAuth();
+        allow create: if isWorkflowParticipant();
+        allow update, delete: if false;
+      }
+    }
+
+    // WLI inventory balances (fuel/water) — deducted on fuel request closure
+    match /inventoryBalances/{balanceId} {
+      allow read: if isAuth();
+      allow write: if isWorkflowParticipant();
+    }
+
+    // Top-level workflow notifications — recipient (by role or uid) can read/mark-read
+    match /notifications/{notifId} {
+      allow read: if isAuth() && (resource.data.recipientRole == getUserRole() || resource.data.recipientId == request.auth.uid);
+      allow create: if isWorkflowParticipant();
+      allow update: if isAuth() && (resource.data.recipientRole == getUserRole() || resource.data.recipientId == request.auth.uid);
       allow delete: if isSuperAdmin();
     }
 
