@@ -52,7 +52,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | Seed | admin-seed.ts (4 orgs, 5 WLI sites, super_admin) | ✅ Done | `22465be` |
 | **WF Phase 1** | Roles → 11-actor model; rules + dev users realigned | ✅ Done | `335330e` |
 | **WF Phase 2** | Workflow engine + 4 declarative state machines | ✅ Done | `1502a49` |
-| **WF Phase 3** | Wire `executeTransition` → Firestore + timeline + notifications + side-effects | ✅ Done | `pending` |
+| **WF Phase 3** | Wire `executeTransition` → Firestore + timeline + notifications + side-effects | ✅ Done | `9bb20b4` |
 | **WF Phase 4** | UI per stage: role inboxes, stage forms, GM summary card, timeline view | ⬜ Next | — |
 
 ### Phase 3 detail (`src/lib/workflow/` + `src/lib/firebase/db.ts`)
