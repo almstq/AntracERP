@@ -28,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [devUser, setDevUser] = useState<string | null>(null);
+  const [actingRole, setActingRole] = useState<string | null>(null);
 
   useEffect(() => {
     // If in dev mode, skip Firebase auth listener
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async () => {
     setDevUser(null);
+    setActingRole(null);
     const firebaseAuth = getAuthInstance();
     if (!firebaseAuth) return;
     try {
@@ -99,8 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  const effectiveRole = actingRole ?? user?.role ?? 'pending';
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, effectiveRole, actingRole, setActingRole }}>
       {children}
     </AuthContext.Provider>
   );

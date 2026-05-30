@@ -13,7 +13,7 @@ import type { PurchaseRequest, PRStatus, PRLineItem, PRQuote } from '../../../ty
 
 export function PurchaseRequestDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const { data: pr, loading, refresh } = useEntity<PurchaseRequest>('purchaseRequests', id);
   const { data: suppliers } = useSupplierList();
 
@@ -26,7 +26,7 @@ export function PurchaseRequestDetail() {
   if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
   if (!pr) return <div className="p-6 text-xs text-text-muted">PR not found.</div>;
 
-  const role = user?.role ?? 'pending';
+  const role = effectiveRole;
   const status = pr.status as PRStatus;
   const can = (action: string) => getAvailableTransitions(prWf, status, role).some((t) => t.action === action);
   const supName = (sid: string) => suppliers.find((s) => s.id === sid)?.name ?? sid;
@@ -36,7 +36,7 @@ export function PurchaseRequestDetail() {
     setBusy(true); setErr(null);
     const res = await executeTransition({
       workflowId: 'purchase_request', entityId: pr.id, to,
-      actor: { id: user.uid, role: user.role, name: user.displayName }, fields, notes,
+      actor: { id: user.uid, role: effectiveRole, name: user.displayName }, fields, notes,
     });
     setBusy(false);
     if (!res.success) { setErr(res.message); return; }

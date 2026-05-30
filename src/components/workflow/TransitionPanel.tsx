@@ -16,9 +16,9 @@ interface Props {
 }
 
 export function TransitionPanel({ workflowId, entityId, status, onDone }: Props) {
-  const { user } = useAuth();
+  const { user, effectiveRole } = useAuth();
   const def = getWorkflow(workflowId);
-  const role = user?.role ?? 'pending';
+  const role = effectiveRole;
   const available = getAvailableTransitions(def, status, role);
 
   const [active, setActive] = useState<WorkflowTransition | null>(null);
@@ -61,7 +61,7 @@ export function TransitionPanel({ workflowId, entityId, status, onDone }: Props)
 
     const res = await executeTransition({
       workflowId, entityId, to: active.to as string,
-      actor: { id: user.uid, role: user.role, name: user.displayName },
+      actor: { id: user.uid, role: effectiveRole, name: user.displayName },
       notes: notes || undefined,
       fields: Object.keys(fields).length ? fields : undefined,
     });

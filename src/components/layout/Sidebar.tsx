@@ -7,6 +7,7 @@ import {
   Boxes, Banknote, Package, Store, type LucideIcon,
 } from 'lucide-react';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
+import { ActorSwitcher } from './ActorSwitcher';
 
 interface NavItem { to: string; label: string; icon: LucideIcon; end?: boolean }
 interface NavSection { title?: string; items: NavItem[] }
@@ -134,8 +135,9 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="absolute bottom-0 left-0 right-0 p-3 border-t border-border bg-bg-panel">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-bg-panel">
+          <ActorSwitcher />
+          <div className="flex items-center gap-2 mb-2 p-3 pb-0">
             <div className="w-7 h-7 rounded-full bg-blue/20 flex items-center justify-center text-[10px] font-bold text-blue">
               {user?.displayName?.charAt(0) || 'U'}
             </div>
@@ -144,7 +146,7 @@ export function Navbar() {
               <p className="text-[10px] text-text-muted truncate">{user ? (ROLE_LABELS[user.role] ?? user.role) : ''}</p>
             </div>
           </div>
-          <button onClick={() => logout()} className="flex items-center gap-2 text-xs text-text-muted hover:text-red transition-colors">
+          <button onClick={() => logout()} className="flex items-center gap-2 px-3 pb-3 text-xs text-text-muted hover:text-red transition-colors">
             <LogOut size={14} /> Logout
           </button>
         </div>

@@ -4,8 +4,8 @@ import { useAuth } from '../../lib/hooks/useAuth';
 import { useNotifications } from '../../lib/hooks/useWorkflowData';
 
 export function NotificationBell() {
-  const { user } = useAuth();
-  const { data: notifs } = useNotifications(user?.role);
+  const { effectiveRole } = useAuth();
+  const { data: notifs } = useNotifications(effectiveRole);
   const [open, setOpen] = useState(false);
   const unread = notifs.filter((n) => !n.read);
 

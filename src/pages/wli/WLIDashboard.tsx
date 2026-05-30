@@ -11,13 +11,13 @@ import { ROLE_LABELS } from '../../lib/permissions/roles';
 import type { TicketStatus } from '../../types/workflow-entities';
 
 export function WLIDashboard() {
-  const { user } = useAuth();
+  const { effectiveRole } = useAuth();
   const { data: tickets } = useTicketList();
   const { data: assets } = useAssetList();
   const { data: sites } = useSiteList();
   const { data: staff } = useStaffList();
 
-  const role = user?.role ?? 'pending';
+  const role = effectiveRole;
   const projectSiteIds = new Set(sites.filter((s) => s.type === 'project').map((s) => s.id));
 
   const openTickets = tickets.filter((t) => !['closed', 'rejected'].includes(t.status));
