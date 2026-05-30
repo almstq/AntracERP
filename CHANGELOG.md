@@ -8,6 +8,33 @@ Git tags mark each release on its milestone commit (`git tag -l`).
 
 ## [Unreleased]
 
+### Planned
+- **Money foundation:** currency selector + global Maldives GST 8% (`computeTotals`); retrofit PO + all finance docs.
+- **CRM & Sales module** (`docs/CRM_PLAN.md`): Customer Register → Sales/Enquiry → Quotation → Work Order → Invoice → Payment; `sales_staff`/`ops_staff` roles; asset commercial status (soft-reserve/deploy).
+- Fuel/water workflow UI; file uploads (Firebase Storage); Google Maps key.
+
+---
+
+## [0.6.0] — 2026-05-31 — Live workflow UI + procurement/payment
+
+### Added
+- **Issue→Closure workflow, full live UI**, tested end-to-end: ticket raise
+  (asset-linked) → diagnose (PR auto-spawn) → supervisor → GM approve (PR
+  activate) → iterative RFQ sourcing (suppliers × items matrix) → competitive
+  quotes → GM price-comparison grid (split orders) → raise PO per supplier →
+  4-tier payment chain (WLI Finance → Antrac Finance → CFO → Director → close).
+- Downloadable **RFQ** and **PO** documents (WLI letterhead, HTML/print-PDF).
+- Generic `TransitionPanel` + `Timeline`; aggregated actor **inbox/desks**.
+- Branded **login splash**; module-aware sidebar (HQ/WLI/MPL/EMS); WLI sidebar
+  lists every actor desk; map-centric **Command Center** (stats, inbox, fleet
+  readiness, notification bell, Google-Maps fleet map — key-gated).
+- **Master-data registers:** Locations (geo), Asset, Staff, Supplier + Fleet Map.
+- **Act-As switcher** (super_admin impersonation) + mock-mode warning banner.
+
+### Notes
+- CRM & Sales workflow spec received → planned in `docs/CRM_PLAN.md`.
+- Cross-cutting **currency selector + GST 8%** identified, pending (next).
+
 ### Added (WF Phase 4 — slice 1: issue-ticket raise → diagnose → approve)
 - Live ticket list + detail (real Firestore reads via `useWorkflowData` hooks).
 - `New Ticket` form (operator raise) → creates draft + `submit` transition.

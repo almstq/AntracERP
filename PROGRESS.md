@@ -2,19 +2,39 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live)
-**Updated:** 2026-05-31
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.6.0
+**Updated:** 2026-05-31 (session 3 — end of session)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
 
 ---
 
+## ⏯ RESUME HERE (next session)
+
+Session paused — Mustarq shutting down. **Two workflows built & live-tested**
+(Issue→Closure + procurement/payment). Next, in order:
+
+1. **Cross-cutting money foundation** — `Money {amount,currency}` + currency
+   selector + **global GST 8%** (`computeTotals`); retrofit PO + all finance docs.
+2. **CRM & Sales module** — see `docs/CRM_PLAN.md` (Phases A–F). Adds
+   `sales_staff`/`ops_staff` roles, Customer Register, Sales/Enquiry workflow,
+   Quotation + Invoice docs, Work Order, payment tracking, asset commercial status.
+3. Fuel/water workflow UI; file uploads (Firebase Storage); Google Maps API key (from user).
+
+**To run:** `npm run dev` → http://localhost:3000 · log in with **Google** as
+super_admin (NOT Developer Login — mock has no token, writes denied). Use the
+sidebar-footer **Act As** dropdown to test as any actor.
+
+---
+
 ## Current State (one-liner)
 
-Firebase is **live**, auth verified end-to-end, roles realigned to the 11-actor
-workflow model, and both WLI workflows are fully modelled as declarative state
-machines on a shared engine. **Next: wire the engine to Firestore (Phase 3).**
+Firebase live; full **Issue→Closure** workflow (ticket → PR → RFQ sourcing →
+quotes → GM comparison/award → PO → 4-tier payment chain) built with live UI,
+downloadable RFQ/PO docs, and **live-tested end-to-end**. Master-data registers
+(Locations/Assets/Staff/Suppliers + Fleet Map) and a map-centric Command Center
+done. **Fuel workflow modelled (no UI). CRM spec received → plan in `docs/CRM_PLAN.md`.**
 
 ---
 
@@ -53,7 +73,26 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **WF Phase 1** | Roles → 11-actor model; rules + dev users realigned | ✅ Done | `335330e` |
 | **WF Phase 2** | Workflow engine + 4 declarative state machines | ✅ Done | `1502a49` |
 | **WF Phase 3** | Wire `executeTransition` → Firestore + timeline + notifications + side-effects | ✅ Done | `9bb20b4` |
-| **WF Phase 4** | UI per stage: role inboxes, stage forms, GM summary card, timeline view | ⬜ Next | — |
+| **WF Phase 4** | Live UI: tickets, TransitionPanel, Timeline, login splash, module sidebar, actor desks, Command Center, registers (Locations/Assets/Staff/Suppliers/Map) | ✅ Done | `→ 11e6830` |
+| **Procurement deep-dive** | Iterative RFQ sourcing matrix, competitive quotes, GM price comparison, RFQ+PO docs, Act-As testing | ✅ Done & live-tested | `dc50f26`, `5513e06` |
+| **v0.6.0 milestone** | Phase 4 + procurement/payment complete | ✅ Tagged | `v0.6.0` |
+| **Money foundation** | Currency selector + global GST 8% | ⬜ Next | — |
+| **CRM & Sales** | Customer Register → Sales → Quote → Work Order → Invoice → Payment (`docs/CRM_PLAN.md`) | ⬜ Planned | — |
+| **Fuel/water UI** | Workflow 2 UI (modelled, no UI yet) | ⬜ Pending | — |
+
+### Cross-cutting backlog
+- **Currency selector** + **Maldives GST 8%** — missing on all finance forms (PO, future quotes/invoices). Money model + shared totals calc. **Do before CRM.**
+- **File uploads** (Firebase Storage) for tax invoice / payment receipt / photos — currently text-reference stubs.
+- **Google Maps API key** — `VITE_GOOGLE_MAPS_API_KEY` (+ billing) from user → lights up Fleet Map / Command Center.
+- **Cloud Functions** — move side-effects server-side (currently client-side + coarse rules).
+- **PDF/Gemini** — docs are HTML/print-PDF; Gemini comparison/diagnosis stubbed.
+
+### Phase 4 / procurement detail (key files)
+- UI: `src/components/workflow/{TransitionPanel,Timeline,FleetMapView}.tsx`, `src/components/layout/{Sidebar,NotificationBell,ActorSwitcher}.tsx`
+- Pages: `src/pages/wli/{WLIDashboard,RoleInbox}.tsx`, `tickets/*`, `procurement/*`, `registers/*`
+- Services: `src/lib/services/{tickets,registry,rfq}.ts` (rfq.ts also has `buildPoHtml`)
+- Auth: `effectiveRole`/`actingRole` in AuthContext (Act-As); `isMock` banner
+- Seed now: 4 orgs, 5 sites(+geo), 10 assets, 5 suppliers, 6 staff, super_admin
 
 ### Phase 3 detail (`src/lib/workflow/` + `src/lib/firebase/db.ts`)
 - `db.ts` — real Firestore SDK access layer (getById, listAll/Where, createAuto/WithId, updateFields, batch helpers; Timestamp→Date conversion)
