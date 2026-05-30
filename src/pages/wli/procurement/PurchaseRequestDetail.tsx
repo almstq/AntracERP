@@ -300,11 +300,11 @@ export function PurchaseRequestDetail() {
                             const unit = Number(quoteDraft[sid]?.[li.ref]) || 0;
                             return (
                               <div key={li.ref} className="space-y-0.5">
-                                <p className="text-[10px] text-text-muted">{li.ref}. {li.description} · qty {li.quantity} {li.uom}</p>
+                                <p className="text-[10px] text-text-primary">{li.ref}. {li.description}</p>
+                                <p className="text-[10px] text-text-muted">Requested qty: <b>{li.quantity} {li.uom}</b> (from ticket — fixed)</p>
                                 <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] text-text-muted">Unit price</span>
-                                  <span className="text-[10px] text-text-muted">MVR</span>
-                                  <input type="number" min="0" className={`${fieldCls} flex-1`} placeholder="0.00"
+                                  <span className="text-[10px] text-text-muted whitespace-nowrap">Quoted unit price (MVR)</span>
+                                  <input type="number" min="0" step="0.01" className={`${fieldCls} flex-1`} placeholder="as on quote"
                                     value={quoteDraft[sid]?.[li.ref] ?? ''}
                                     onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
                                   <span className="text-[10px] text-text-secondary whitespace-nowrap">= {(unit * li.quantity).toLocaleString()}</span>
