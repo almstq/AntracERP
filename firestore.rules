@@ -16,23 +16,27 @@ service cloud.firestore {
     }
 
     function isGM() {
-      return isAuth() && getUserRole() in ['wli_gm', 'director', 'super_admin'];
+      return isAuth() && getUserRole() in ['gm', 'director', 'super_admin'];
     }
 
     function isSiteManager() {
-      return isAuth() && getUserRole() in ['wli_site_manager', 'wli_gm', 'director', 'super_admin'];
+      return isAuth() && getUserRole() in ['supervisor', 'gm', 'director', 'super_admin'];
     }
 
     function isMechanic() {
-      return isAuth() && getUserRole() in ['wli_mechanic', 'super_admin'];
+      return isAuth() && getUserRole() in ['mechanic', 'super_admin'];
     }
 
     function isProcurement() {
-      return isAuth() && getUserRole() in ['wli_procurement', 'wli_gm', 'super_admin'];
+      return isAuth() && getUserRole() in ['proc_staff', 'gm', 'super_admin'];
     }
 
     function isFinance() {
-      return isAuth() && getUserRole() in ['wli_finance', 'holding_finance', 'super_admin'];
+      return isAuth() && getUserRole() in ['finance_wli', 'antrac_finance', 'super_admin'];
+    }
+
+    function isWLIStaff() {
+      return isAuth() && getUserRole() in ['operator', 'mechanic', 'supervisor', 'gm', 'proc_staff', 'finance_wli', 'inventory_staff', 'super_admin'];
     }
 
     // Orgs — read by all authenticated users, write by super admin only
@@ -68,12 +72,19 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
-    // Tickets — role-based access
+    // Tickets — operators raise; WLI staff act on them through the workflow.
+    // Fine-grained stage gating is enforced in app logic (transition tables).
     match /tickets/{ticketId} {
       allow read: if isAuth();
-      allow create: if isSiteManager() || isSuperAdmin();
-      allow update: if isGM() || isMechanic() || request.auth.uid == resource.data.raisedById;
+      allow create: if isWLIStaff();
+      allow update: if isWLIStaff();
       allow delete: if isSuperAdmin();
+      // Timeline subcollection — append-only audit trail
+      match /timeline/{eventId} {
+        allow read: if isAuth();
+        allow create: if isWLIStaff();
+        allow update, delete: if false;
+      }
     }
 
     // Purchase requests

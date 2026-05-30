@@ -11,8 +11,8 @@ interface AuthUser {
 }
 
 const navItems = [
-  { to: '/holding', label: 'Holding', icon: Building2, roles: [ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.HOLDING_FINANCE, ROLES.HOLDING_HR] },
-  { to: '/wli', label: 'WLI', icon: LayoutDashboard, roles: [ROLES.WLI_GM, ROLES.WLI_SITE_MANAGER, ROLES.WLI_MECHANIC, ROLES.WLI_PROCUREMENT, ROLES.WLI_FINANCE, ROLES.SUPER_ADMIN] },
+  { to: '/holding', label: 'Holding', icon: Building2, roles: [ROLES.SUPER_ADMIN, ROLES.DIRECTOR, ROLES.CFO, ROLES.ANTRAC_FINANCE, ROLES.HOLDING_HR] },
+  { to: '/wli', label: 'WLI', icon: LayoutDashboard, roles: [ROLES.GM, ROLES.SUPERVISOR, ROLES.MECHANIC, ROLES.OPERATOR, ROLES.PROC_STAFF, ROLES.FINANCE_WLI, ROLES.INVENTORY_STAFF, ROLES.SUPER_ADMIN] },
   { to: '/mpl', label: 'MPL', icon: Package, roles: [ROLES.MPL_MANAGER, ROLES.SUPER_ADMIN] },
   { to: '/ems', label: 'EMS', icon: Settings, roles: [ROLES.EMS_MANAGER, ROLES.SUPER_ADMIN] },
   { to: '/admin/users', label: 'Admin', icon: Users, roles: [ROLES.SUPER_ADMIN] },

@@ -87,7 +87,7 @@ export function useTicketTransition() {
 
   return useMutation({
     mutationFn: async (input: TicketTransitionInput) => {
-      return executeTransition(input.ticketId, input.from as MockTicketStatus, input.to as MockTicketStatus, 'wli_gm', input.notes || '');
+      return executeTransition(input.ticketId, input.from as MockTicketStatus, input.to as MockTicketStatus, 'gm', input.notes || '');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });

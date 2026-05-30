@@ -23,18 +23,18 @@ export interface TicketTransition {
 }
 
 export const TRANSITIONS: TicketTransition[] = [
-  { from: 'open', to: 'mechanic_review', allowedRoles: ['wli_site_manager', 'wli_gm', 'super_admin'], label: 'Assign to Mechanic', requiresNotes: false, sideEffect: 'NOTIFY_MECHANIC' },
-  { from: 'open', to: 'rejected', allowedRoles: ['wli_site_manager', 'wli_gm', 'super_admin'], label: 'Reject', requiresNotes: true },
-  { from: 'mechanic_review', to: 'supervisor_review', allowedRoles: ['wli_mechanic', 'super_admin'], label: 'Submit for Supervisor Review', requiresNotes: true, sideEffect: 'NOTIFY_SUPERVISOR' },
-  { from: 'mechanic_review', to: 'rejected', allowedRoles: ['wli_mechanic', 'wli_site_manager', 'wli_gm', 'super_admin'], label: 'Reject', requiresNotes: true },
-  { from: 'mechanic_review', to: 'open', allowedRoles: ['wli_mechanic', 'super_admin'], label: 'Return to Open', requiresNotes: true },
-  { from: 'supervisor_review', to: 'gm_approved', allowedRoles: ['wli_site_manager', 'wli_gm', 'super_admin'], label: 'Approve', requiresNotes: false, sideEffect: 'NOTIFY_GM' },
-  { from: 'supervisor_review', to: 'rejected', allowedRoles: ['wli_site_manager', 'wli_gm', 'super_admin'], label: 'Reject', requiresNotes: true },
-  { from: 'supervisor_review', to: 'mechanic_review', allowedRoles: ['wli_site_manager', 'wli_gm', 'super_admin'], label: 'Return to Mechanic', requiresNotes: true },
-  { from: 'gm_approved', to: 'closed', allowedRoles: ['wli_gm', 'super_admin'], label: 'Close', requiresNotes: false, sideEffect: 'CREATE_PR_AUTO' },
-  { from: 'gm_approved', to: 'rejected', allowedRoles: ['wli_gm', 'super_admin'], label: 'Reject', requiresNotes: true },
-  { from: 'rejected', to: 'open', allowedRoles: ['wli_gm', 'super_admin'], label: 'Reopen', requiresNotes: true },
-  { from: 'closed', to: 'open', allowedRoles: ['wli_gm', 'super_admin'], label: 'Reopen', requiresNotes: true },
+  { from: 'open', to: 'mechanic_review', allowedRoles: ['supervisor', 'gm', 'super_admin'], label: 'Assign to Mechanic', requiresNotes: false, sideEffect: 'NOTIFY_MECHANIC' },
+  { from: 'open', to: 'rejected', allowedRoles: ['supervisor', 'gm', 'super_admin'], label: 'Reject', requiresNotes: true },
+  { from: 'mechanic_review', to: 'supervisor_review', allowedRoles: ['mechanic', 'super_admin'], label: 'Submit for Supervisor Review', requiresNotes: true, sideEffect: 'NOTIFY_SUPERVISOR' },
+  { from: 'mechanic_review', to: 'rejected', allowedRoles: ['mechanic', 'supervisor', 'gm', 'super_admin'], label: 'Reject', requiresNotes: true },
+  { from: 'mechanic_review', to: 'open', allowedRoles: ['mechanic', 'super_admin'], label: 'Return to Open', requiresNotes: true },
+  { from: 'supervisor_review', to: 'gm_approved', allowedRoles: ['supervisor', 'gm', 'super_admin'], label: 'Approve', requiresNotes: false, sideEffect: 'NOTIFY_GM' },
+  { from: 'supervisor_review', to: 'rejected', allowedRoles: ['supervisor', 'gm', 'super_admin'], label: 'Reject', requiresNotes: true },
+  { from: 'supervisor_review', to: 'mechanic_review', allowedRoles: ['supervisor', 'gm', 'super_admin'], label: 'Return to Mechanic', requiresNotes: true },
+  { from: 'gm_approved', to: 'closed', allowedRoles: ['gm', 'super_admin'], label: 'Close', requiresNotes: false, sideEffect: 'CREATE_PR_AUTO' },
+  { from: 'gm_approved', to: 'rejected', allowedRoles: ['gm', 'super_admin'], label: 'Reject', requiresNotes: true },
+  { from: 'rejected', to: 'open', allowedRoles: ['gm', 'super_admin'], label: 'Reopen', requiresNotes: true },
+  { from: 'closed', to: 'open', allowedRoles: ['gm', 'super_admin'], label: 'Reopen', requiresNotes: true },
 ];
 
 export function getAvailableTransitions(currentStatus: TicketStatus, userRole: string): TicketTransition[] {
