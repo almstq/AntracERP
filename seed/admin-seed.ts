@@ -49,6 +49,20 @@ const SITES = [
   { id: 'male-hq', name: 'Malé HQ', type: 'hq', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', createdAt: now },
 ];
 
+// WLI Fleet / Vessel register — representative heavy equipment across sites.
+const ASSETS = [
+  { id: 'wl-hv-0002', code: 'WL-HV-0002', make: 'VOLVO', model: 'A40G', type: 'Hauler Dump Truck', assetClass: 'vehicle', currentSiteId: 'muthaafushi', operationalStatus: 'operational' },
+  { id: 'wl-hv-0003', code: 'WL-HV-0003', make: 'CATERPILLAR', model: '320D', type: 'Excavator', assetClass: 'equipment', currentSiteId: 'bodufinolhu', operationalStatus: 'operational' },
+  { id: 'wl-hv-0007', code: 'WL-HV-0007', make: 'LIEBHERR', model: 'LTM 1050', type: 'Mobile Crane', assetClass: 'equipment', currentSiteId: 'thilafushi', operationalStatus: 'operational' },
+  { id: 'wl-hv-0008', code: 'WL-HV-0008', make: 'KOMATSU', model: 'PC350', type: 'High Bed Excavator', assetClass: 'equipment', currentSiteId: 'thilafushi', operationalStatus: 'down' },
+  { id: 'wl-hv-0009', code: 'WL-HV-0009', make: 'KOBELCO', model: 'SK380', type: 'High Bed Excavator', assetClass: 'equipment', currentSiteId: 'thilafushi', operationalStatus: 'operational' },
+  { id: 'wl-hv-0011', code: 'WL-HV-0011', make: 'BOMAG', model: 'BW211', type: 'Road Roller', assetClass: 'equipment', currentSiteId: 'goidhoo', operationalStatus: 'operational' },
+  { id: 'wl-hv-0014', code: 'WL-HV-0014', make: 'CATERPILLAR', model: 'D6', type: 'Bulldozer', assetClass: 'equipment', currentSiteId: 'goidhoo', operationalStatus: 'idle' },
+  { id: 'wl-hv-0018', code: 'WL-HV-0018', make: 'TOYOTA', model: '8FD30', type: 'Forklift', assetClass: 'vehicle', currentSiteId: 'bodufinolhu', operationalStatus: 'operational' },
+  { id: 'wl-gn-0003', code: 'WL-GN-0003', make: 'CUMMINS', model: 'C150D5', type: 'Generator', assetClass: 'equipment', currentSiteId: 'muthaafushi', operationalStatus: 'operational' },
+  { id: 'wl-vs-0001', code: 'WL-VS-0001', make: 'DAMEN', model: 'Stan 2606', type: 'Landing Craft', assetClass: 'vessel', currentSiteId: 'male-hq', operationalStatus: 'operational' },
+];
+
 async function seed() {
   console.log('[seed] Starting Antrac ERP seed...');
   console.log(`[seed] UID: ${uid}`);
@@ -68,6 +82,13 @@ async function seed() {
     batch.set(db.collection('sites').doc(id), data);
   }
   console.log(`[seed] Queued ${SITES.length} sites`);
+
+  // Assets (fleet / vessel register)
+  for (const asset of ASSETS) {
+    const { id, ...data } = asset;
+    batch.set(db.collection('assets').doc(id), { ...data, orgId: 'antrac-holding', sbuId: 'sbu-wli', createdAt: now });
+  }
+  console.log(`[seed] Queued ${ASSETS.length} assets`);
 
   // Super admin user doc
   batch.set(db.collection('users').doc(uid), {

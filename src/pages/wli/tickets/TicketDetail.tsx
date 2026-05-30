@@ -38,7 +38,7 @@ export function TicketDetail() {
           <Card header={<span className="text-sm font-medium">Details</span>}>
             <p className="text-xs text-text-secondary mb-3">{ticket.description}</p>
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div><span className="text-text-muted">Asset:</span> <span className="text-text-primary">{ticket.assetId || '—'}</span></div>
+              <div><span className="text-text-muted">Asset:</span> <span className="text-text-primary">{ticket.assetLabel || ticket.assetCode || '—'}</span></div>
               <div><span className="text-text-muted">Site:</span> <span className="text-text-primary">{ticket.siteId}</span></div>
               <div><span className="text-text-muted">Urgency:</span> <span className="text-text-primary">{ticket.urgency}</span></div>
               <div><span className="text-text-muted">Raised by:</span> <span className="text-text-primary">{ticket.raisedById}</span></div>

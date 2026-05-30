@@ -64,6 +64,9 @@ export interface Ticket {
   raisedById: string;
   status: TicketStatus;
   urgency: Urgency;
+  // denormalized asset display (resolved at creation)
+  assetCode?: string;
+  assetLabel?: string;
   // Stage 1 — issue
   description: string;
   operatorRecommendation?: string;

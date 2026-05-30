@@ -38,7 +38,7 @@ export function TicketList() {
                   <Ticket size={16} className="text-text-muted flex-shrink-0" />
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-text-primary truncate">{t.description || t.displayId}</p>
-                    <p className="text-[10px] text-text-muted">{t.displayId} · {t.siteId} · {t.urgency}</p>
+                    <p className="text-[10px] text-text-muted">{t.displayId} · {t.assetCode || '—'} · {t.siteId} · {t.urgency}</p>
                   </div>
                 </div>
                 <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary flex-shrink-0 ml-3">

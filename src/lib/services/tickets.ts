@@ -11,7 +11,9 @@ import type { RequiredMaterial, RequiredService, Urgency } from '../../types/wor
 export interface NewTicketInput {
   description: string;
   siteId: string;
-  assetId?: string;
+  assetId: string;
+  assetCode: string;
+  assetLabel: string;
   location?: string;
   urgency: Urgency;
   operatorRecommendation?: string;
@@ -31,7 +33,9 @@ export async function createTicket(input: NewTicketInput, actor: WorkflowActor):
     orgId: 'antrac-holding',
     sbuId: 'sbu-wli',
     siteId: input.siteId,
-    assetId: input.assetId ?? null,
+    assetId: input.assetId,
+    assetCode: input.assetCode,
+    assetLabel: input.assetLabel,
     location: input.location ?? null,
     raisedById: actor.id,
     status: 'draft',

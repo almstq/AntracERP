@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listAll, listWhere, getById, listSub } from '../firebase/db';
 import type { Ticket } from '../../types/workflow-entities';
+import type { Asset } from '../../types/asset';
 import type { TimelineEvent } from '../workflow/types';
 
 interface Loadable<T> {
@@ -44,6 +45,23 @@ export function useTicket(id: string | undefined): Loadable<(Ticket & { id: stri
       .catch((e) => setError(e?.message ?? 'Failed to load ticket'))
       .finally(() => setLoading(false));
   }, [id]);
+
+  useEffect(load, [load]);
+  return { data, loading, error, refresh: load };
+}
+
+export function useAssetList(sbuId = 'sbu-wli'): Loadable<(Asset & { id: string })[]> {
+  const [data, setData] = useState<(Asset & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    listWhere<Asset>('assets', 'sbuId', '==', sbuId)
+      .then((rows) => { setData(rows); setError(null); })
+      .catch((e) => setError(e?.message ?? 'Failed to load assets'))
+      .finally(() => setLoading(false));
+  }, [sbuId]);
 
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };

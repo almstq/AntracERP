@@ -4,7 +4,9 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../../lib/hooks/useAuth';
+import { useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { createTicket } from '../../../lib/services/tickets';
+import { assetLabel } from '../../../types/asset';
 import type { Urgency } from '../../../types/workflow-entities';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
@@ -13,21 +15,39 @@ const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 export function NewTicket() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [description, setDescription] = useState('');
-  const [siteId, setSiteId] = useState(SITES[0]);
+  const { data: assets, loading: assetsLoading } = useAssetList();
+
   const [assetId, setAssetId] = useState('');
+  const [siteId, setSiteId] = useState('');
+  const [siteTouched, setSiteTouched] = useState(false);
+  const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState<Urgency>('routine');
   const [recommendation, setRecommendation] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const selectedAsset = assets.find((a) => a.id === assetId);
+  // Site auto-follows the asset's current deployment unless the user overrides it.
+  const effectiveSite = siteTouched ? siteId : (selectedAsset?.currentSiteId ?? '');
+
+  function onAssetChange(id: string) {
+    setAssetId(id);
+    setSiteTouched(false); // re-sync site to the new asset's location
+  }
+
   async function submit() {
     if (!user) return;
+    if (!selectedAsset) { setErr('Select the machine this issue is about.'); return; }
+    if (!effectiveSite) { setErr('Select a location.'); return; }
     if (!description.trim()) { setErr('Describe the issue.'); return; }
     setBusy(true); setErr(null);
     try {
       const id = await createTicket(
-        { description, siteId, assetId: assetId || undefined, urgency, operatorRecommendation: recommendation || undefined },
+        {
+          description, siteId: effectiveSite, assetId: selectedAsset.id,
+          assetCode: selectedAsset.code, assetLabel: assetLabel(selectedAsset),
+          urgency, operatorRecommendation: recommendation || undefined,
+        },
         { id: user.uid, role: user.role, name: user.displayName },
       );
       navigate(`/wli/tickets/${id}`);
@@ -49,13 +69,29 @@ export function NewTicket() {
       <Card>
         <div className="space-y-3">
           <div>
-            <label className="text-xs text-text-muted">Issue description</label>
-            <textarea className={field} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's wrong with the asset?" />
+            <label className="text-xs text-text-muted">Machine / Asset *</label>
+            <select className={field} value={assetId} onChange={(e) => onAssetChange(e.target.value)}>
+              <option value="">{assetsLoading ? 'Loading fleet…' : 'Select the machine…'}</option>
+              {assets.map((a) => (
+                <option key={a.id} value={a.id}>{assetLabel(a)} · {a.currentSiteId}</option>
+              ))}
+            </select>
+            {selectedAsset && (
+              <p className="text-[10px] text-text-muted mt-1">
+                Status: {selectedAsset.operationalStatus} · Deployed at {selectedAsset.currentSiteId}
+              </p>
+            )}
           </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs text-text-muted">Site</label>
-              <select className={field} value={siteId} onChange={(e) => setSiteId(e.target.value)}>
+              <label className="text-xs text-text-muted">Location {selectedAsset && !siteTouched ? '(auto)' : ''}</label>
+              <select
+                className={field}
+                value={effectiveSite}
+                onChange={(e) => { setSiteTouched(true); setSiteId(e.target.value); }}
+              >
+                <option value="">Select…</option>
                 {SITES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
@@ -66,9 +102,10 @@ export function NewTicket() {
               </select>
             </div>
           </div>
+
           <div>
-            <label className="text-xs text-text-muted">Asset ID (optional)</label>
-            <input className={field} value={assetId} onChange={(e) => setAssetId(e.target.value)} placeholder="e.g. WL-HV-0007" />
+            <label className="text-xs text-text-muted">Issue description *</label>
+            <textarea className={field} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's wrong with the machine?" />
           </div>
           <div>
             <label className="text-xs text-text-muted">Your recommendation (optional)</label>
