@@ -1,6 +1,6 @@
 {
   "users": [
-    { "email": "alie.mustarq@gmail.com", "role": "super_admin", "orgId": "antrac-holding", "siteAssignments": [] },
+    { "email": "a.musthaq@gmail.com", "role": "super_admin", "orgId": "antrac-holding", "siteAssignments": [] },
     { "email": "ibrahim@antrac.com", "role": "wli_gm", "orgId": "sbu-wli", "siteAssignments": ["site-a", "site-b"] },
     { "email": "ahmed@antrac.com", "role": "wli_site_manager", "orgId": "sbu-wli", "siteAssignments": ["site-a"] },
     { "email": "hassan@antrac.com", "role": "wli_mechanic", "orgId": "sbu-wli", "siteAssignments": ["site-a"] }

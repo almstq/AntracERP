@@ -1,7 +1,9 @@
 {
   "sites": [
-    { "name": "Site A — Hulhumalé", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
-    { "name": "Site B — Airport", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
-    { "name": "Harbor Yard", "type": "yard", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" }
+    { "id": "thilafushi", "name": "Thilafushi Yard", "type": "yard", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
+    { "id": "bodufinolhu", "name": "Bodufinolhu Site", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
+    { "id": "muthaafushi", "name": "Muthaafushi Site", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
+    { "id": "goidhoo", "name": "Goidhoo Site", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
+    { "id": "male-hq", "name": "Malé HQ", "type": "hq", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" }
   ]
 }
