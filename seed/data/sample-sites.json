@@ -1,0 +1,7 @@
+{
+  "sites": [
+    { "name": "Site A — Hulhumalé", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
+    { "name": "Site B — Airport", "type": "project", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" },
+    { "name": "Harbor Yard", "type": "yard", "orgId": "antrac-holding", "sbuId": "sbu-wli", "status": "active" }
+  ]
+}

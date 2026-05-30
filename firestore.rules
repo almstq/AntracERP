@@ -1,0 +1,172 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isSuperAdmin() {
+      return isAuth() && getUserRole() == 'super_admin';
+    }
+
+    function isGM() {
+      return isAuth() && getUserRole() in ['wli_gm', 'director', 'super_admin'];
+    }
+
+    function isSiteManager() {
+      return isAuth() && getUserRole() in ['wli_site_manager', 'wli_gm', 'director', 'super_admin'];
+    }
+
+    function isMechanic() {
+      return isAuth() && getUserRole() in ['wli_mechanic', 'super_admin'];
+    }
+
+    function isProcurement() {
+      return isAuth() && getUserRole() in ['wli_procurement', 'wli_gm', 'super_admin'];
+    }
+
+    function isFinance() {
+      return isAuth() && getUserRole() in ['wli_finance', 'holding_finance', 'super_admin'];
+    }
+
+    // Orgs — read by all authenticated users, write by super admin only
+    match /orgs/{orgId} {
+      allow read: if isAuth();
+      allow write: if isSuperAdmin();
+    }
+
+    // Users — self read, admin write
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isSuperAdmin());
+      allow write: if isSuperAdmin();
+    }
+
+    // Sites — read by all, write by site manager+
+    match /sites/{siteId} {
+      allow read: if isAuth();
+      allow create, update: if isSiteManager() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Staff — read by all, write by site manager+
+    match /staff/{staffId} {
+      allow read: if isAuth();
+      allow create, update: if isSiteManager() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Assets — read by all, write by site manager+
+    match /assets/{assetId} {
+      allow read: if isAuth();
+      allow create, update: if isSiteManager() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Tickets — role-based access
+    match /tickets/{ticketId} {
+      allow read: if isAuth();
+      allow create: if isSiteManager() || isSuperAdmin();
+      allow update: if isGM() || isMechanic() || request.auth.uid == resource.data.raisedById;
+      allow delete: if isSuperAdmin();
+    }
+
+    // Purchase requests
+    match /purchaseRequests/{prId} {
+      allow read: if isAuth();
+      allow create: if isSiteManager() || isProcurement();
+      allow update: if isProcurement() || isGM();
+      allow delete: if isSuperAdmin();
+    }
+
+    // RFQs
+    match /rfqs/{rfqId} {
+      allow read: if isAuth();
+      allow create, update: if isProcurement() || isGM();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Purchase orders
+    match /purchaseOrders/{poId} {
+      allow read: if isAuth();
+      allow create, update: if isProcurement() || isGM() || isFinance();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Inventory items
+    match /inventoryItems/{itemId} {
+      allow read: if isAuth();
+      allow write: if isProcurement() || isSiteManager() || isSuperAdmin();
+    }
+
+    // Stock balances
+    match /stockBalances/{balanceId} {
+      allow read: if isAuth();
+      allow write: if isProcurement() || isSiteManager() || isSuperAdmin();
+    }
+
+    // Storage locations
+    match /storageLocations/{locationId} {
+      allow read: if isAuth();
+      allow write: if isSiteManager() || isSuperAdmin();
+    }
+
+    // Stock movements
+    match /stockMovements/{movementId} {
+      allow read: if isAuth();
+      allow create: if isSiteManager() || isProcurement() || isSuperAdmin();
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // Customers
+    match /customers/{customerId} {
+      allow read: if isAuth();
+      allow write: if isGM() || isSuperAdmin();
+    }
+
+    // CRM enquiries
+    match /crmEnquiries/{enquiryId} {
+      allow read: if isAuth();
+      allow write: if isGM() || isSuperAdmin();
+    }
+
+    // Jobs
+    match /jobs/{jobId} {
+      allow read: if isAuth();
+      allow write: if isGM() || isSuperAdmin();
+    }
+
+    // Notifications — user-specific
+    match /users/{userId}/notifications/{notificationId} {
+      allow read, write: if isAuth() && request.auth.uid == userId;
+    }
+
+    // Audit events — append only
+    match /auditEvents/{eventId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update, delete: if false;
+    }
+
+    // Fuel requests
+    match /fuelRequests/{requestId} {
+      allow read: if isAuth();
+      allow create: if isSiteManager();
+      allow update: if isGM();
+      allow delete: if isSuperAdmin();
+    }
+
+    // AI tasks
+    match /aiTasks/{taskId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+  }
+}

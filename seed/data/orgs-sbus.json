@@ -1,0 +1,8 @@
+{
+  "orgs": [
+    { "id": "antrac-holding", "name": "Antrac Holding", "type": "holding", "status": "active" },
+    { "id": "sbu-wli", "name": "Well Land Investment", "type": "sbu", "sbuType": "wli", "parentId": "antrac-holding", "status": "active" },
+    { "id": "sbu-mpl", "name": "Maldives Petroleum Link", "type": "sbu", "sbuType": "mpl", "parentId": "antrac-holding", "status": "active" },
+    { "id": "sbu-ems", "name": "Expert Motor Service", "type": "sbu", "sbuType": "ems", "parentId": "antrac-holding", "status": "active" }
+  ]
+}
