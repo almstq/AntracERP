@@ -9,6 +9,7 @@ import { useAuth } from '../../../lib/hooks/useAuth';
 import { executeTransition } from '../../../lib/workflow/executor';
 import { purchaseRequestWorkflow as prWf } from '../../../lib/workflow/definitions';
 import { getAvailableTransitions } from '../../../lib/workflow/engine';
+import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
 import type { PurchaseRequest, PRStatus, PRLineItem, PRQuote } from '../../../types/workflow-entities';
 
 export function PurchaseRequestDetail() {
@@ -90,6 +91,12 @@ export function PurchaseRequestDetail() {
 
   const union = [...new Set(pr.lineItems.flatMap((li) => li.assignedSupplierIds ?? []))];
   const quotedForRef = (ref: string) => (pr.quotes ?? []).filter((q) => q.linePrices.some((lp) => lp.ref === ref));
+
+  function downloadRfq(sid: string) {
+    const items = pr!.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
+    const sup = { id: sid, name: supName(sid) };
+    downloadHtml(`${rfqNumber(pr!, sid)}.html`, buildRfqHtml(pr!, sup, items));
+  }
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
@@ -177,10 +184,24 @@ export function PurchaseRequestDetail() {
               </div>
             )}
 
+            {/* RFQ documents — download one per supplier, send out-of-band */}
+            {status === 'rfq_sent' && union.length > 0 && (
+              <div className="space-y-2 border-b border-border pb-3 mb-1">
+                <p className="text-xs text-text-secondary">RFQ documents — download & send to each supplier:</p>
+                {union.map((sid) => (
+                  <button key={sid} onClick={() => downloadRfq(sid)}
+                    className="w-full flex items-center justify-between text-[11px] px-2 py-1.5 rounded bg-bg-surface border border-border hover:bg-bg-base text-text-primary">
+                    <span>{rfqNumber(pr, sid)} · {supName(sid)}</span>
+                    <span className="text-blue">Download ↓</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
             {/* Stage 7 — enter quotes (each supplier prices only its assigned items) */}
             {can('open_review') && (
               <div className="space-y-2">
-                <p className="text-xs text-text-secondary">Enter quoted unit prices:</p>
+                <p className="text-xs text-text-secondary">Enter quotes received from suppliers:</p>
                 {union.map((sid) => {
                   const itemsForSup = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
                   return (
