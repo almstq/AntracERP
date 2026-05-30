@@ -23,6 +23,8 @@ export function PurchaseRequestDetail() {
   const [quoteDraft, setQuoteDraft] = useState<Record<string, Record<string, number>>>({});
   // Stage 7 GM selection: { ref -> supplierId }
   const [lineSel, setLineSel] = useState<Record<string, string>>({});
+  // Supplier columns staged for sourcing (added but not yet assigned to an item)
+  const [extraCols, setExtraCols] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -45,7 +47,6 @@ export function PurchaseRequestDetail() {
   const can = (action: string) => getAvailableTransitions(prWf, status, role).some((t) => t.action === action);
   const canEnterQuotes = ['proc_staff', 'super_admin'].includes(role) && (status === 'rfq_sent' || status === 'quotes_under_review');
   const supName = (sid: string) => suppliers.find((s) => s.id === sid)?.name ?? sid;
-  const fieldCls = 'text-xs p-1.5 rounded bg-bg-surface border border-border text-text-primary';
 
   async function run(to: PRStatus, fields?: Record<string, unknown>, notes?: string) {
     if (!user || !pr) return;
@@ -146,18 +147,89 @@ export function PurchaseRequestDetail() {
             </div>
           </Card>
 
-          {pr.quotes?.length > 0 && (
-            <Card header={<span className="text-sm font-medium">Quotes Received</span>}>
-              <div className="space-y-1 text-xs">
-                {pr.quotes.map((q) => (
-                  <div key={q.id} className="flex justify-between p-2 rounded-lg bg-bg-surface">
-                    <span className="text-text-primary">{q.supplierName} <span className="text-text-muted">({q.linePrices.length} item)</span></span>
-                    <span className="text-text-muted">{q.currency} {q.total.toLocaleString()}</span>
+          {/* Sourcing matrix — suppliers (columns) × items (rows); cell = quoted unit price */}
+          {canEnterQuotes && (() => {
+            const cols = [...new Set([...union, ...extraCols])];
+            const addable = suppliers.filter((s) => !cols.includes(s.id));
+            return (
+              <Card header={
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-sm font-medium">Sourcing — suppliers × items</span>
+                  {addable.length > 0 && (
+                    <select className="text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary" value=""
+                      onChange={(e) => { if (e.target.value) setExtraCols((c) => [...c, e.target.value]); }}>
+                      <option value="">+ add supplier…</option>
+                      {addable.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  )}
+                </div>
+              }>
+                {cols.length === 0 ? (
+                  <p className="text-xs text-text-muted">Add a supplier to start issuing RFQs for these items.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] border-collapse">
+                      <thead>
+                        <tr className="text-text-muted">
+                          <th className="text-left p-1.5">Item</th>
+                          <th className="p-1.5 whitespace-nowrap">Req. qty</th>
+                          {cols.map((sid) => (
+                            <th key={sid} className="p-1.5 text-center min-w-[100px]">
+                              <div className="text-text-primary">{supName(sid)}</div>
+                              {union.includes(sid)
+                                ? <button onClick={() => downloadRfq(sid)} className="text-blue text-[10px]">RFQ ↓</button>
+                                : <span className="text-[9px] text-text-muted">not solicited</span>}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pr.lineItems.map((li) => (
+                          <tr key={li.ref} className="border-t border-border">
+                            <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
+                            <td className="p-1.5 text-center text-text-secondary whitespace-nowrap">{li.quantity} {li.uom}</td>
+                            {cols.map((sid) => {
+                              const assigned = (li.assignedSupplierIds ?? []).includes(sid);
+                              if (!assigned) return (
+                                <td key={sid} className="p-1 text-center">
+                                  <button onClick={() => assignSupplier(li.ref, sid)} disabled={busy}
+                                    className="text-[10px] px-2 py-1 rounded border border-dashed border-border text-text-muted hover:text-blue hover:border-blue">+ RFQ</button>
+                                </td>
+                              );
+                              return (
+                                <td key={sid} className="p-1">
+                                  <input type="number" min="0" step="0.01" placeholder="price"
+                                    className="w-full text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary text-right"
+                                    value={quoteDraft[sid]?.[li.ref] ?? ''}
+                                    onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))}
+                        <tr className="border-t border-border font-medium">
+                          <td className="p-1.5 text-text-muted" colSpan={2}>Quote total (MVR)</td>
+                          {cols.map((sid) => {
+                            const total = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid))
+                              .reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
+                            return <td key={sid} className="p-1.5 text-center text-text-secondary">{total ? total.toLocaleString() : '—'}</td>;
+                          })}
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </div>
-            </Card>
-          )}
+                )}
+                <p className="text-[10px] text-text-muted mt-2">Each column is a supplier. <b>+ RFQ</b> issues an RFQ for that item; enter the quoted unit price when received. Qty is fixed from the request.</p>
+                {err && <p className="text-xs text-red mt-2">{err}</p>}
+                <div className="flex justify-end gap-2 mt-3">
+                  <Button variant="secondary" size="sm" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
+                  {status === 'rfq_sent' && can('open_review') && union.length > 0 && (
+                    <Button variant="primary" size="sm" onClick={forwardToGm} disabled={busy}>Forward to GM</Button>
+                  )}
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* GM price comparison — item × supplier grid, lowest flagged */}
           {status === 'quotes_under_review' && can('approve_supplier') && (pr.quotes?.length ?? 0) > 0 && (() => {
@@ -244,88 +316,8 @@ export function PurchaseRequestDetail() {
               <Button variant="primary" size="sm" className="w-full" onClick={() => run('rfq_sent')} disabled={busy}>Start Sourcing</Button>
             )}
 
-            {/* Iterative sourcing: add suppliers, issue RFQs, record quotes */}
             {canEnterQuotes && (
-              <div className="space-y-3">
-                <p className="text-xs font-medium text-text-primary">Sourcing</p>
-
-                {/* Per item: assigned suppliers + add another (issues another RFQ) */}
-                {pr.lineItems.map((li) => {
-                  const assigned = li.assignedSupplierIds ?? [];
-                  const addable = suppliers.filter((s) => !assigned.includes(s.id));
-                  return (
-                    <div key={li.ref} className="border border-border rounded-lg p-2 space-y-1">
-                      <p className="text-[11px] font-medium text-text-primary">{li.ref}. {li.description}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {assigned.length === 0 && <span className="text-[10px] text-text-muted">no suppliers yet</span>}
-                        {assigned.map((sid) => (
-                          <span key={sid} className="text-[10px] px-2 py-0.5 rounded-full bg-bg-surface text-text-secondary">{supName(sid)}</span>
-                        ))}
-                      </div>
-                      {addable.length > 0 && (
-                        <select className={`${fieldCls} w-full`} value=""
-                          onChange={(e) => { if (e.target.value) assignSupplier(li.ref, e.target.value); }} disabled={busy}>
-                          <option value="">+ add supplier (issue RFQ)…</option>
-                          {addable.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                        </select>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* RFQ documents — one per solicited supplier */}
-                {union.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-[11px] text-text-secondary">RFQ documents — download & send:</p>
-                    {union.map((sid) => (
-                      <button key={sid} onClick={() => downloadRfq(sid)}
-                        className="w-full flex items-center justify-between text-[11px] px-2 py-1.5 rounded bg-bg-surface border border-border hover:bg-bg-base text-text-primary">
-                        <span>{rfqNumber(pr, sid)} · {supName(sid)}</span>
-                        <span className="text-blue">Download ↓</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                {/* Record quotes — only from solicited suppliers */}
-                {union.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-[11px] text-text-secondary">Record quotes received:</p>
-                    {union.map((sid) => {
-                      const itemsForSup = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
-                      return (
-                        <div key={sid} className="border border-border rounded-lg p-2 space-y-2">
-                          <p className="text-[11px] font-medium text-text-primary">{supName(sid)}</p>
-                          {itemsForSup.map((li) => {
-                            const unit = Number(quoteDraft[sid]?.[li.ref]) || 0;
-                            return (
-                              <div key={li.ref} className="space-y-0.5">
-                                <p className="text-[10px] text-text-primary">{li.ref}. {li.description}</p>
-                                <p className="text-[10px] text-text-muted">Requested qty: <b>{li.quantity} {li.uom}</b> (from ticket — fixed)</p>
-                                <div className="flex items-center gap-1.5">
-                                  <span className="text-[10px] text-text-muted whitespace-nowrap">Quoted unit price (MVR)</span>
-                                  <input type="number" min="0" step="0.01" className={`${fieldCls} flex-1`} placeholder="as on quote"
-                                    value={quoteDraft[sid]?.[li.ref] ?? ''}
-                                    onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
-                                  <span className="text-[10px] text-text-secondary whitespace-nowrap">= {(unit * li.quantity).toLocaleString()}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                          <p className="text-[10px] text-text-secondary text-right pt-1 border-t border-border-soft">
-                            Quote total: MVR {itemsForSup.reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0).toLocaleString()}
-                          </p>
-                        </div>
-                      );
-                    })}
-                    <Button variant="secondary" size="sm" className="w-full" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
-                  </div>
-                )}
-
-                {status === 'rfq_sent' && can('open_review') && union.length > 0 && (
-                  <Button variant="primary" size="sm" className="w-full" onClick={forwardToGm} disabled={busy}>Forward to GM for Review</Button>
-                )}
-              </div>
+              <p className="text-xs text-text-muted">Use the <b>Sourcing</b> matrix on the left to add suppliers, issue RFQs and record quotes.</p>
             )}
 
             {can('approve_supplier') && (
