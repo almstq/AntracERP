@@ -13,6 +13,7 @@ import { LocationRegister } from '../pages/wli/registers/LocationRegister';
 import { AssetRegister } from '../pages/wli/registers/AssetRegister';
 import { StaffRegister } from '../pages/wli/registers/StaffRegister';
 import { FleetMap } from '../pages/wli/registers/FleetMap';
+import { SupplierRegister } from '../pages/wli/registers/SupplierRegister';
 import { RoleInbox } from '../pages/wli/RoleInbox';
 import { PurchaseRequestList } from '../pages/wli/procurement/PurchaseRequestList';
 import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestDetail';
@@ -56,6 +57,7 @@ export const router = createBrowserRouter([
           { path: 'locations', element: <LocationRegister /> },
           { path: 'assets', element: <AssetRegister /> },
           { path: 'staff', element: <StaffRegister /> },
+          { path: 'suppliers', element: <SupplierRegister /> },
           { path: 'map', element: <FleetMap /> },
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },

@@ -82,3 +82,18 @@ export async function updateStaff(id: string, patch: Partial<StaffInput>): Promi
 export async function assignStaffSite(staffId: string, siteId: string): Promise<void> {
   await updateFields('staff', staffId, { siteId });
 }
+
+// ─── Suppliers ───────────────────────────────────────────────────────────
+
+export interface SupplierInput {
+  name: string;
+  country?: string;
+  contactEmail?: string;
+  categories: string[];
+}
+
+export async function createSupplier(input: SupplierInput): Promise<string> {
+  const id = slug(input.name);
+  await createWithId('suppliers', id, { ...input, active: true });
+  return id;
+}

@@ -49,6 +49,14 @@ const SITES = [
   { id: 'male-hq', name: 'Malé HQ', type: 'hq', orgId: 'antrac-holding', sbuId: 'sbu-wli', status: 'active', location: { lat: 4.1755, lng: 73.5093 }, createdAt: now },
 ];
 
+const SUPPLIERS = [
+  { id: 'iepl-india', name: 'IEPL India', country: 'India', categories: ['parts', 'hydraulic'], contactEmail: 'sales@iepl.in' },
+  { id: 'parts-master', name: 'Parts Master', country: 'Maldives', categories: ['parts', 'consumables'], contactEmail: 'info@partsmaster.mv' },
+  { id: 'rkl-trading', name: 'RKL Trading', country: 'Sri Lanka', categories: ['parts', 'tools'], contactEmail: 'orders@rkl.lk' },
+  { id: 'island-hydraulics', name: 'Island Hydraulics', country: 'Maldives', categories: ['hydraulic', 'service'], contactEmail: 'service@islandhyd.mv' },
+  { id: 'gulf-heavy-spares', name: 'Gulf Heavy Spares', country: 'UAE', categories: ['parts', 'electrical'], contactEmail: 'sales@gulfheavy.ae' },
+];
+
 const STAFF = [
   { id: 'st-001', displayId: 'ST-001', name: 'Janaka Perera', role: 'operator', designation: 'Heavy Vehicle Operator', siteId: 'thilafushi' },
   { id: 'st-002', displayId: 'ST-002', name: 'Sampath Silva', role: 'supervisor', designation: 'Site Supervisor', siteId: 'thilafushi' },
@@ -98,6 +106,13 @@ async function seed() {
     batch.set(db.collection('assets').doc(id), { ...data, orgId: 'antrac-holding', sbuId: 'sbu-wli', createdAt: now });
   }
   console.log(`[seed] Queued ${ASSETS.length} assets`);
+
+  // Suppliers
+  for (const sup of SUPPLIERS) {
+    const { id, ...data } = sup;
+    batch.set(db.collection('suppliers').doc(id), { ...data, active: true, createdAt: now });
+  }
+  console.log(`[seed] Queued ${SUPPLIERS.length} suppliers`);
 
   // Staff register
   for (const s of STAFF) {

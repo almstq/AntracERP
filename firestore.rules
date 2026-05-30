@@ -197,6 +197,12 @@ service cloud.firestore {
       }
     }
 
+    // Suppliers — read by all auth; managed by procurement/GM
+    match /suppliers/{supplierId} {
+      allow read: if isAuth();
+      allow write: if isProcurement() || isGM() || isSuperAdmin();
+    }
+
     // WLI inventory balances (fuel/water) — deducted on fuel request closure
     match /inventoryBalances/{balanceId} {
       allow read: if isAuth();
