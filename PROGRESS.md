@@ -21,6 +21,13 @@ Session paused — Mustarq shutting down. **Two workflows built & live-tested**
    `sales_staff`/`ops_staff` roles, Customer Register, Sales/Enquiry workflow,
    Quotation + Invoice docs, Work Order, payment tracking, asset commercial status.
 3. Fuel/water workflow UI; file uploads (Firebase Storage); Google Maps API key (from user).
+4. **Doc consolidation** — migrate remaining Antrac content out of the starqOS
+   processor into `docs/` (see `docs/README.md` "Deferred consolidation"); update
+   indexer / VOID DECK / cron references; retire old copies to `_recyclebin/`.
+
+**Organising principle (Mustarq):** every project is self-contained under
+`projects/<name>/`; starqOS indexes/visualises it but does not hold project
+content. All project docs live under `projects/antrac-erp/docs/` (canonical).
 
 **To run:** `npm run dev` → http://localhost:3000 · log in with **Google** as
 super_admin (NOT Developer Login — mock has no token, writes denied). Use the
