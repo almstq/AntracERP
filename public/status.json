@@ -1,0 +1,282 @@
+{
+  "generatedAt": "2026-05-28T22:51:36.271Z",
+  "devServer": {
+    "running": true,
+    "port": 3000
+  },
+  "typescript": {
+    "clean": true,
+    "errors": 0,
+    "warnings": 0
+  },
+  "project": {
+    "totalFiles": 59,
+    "totalLines": 2548,
+    "moduleProgress": 5,
+    "moduleTotal": 11,
+    "progressPercent": 45
+  },
+  "modules": [
+    {
+      "name": "Auth & Routing",
+      "fileCount": 8,
+      "stubCount": 0,
+      "totalLines": 565,
+      "status": "done"
+    },
+    {
+      "name": "Ticket Management",
+      "fileCount": 6,
+      "stubCount": 0,
+      "totalLines": 504,
+      "status": "done"
+    },
+    {
+      "name": "Procurement",
+      "fileCount": 5,
+      "stubCount": 0,
+      "totalLines": 378,
+      "status": "done"
+    },
+    {
+      "name": "Inventory",
+      "fileCount": 0,
+      "stubCount": 0,
+      "totalLines": 0,
+      "status": "not_started"
+    },
+    {
+      "name": "CRM",
+      "fileCount": 0,
+      "stubCount": 0,
+      "totalLines": 0,
+      "status": "not_started"
+    },
+    {
+      "name": "Finance",
+      "fileCount": 0,
+      "stubCount": 0,
+      "totalLines": 0,
+      "status": "not_started"
+    },
+    {
+      "name": "Holding Dashboard",
+      "fileCount": 1,
+      "stubCount": 0,
+      "totalLines": 48,
+      "status": "done"
+    },
+    {
+      "name": "MPL Dashboard",
+      "fileCount": 1,
+      "stubCount": 1,
+      "totalLines": 11,
+      "status": "stub"
+    },
+    {
+      "name": "EMS Dashboard",
+      "fileCount": 1,
+      "stubCount": 1,
+      "totalLines": 11,
+      "status": "stub"
+    },
+    {
+      "name": "Admin",
+      "fileCount": 1,
+      "stubCount": 0,
+      "totalLines": 44,
+      "status": "done"
+    },
+    {
+      "name": "UI Components",
+      "fileCount": 8,
+      "stubCount": 1,
+      "totalLines": 197,
+      "status": "wip"
+    }
+  ],
+  "recentChanges": [
+    {
+      "file": "src/pages/wli/procurement/PurchaseOrderDetail.tsx",
+      "date": "2026-05-29",
+      "time": "02:11:26.361256600"
+    },
+    {
+      "file": "src/routes/router.tsx",
+      "date": "2026-05-29",
+      "time": "01:13:21.251212100"
+    },
+    {
+      "file": "src/pages/wli/procurement/PurchaseRequestList.tsx",
+      "date": "2026-05-29",
+      "time": "01:12:25.730550100"
+    },
+    {
+      "file": "src/pages/wli/procurement/PurchaseRequestDetail.tsx",
+      "date": "2026-05-29",
+      "time": "01:12:25.695957600"
+    },
+    {
+      "file": "src/pages/wli/procurement/RFQList.tsx",
+      "date": "2026-05-29",
+      "time": "01:12:25.668340900"
+    },
+    {
+      "file": "src/pages/wli/procurement/PurchaseOrderList.tsx",
+      "date": "2026-05-29",
+      "time": "01:12:25.657793200"
+    },
+    {
+      "file": "src/lib/context/AuthContext.tsx",
+      "date": "2026-05-29",
+      "time": "01:06:18.459779700"
+    },
+    {
+      "file": "src/pages/Login.tsx",
+      "date": "2026-05-29",
+      "time": "01:00:24.122414300"
+    }
+  ],
+  "files": [
+    {
+      "path": "src/pages/wli/procurement/PurchaseOrderDetail.tsx",
+      "lines": 94,
+      "size": 4764,
+      "mtime": "2026-05-28T21:11:26.361Z",
+      "type": "source"
+    },
+    {
+      "path": "src/routes/router.tsx",
+      "lines": 64,
+      "size": 2774,
+      "mtime": "2026-05-28T20:13:21.251Z",
+      "type": "source"
+    },
+    {
+      "path": "src/pages/wli/procurement/PurchaseRequestList.tsx",
+      "lines": 74,
+      "size": 2920,
+      "mtime": "2026-05-28T20:12:25.731Z",
+      "type": "source"
+    },
+    {
+      "path": "src/pages/wli/procurement/PurchaseRequestDetail.tsx",
+      "lines": 91,
+      "size": 4403,
+      "mtime": "2026-05-28T20:12:25.696Z",
+      "type": "source"
+    },
+    {
+      "path": "src/pages/wli/procurement/RFQList.tsx",
+      "lines": 58,
+      "size": 2436,
+      "mtime": "2026-05-28T20:12:25.668Z",
+      "type": "source"
+    },
+    {
+      "path": "src/pages/wli/procurement/PurchaseOrderList.tsx",
+      "lines": 61,
+      "size": 2818,
+      "mtime": "2026-05-28T20:12:25.658Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/context/AuthContext.tsx",
+      "lines": 108,
+      "size": 3472,
+      "mtime": "2026-05-28T20:06:18.460Z",
+      "type": "source"
+    },
+    {
+      "path": "src/pages/Login.tsx",
+      "lines": 127,
+      "size": 5479,
+      "mtime": "2026-05-28T20:00:24.122Z",
+      "type": "source"
+    },
+    {
+      "path": "src/pages/Dashboard.tsx",
+      "lines": 24,
+      "size": 1064,
+      "mtime": "2026-05-28T19:59:20.388Z",
+      "type": "source"
+    },
+    {
+      "path": "src/App.tsx",
+      "lines": 13,
+      "size": 367,
+      "mtime": "2026-05-28T19:59:20.369Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/firebase/auth.ts",
+      "lines": 60,
+      "size": 1676,
+      "mtime": "2026-05-28T15:41:59.578Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/workflows/ticket.ts",
+      "lines": 83,
+      "size": 3801,
+      "mtime": "2026-05-28T10:51:39.449Z",
+      "type": "source"
+    },
+    {
+      "path": "src/main.tsx",
+      "lines": 30,
+      "size": 847,
+      "mtime": "2026-05-28T09:50:55.577Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/mock-data/index.ts",
+      "lines": 2,
+      "size": 162,
+      "mtime": "2026-05-28T09:47:44.637Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/hooks/useTickets.ts",
+      "lines": 111,
+      "size": 3386,
+      "mtime": "2026-05-28T09:45:03.632Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/hooks/useMockData.ts",
+      "lines": 10,
+      "size": 258,
+      "mtime": "2026-05-28T09:41:39.416Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/utils/validation.ts",
+      "lines": 27,
+      "size": 1022,
+      "mtime": "2026-05-28T09:41:39.394Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/mock-data/tickets.ts",
+      "lines": 81,
+      "size": 4442,
+      "mtime": "2026-05-28T09:28:50.526Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/mock-data/types.ts",
+      "lines": 52,
+      "size": 978,
+      "mtime": "2026-05-28T09:28:50.501Z",
+      "type": "source"
+    },
+    {
+      "path": "src/lib/firebase/firestore.ts",
+      "lines": 77,
+      "size": 3158,
+      "mtime": "2026-05-28T06:43:05.716Z",
+      "type": "source"
+    }
+  ]
+}

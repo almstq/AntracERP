@@ -1,0 +1,107 @@
+import type { ReactNode } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type { User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { getAuthInstance, getDbInstance } from '../firebase/client';
+import { AuthContext } from './AuthContext.context';
+import type { AuthUser } from './AuthContext.context';
+import { MOCK_USERS } from '../mock-data/tickets';
+
+export type { AuthUser };
+
+// Find mock user by UID
+function findMockUser(uid: string): AuthUser | null {
+  const mock = MOCK_USERS.find(u => u.uid === uid);
+  if (!mock) return null;
+  return {
+    uid: mock.uid,
+    email: mock.email,
+    displayName: mock.displayName,
+    role: mock.role,
+    orgId: mock.orgId,
+    orgName: mock.orgId === 'antrac-holding' ? 'Antrac Holding' : mock.orgId === 'sbu-wli' ? 'WLI' : 'Antrac',
+  };
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [devUser, setDevUser] = useState<string | null>(null);
+
+  useEffect(() => {
+    // If in dev mode, skip Firebase auth listener
+    if (devUser) {
+      const mu = findMockUser(devUser);
+      if (mu) {
+        setUser(mu);
+        setLoading(false);
+      }
+      return;
+    }
+
+    const firebaseAuth = getAuthInstance();
+    const firebaseDb = getDbInstance();
+    if (!firebaseAuth || !firebaseDb) {
+      setLoading(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(firebaseAuth, async (fbUser: FirebaseUser | null) => {
+      if (!fbUser) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      try {
+        const userDoc = await getDoc(doc(firebaseDb, 'users', fbUser.uid));
+        if (userDoc.exists()) {
+          const data = userDoc.data() as { role: string; orgId: string; orgName?: string };
+          setUser({
+            uid: fbUser.uid,
+            email: fbUser.email || '',
+            displayName: fbUser.displayName || '',
+            role: data.role,
+            orgId: data.orgId,
+            orgName: data.orgName || 'Antrac Holding',
+          });
+        } else {
+          setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '' });
+        }
+      } catch {
+        setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '' });
+      }
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, [devUser]);
+
+  const login = useCallback(async (uidOrEmpty?: string) => {
+    // Dev login: if uid provided, set dev mode
+    if (uidOrEmpty) {
+      setDevUser(uidOrEmpty);
+      return;
+    }
+    // Production: Google popup
+    const firebaseAuth = getAuthInstance();
+    if (!firebaseAuth) return;
+    await signInWithPopup(firebaseAuth, new GoogleAuthProvider());
+  }, []);
+
+  const logout = useCallback(async () => {
+    setDevUser(null);
+    const firebaseAuth = getAuthInstance();
+    if (!firebaseAuth) return;
+    try {
+      await firebaseSignOut(firebaseAuth);
+    } catch {
+      // ignore
+    }
+    setUser(null);
+  }, []);
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
