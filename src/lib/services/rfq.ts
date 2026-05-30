@@ -75,6 +75,65 @@ export function buildRfqHtml(
 </body></html>`;
 }
 
+export function buildPoHtml(po: {
+  displayId: string; supplierName: string; deliveryAddress: string; paymentTerms?: string;
+  currency: string; total: number;
+  lineItems: { description: string; uom: string; quantity: number; unitPrice: number }[];
+}): string {
+  const today = new Date();
+  const rows = po.lineItems.map((li, i) => `
+    <tr>
+      <td style="padding:6px 8px;border:1px solid #ddd">${i + 1}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd">${li.description}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;text-align:center">${li.quantity}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;text-align:center">${li.uom}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;text-align:right">${li.unitPrice.toLocaleString()}</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;text-align:right">${(li.unitPrice * li.quantity).toLocaleString()}</td>
+    </tr>`).join('');
+
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${po.displayId}</title></head>
+<body style="font-family:Arial,Helvetica,sans-serif;color:#111;max-width:760px;margin:32px auto;padding:0 24px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #1f4e79;padding-bottom:12px">
+    <div>
+      <h1 style="margin:0;font-size:20px;color:#1f4e79">WELL LAND INVESTMENT PVT LTD</h1>
+      <p style="margin:2px 0;font-size:12px;color:#555">Antrac Holding Group · Malé, Maldives</p>
+    </div>
+    <div style="text-align:right">
+      <h2 style="margin:0;font-size:16px">PURCHASE ORDER</h2>
+      <p style="margin:2px 0;font-size:13px"><b>${po.displayId}</b></p>
+    </div>
+  </div>
+
+  <table style="width:100%;font-size:12px;margin-top:16px">
+    <tr>
+      <td style="vertical-align:top;width:50%"><b>Supplier:</b> ${po.supplierName}<br/><b>Date:</b> ${today.toLocaleDateString()}</td>
+      <td style="vertical-align:top"><b>Deliver to:</b> ${po.deliveryAddress}<br/><b>Payment terms:</b> ${po.paymentTerms || 'As agreed'}</td>
+    </tr>
+  </table>
+
+  <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:16px">
+    <thead><tr style="background:#1f4e79;color:#fff">
+      <th style="padding:6px 8px;border:1px solid #ddd;width:36px">#</th>
+      <th style="padding:6px 8px;border:1px solid #ddd;text-align:left">Item</th>
+      <th style="padding:6px 8px;border:1px solid #ddd">Qty</th>
+      <th style="padding:6px 8px;border:1px solid #ddd">UOM</th>
+      <th style="padding:6px 8px;border:1px solid #ddd">Unit Price</th>
+      <th style="padding:6px 8px;border:1px solid #ddd">Total</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+    <tfoot><tr>
+      <td colspan="5" style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">Grand Total (${po.currency})</td>
+      <td style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">${po.total.toLocaleString()}</td>
+    </tr></tfoot>
+  </table>
+
+  <div style="margin-top:48px;font-size:12px">
+    <div style="display:inline-block;border-top:1px solid #333;padding-top:4px;width:220px">Authorised Signatory · WLI GM</div>
+  </div>
+  <p style="font-size:11px;color:#777;margin-top:24px">Issued by Well Land Investment Pvt Ltd · ${today.toLocaleDateString()}</p>
+</body></html>`;
+}
+
 /** Trigger a browser download of an HTML string. */
 export function downloadHtml(filename: string, html: string): void {
   const blob = new Blob([html], { type: 'text/html' });

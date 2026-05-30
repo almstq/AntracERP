@@ -1,9 +1,10 @@
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
+import { buildPoHtml, downloadHtml } from '../../../lib/services/rfq';
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
 import type { PurchaseOrder, POStatus } from '../../../types/workflow-entities';
 
@@ -39,7 +40,15 @@ export function PurchaseOrderDetail() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2 space-y-4">
-          <Card header={<span className="text-sm font-medium">Order</span>}>
+          <Card header={
+            <div className="flex items-center justify-between w-full">
+              <span className="text-sm font-medium">Order</span>
+              <button onClick={() => downloadHtml(`${po.displayId}.html`, buildPoHtml(po))}
+                className="flex items-center gap-1 text-[11px] text-blue hover:underline">
+                <Download size={12} /> Download PO
+              </button>
+            </div>
+          }>
             <div className="space-y-2 text-xs">
               {po.lineItems?.map((li, i) => (
                 <div key={i} className="flex justify-between p-2 rounded-lg bg-bg-surface">
