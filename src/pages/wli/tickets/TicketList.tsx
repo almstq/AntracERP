@@ -1,54 +1,53 @@
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
-import { StatusBadge } from '../../../components/shared/StatusBadge';
-import { PriorityBadge } from '../../../components/shared/PriorityBadge';
 import { Button } from '../../../components/ui/Button';
-import { Ticket, Plus, Filter } from 'lucide-react';
-
-const mockTickets = [
-  { id: 'IR-2026-0001', title: 'Excavator hydraulic leak', asset: 'EX-001', severity: 'high', status: 'mechanic_review', site: 'Site A', age: '2h', raisedBy: 'Ahmed' },
-  { id: 'IR-2026-0002', title: 'Vessel engine overheating', asset: 'VS-003', severity: 'critical', status: 'open', site: 'Harbor', age: '30m', raisedBy: 'Ibrahim' },
-  { id: 'IR-2026-0003', title: 'Generator fuel filter replacement', asset: 'GN-002', severity: 'medium', status: 'supervisor_review', site: 'Site B', age: '1d', raisedBy: 'Hassan' },
-  { id: 'IR-2026-0004', title: 'Crane wire rope inspection', asset: 'CR-001', severity: 'low', status: 'gm_approved', site: 'Site A', age: '3d', raisedBy: 'Ali' },
-  { id: 'IR-2026-0005', title: 'Bulldozer track damage', asset: 'BD-001', severity: 'high', status: 'open', site: 'Site C', age: '4h', raisedBy: 'Mustarq' },
-];
+import { Ticket, Plus } from 'lucide-react';
+import { useTicketList } from '../../../lib/hooks/useWorkflowData';
+import { ticketWorkflow } from '../../../lib/workflow/definitions';
+import type { TicketStatus } from '../../../types/workflow-entities';
 
 export function TicketList() {
+  const { data: tickets, loading, error } = useTicketList();
+
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Issue Tickets</h1>
-          <p className="text-xs text-text-muted">{mockTickets.length} tickets</p>
+          <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${tickets.length} tickets`}</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm"><Filter size={14} /> Filter</Button>
+        <Link to="/wli/tickets/new">
           <Button variant="primary" size="sm"><Plus size={14} /> New Ticket</Button>
-        </div>
+        </Link>
       </div>
 
+      {error && <p className="text-xs text-red mb-3">{error}</p>}
+
       <Card>
-        <div className="space-y-1">
-          {mockTickets.map(ticket => (
-            <Link
-              key={ticket.id}
-              to={`/wli/tickets/${ticket.id}`}
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface transition-colors"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <Ticket size={16} className="text-text-muted flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">{ticket.title}</p>
-                  <p className="text-[10px] text-text-muted">{ticket.id} · {ticket.asset} · {ticket.site} · {ticket.raisedBy} · {ticket.age}</p>
+        {!loading && tickets.length === 0 ? (
+          <p className="text-xs text-text-muted p-2">No tickets yet. Raise the first one.</p>
+        ) : (
+          <div className="space-y-1">
+            {tickets.map((t) => (
+              <Link
+                key={t.id}
+                to={`/wli/tickets/${t.id}`}
+                className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface transition-colors"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <Ticket size={16} className="text-text-muted flex-shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-text-primary truncate">{t.description || t.displayId}</p>
+                    <p className="text-[10px] text-text-muted">{t.displayId} · {t.siteId} · {t.urgency}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                <PriorityBadge priority={ticket.severity} />
-                <StatusBadge status={ticket.status} />
-              </div>
-            </Link>
-          ))}
-        </div>
+                <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary flex-shrink-0 ml-3">
+                  {ticketWorkflow.statusLabels[t.status as TicketStatus] ?? t.status}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -8,10 +8,19 @@ Git tags mark each release on its milestone commit (`git tag -l`).
 
 ## [Unreleased]
 
+### Added (WF Phase 4 — slice 1: issue-ticket raise → diagnose → approve)
+- Live ticket list + detail (real Firestore reads via `useWorkflowData` hooks).
+- `New Ticket` form (operator raise) → creates draft + `submit` transition.
+- Reusable `TransitionPanel` — renders role-available transitions for any
+  workflow entity, captures notes/required fields, special-cases the diagnosis
+  stage (materials/services) and calls `executeTransition`.
+- `Timeline` component — reads the entity's timeline subcollection.
+- Linked PR card on ticket detail (watch the PR auto-spawn on diagnosis).
+- `db.listSub` for subcollection reads; `/wli/tickets/new` route.
+
 ### In progress
-- **WF Phase 4** — UI per stage (role inboxes, stage forms, GM summary card,
-  timeline view). Building one workflow slice at a time, starting with the
-  issue-ticket raise → diagnose → approve path to verify the engine live.
+- Remaining WF Phase 4 slices: procurement (PR/PO) UI, fuel-request UI, role
+  inboxes, GM summary card, notifications bell. PDF + Gemini stay stubbed.
 
 ---
 

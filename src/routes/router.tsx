@@ -8,6 +8,7 @@ import { HoldingDashboard } from '../pages/holding/HoldingDashboard';
 import { WLIDashboard } from '../pages/wli/WLIDashboard';
 import { TicketList } from '../pages/wli/tickets/TicketList';
 import { TicketDetail } from '../pages/wli/tickets/TicketDetail';
+import { NewTicket } from '../pages/wli/tickets/NewTicket';
 import { PurchaseRequestList } from '../pages/wli/procurement/PurchaseRequestList';
 import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestDetail';
 import { RFQList } from '../pages/wli/procurement/RFQList';
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <WLIDashboard /> },
           { path: 'tickets', element: <TicketList /> },
+          { path: 'tickets/new', element: <NewTicket /> },
           { path: 'tickets/:id', element: <TicketDetail /> },
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },

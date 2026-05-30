@@ -54,6 +54,15 @@ export async function listWhere<T = Record<string, unknown>>(
   return snap.docs.map((d) => ({ id: d.id, ...deepConvert(d.data()) }) as T & { id: string });
 }
 
+/** List a subcollection, optionally ordered by a field. */
+export async function listSub<T = Record<string, unknown>>(
+  coll: string, id: string, sub: string, sortBy?: string,
+): Promise<(T & { id: string })[]> {
+  const base = collection(db(), coll, id, sub);
+  const snap = await getDocs(sortBy ? query(base, orderBy(sortBy)) : base);
+  return snap.docs.map((d) => ({ id: d.id, ...deepConvert(d.data()) }) as T & { id: string });
+}
+
 /** Create a doc with an explicit id. */
 export async function createWithId(coll: string, id: string, data: Record<string, unknown>): Promise<void> {
   await setDoc(doc(db(), coll, id), { ...data, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });

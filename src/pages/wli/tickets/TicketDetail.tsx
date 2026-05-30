@@ -1,48 +1,35 @@
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
-import { StatusBadge } from '../../../components/shared/StatusBadge';
-import { PriorityBadge } from '../../../components/shared/PriorityBadge';
-import { Button } from '../../../components/ui/Button';
-import { EmptyState } from '../../../components/shared/EmptyState';
-import { ArrowLeft } from 'lucide-react';
-
-const mockTicket = {
-  id: 'IR-2026-0001',
-  title: 'Excavator hydraulic leak',
-  description: 'Hydraulic fluid leaking from the main cylinder. Machine is currently down.',
-  asset: 'EX-001 — Caterpillar 320D',
-  site: 'Site A — Hulhumalé',
-  severity: 'high',
-  status: 'mechanic_review',
-  raisedBy: 'Ahmed',
-  raisedAt: '2 hours ago',
-  items: [
-    { description: 'Hydraulic cylinder seal kit', quantity: 1, type: 'material' },
-    { description: 'Hydraulic fluid 20L', quantity: 2, type: 'material' },
-  ],
-  timeline: [
-    { event: 'Ticket raised', actor: 'Ahmed', role: 'Site Manager', time: '2h ago', notes: '' },
-    { event: 'Assigned to mechanic', actor: 'System', role: 'System', time: '2h ago', notes: '' },
-  ],
-};
+import { ArrowLeft, Package } from 'lucide-react';
+import { useTicket, useEntity } from '../../../lib/hooks/useWorkflowData';
+import { Timeline } from '../../../components/workflow/Timeline';
+import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
+import { ticketWorkflow, purchaseRequestWorkflow } from '../../../lib/workflow/definitions';
+import type { TicketStatus, PRStatus, PurchaseRequest } from '../../../types/workflow-entities';
 
 export function TicketDetail() {
-  const { id: _id } = useParams();
-  const ticket = mockTicket;
-  void _id;
+  const { id } = useParams();
+  const { data: ticket, loading, error, refresh } = useTicket(id);
+  const { data: pr, refresh: refreshPR } = useEntity<PurchaseRequest>('purchaseRequests', ticket?.purchaseRequestId);
+
+  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (error) return <div className="p-6 text-xs text-red">{error}</div>;
+  if (!ticket) return <div className="p-6 text-xs text-text-muted">Ticket not found.</div>;
+
+  const onDone = () => { refresh(); refreshPR(); };
+
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/tickets" className="text-text-muted hover:text-text-primary">
-          <ArrowLeft size={18} />
-        </Link>
+        <Link to="/wli/tickets" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-lg font-bold text-text-primary truncate">{ticket.title}</h1>
-            <StatusBadge status={ticket.status} />
-            <PriorityBadge priority={ticket.severity} />
+            <h1 className="text-lg font-bold text-text-primary truncate">{ticket.description || ticket.displayId}</h1>
+            <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">
+              {ticketWorkflow.statusLabels[ticket.status as TicketStatus] ?? ticket.status}
+            </span>
           </div>
-          <p className="text-xs text-text-muted">{ticket.id} · {ticket.asset}</p>
+          <p className="text-xs text-text-muted">{ticket.displayId} · {ticket.siteId} · {ticket.urgency}</p>
         </div>
       </div>
 
@@ -51,51 +38,55 @@ export function TicketDetail() {
           <Card header={<span className="text-sm font-medium">Details</span>}>
             <p className="text-xs text-text-secondary mb-3">{ticket.description}</p>
             <div className="grid grid-cols-2 gap-3 text-xs">
-              <div><span className="text-text-muted">Asset:</span> <span className="text-text-primary">{ticket.asset}</span></div>
-              <div><span className="text-text-muted">Site:</span> <span className="text-text-primary">{ticket.site}</span></div>
-              <div><span className="text-text-muted">Raised by:</span> <span className="text-text-primary">{ticket.raisedBy}</span></div>
-              <div><span className="text-text-muted">Age:</span> <span className="text-text-primary">{ticket.raisedAt}</span></div>
+              <div><span className="text-text-muted">Asset:</span> <span className="text-text-primary">{ticket.assetId || '—'}</span></div>
+              <div><span className="text-text-muted">Site:</span> <span className="text-text-primary">{ticket.siteId}</span></div>
+              <div><span className="text-text-muted">Urgency:</span> <span className="text-text-primary">{ticket.urgency}</span></div>
+              <div><span className="text-text-muted">Raised by:</span> <span className="text-text-primary">{ticket.raisedById}</span></div>
             </div>
+            {ticket.diagnosis && (
+              <div className="mt-3 pt-3 border-t border-border text-xs">
+                <p className="text-text-muted mb-1">Mechanic diagnosis:</p>
+                <p className="text-text-secondary">{ticket.diagnosis}</p>
+              </div>
+            )}
           </Card>
 
-          <Card header={<span className="text-sm font-medium">Items Required</span>}>
-            <div className="space-y-2">
-              {ticket.items.map((item, i) => (
-                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-bg-surface text-xs">
-                  <span className="text-text-primary">{item.description}</span>
-                  <span className="text-text-muted">×{item.quantity} · {item.type}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card header={<span className="text-sm font-medium">Timeline</span>}>
-            <div className="space-y-3">
-              {ticket.timeline.map((event, i) => (
-                <div key={i} className="flex gap-3 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-blue mt-1.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-text-primary font-medium">{event.event}</p>
-                    <p className="text-text-muted">{event.actor} · {event.role} · {event.time}</p>
+          {((ticket.materials?.length ?? 0) > 0 || (ticket.services?.length ?? 0) > 0) && (
+            <Card header={<span className="text-sm font-medium">Required Items</span>}>
+              <div className="space-y-2 text-xs">
+                {ticket.materials?.map((m, i) => (
+                  <div key={`m${i}`} className="flex justify-between p-2 rounded-lg bg-bg-surface">
+                    <span className="text-text-primary">{m.description}</span>
+                    <span className="text-text-muted">×{m.quantity} {m.uom} · material</span>
                   </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+                ))}
+                {ticket.services?.map((s, i) => (
+                  <div key={`s${i}`} className="flex justify-between p-2 rounded-lg bg-bg-surface">
+                    <span className="text-text-primary">{s.description}</span>
+                    <span className="text-text-muted">{s.specialistType} · service</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {pr && (
+            <Card header={<span className="text-sm font-medium flex items-center gap-2"><Package size={14} /> Linked Purchase Request</span>}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-text-primary">{pr.displayId}</span>
+                <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">
+                  {purchaseRequestWorkflow.statusLabels[pr.status as PRStatus] ?? pr.status}
+                </span>
+              </div>
+              <p className="text-[10px] text-text-muted mt-1">{pr.lineItems?.length ?? 0} line item(s)</p>
+            </Card>
+          )}
+
+          <Timeline collection="tickets" entityId={ticket.id} />
         </div>
 
         <div className="space-y-4">
-          <Card header={<span className="text-sm font-medium">Actions</span>}>
-            <div className="space-y-2">
-              <Button variant="primary" size="sm" className="w-full">Start Review</Button>
-              <Button variant="secondary" size="sm" className="w-full">Request Clarification</Button>
-              <Button variant="danger" size="sm" className="w-full">Reject</Button>
-            </div>
-          </Card>
-
-          <Card header={<span className="text-sm font-medium">Documents</span>}>
-            <EmptyState title="No documents" description="Upload photos, invoices, or receipts" />
-          </Card>
+          <TransitionPanel workflowId="ticket" entityId={ticket.id} status={ticket.status} onDone={onDone} />
         </div>
       </div>
     </div>
