@@ -29,10 +29,20 @@ Git tags mark each release on its milestone commit (`git tag -l`).
   seeded 6 staff + 10 assets. Registry services + `useSiteList`/`useStaffList`.
 - WLI dashboard: quick-access cards to the four registers.
 
+### Added (Shell & navigation redesign)
+- Branded **login splash** (Antrac branding panel + sign-in).
+- **Module-aware sidebar** — contextual to HQ / WLI / MPL / EMS, each with its
+  own branding header and grouped nav. Replaces the generic top-level sidebar.
+- **WLI sidebar lists every actor dashboard** (Operator, Mechanic, Supervisor,
+  GM, Procurement, WLI Finance, Inventory) + Operations + Registers sections.
+- **Actor desks** (`/wli/desk/:role`) — each lists the tickets awaiting that
+  role's action, showing the available next-actions.
+- super_admin lands in the WLI module.
+
 ### In progress
 - Google Maps API key (user to provide) to activate the map.
 - Remaining WF Phase 4 slices: procurement (PR/PO) UI + 4-tier payment chain,
-  fuel-request UI, role inboxes, GM summary card, notifications bell.
+  fuel-request UI, notifications bell, richer ticket fields per stage.
 
 ---
 
