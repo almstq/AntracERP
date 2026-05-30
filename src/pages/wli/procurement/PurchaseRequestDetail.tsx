@@ -90,7 +90,6 @@ export function PurchaseRequestDetail() {
   }
 
   const union = [...new Set(pr.lineItems.flatMap((li) => li.assignedSupplierIds ?? []))];
-  const quotedForRef = (ref: string) => (pr.quotes ?? []).filter((q) => q.linePrices.some((lp) => lp.ref === ref));
 
   function downloadRfq(sid: string) {
     const items = pr!.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
@@ -140,6 +139,65 @@ export function PurchaseRequestDetail() {
               </div>
             </Card>
           )}
+
+          {/* GM price comparison — item × supplier grid, lowest flagged */}
+          {status === 'quotes_under_review' && can('approve_supplier') && (pr.quotes?.length ?? 0) > 0 && (() => {
+            const cols = [...new Set(pr.quotes.map((q) => q.supplierId))];
+            const priceFor = (sid: string, ref: string) => pr.quotes.find((q) => q.supplierId === sid)?.linePrices.find((lp) => lp.ref === ref)?.unitPrice;
+            const autoLowest = () => {
+              const next: Record<string, string> = {};
+              for (const li of pr.lineItems) {
+                let best: string | undefined; let bestP = Infinity;
+                for (const c of cols) { const p = priceFor(c, li.ref); if (p != null && p < bestP) { bestP = p; best = c; } }
+                if (best) next[li.ref] = best;
+              }
+              setLineSel(next);
+            };
+            return (
+              <Card header={<span className="text-sm font-medium">Price Comparison</span>}>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[11px] border-collapse">
+                    <thead><tr>
+                      <th className="text-left p-1.5 text-text-muted font-medium">Item</th>
+                      {cols.map((c) => <th key={c} className="p-1.5 text-text-muted font-medium">{supName(c)}</th>)}
+                    </tr></thead>
+                    <tbody>
+                      {pr.lineItems.map((li) => {
+                        const prices = cols.map((c) => priceFor(c, li.ref));
+                        const lowest = Math.min(...prices.filter((p): p is number => p != null));
+                        return (
+                          <tr key={li.ref} className="border-t border-border">
+                            <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
+                            {cols.map((c, i) => {
+                              const p = prices[i];
+                              if (p == null) return <td key={c} className="p-1.5 text-center text-text-muted">—</td>;
+                              const sel = lineSel[li.ref] === c;
+                              const low = p === lowest;
+                              return (
+                                <td key={c} className="p-1 text-center">
+                                  <button onClick={() => setLineSel((m) => ({ ...m, [li.ref]: c }))}
+                                    className={`px-2 py-1 rounded w-full ${sel ? 'bg-blue text-white' : low ? 'bg-teal/15 text-teal' : 'bg-bg-surface text-text-secondary'} hover:opacity-80`}>
+                                    {p.toLocaleString()}{low ? ' ★' : ''}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[10px] text-text-muted mt-2">★ = lowest quote · click a price to select that supplier for the item (split allowed)</p>
+                {err && <p className="text-xs text-red mt-2">{err}</p>}
+                <div className="flex gap-2 mt-3">
+                  <Button variant="secondary" size="sm" onClick={autoLowest} disabled={busy}>Auto-pick lowest</Button>
+                  <Button variant="primary" size="sm" className="flex-1" onClick={approveSuppliers} disabled={busy}>Approve Supplier(s)</Button>
+                  <Button variant="secondary" size="sm" onClick={() => run('rfq_sent', undefined, 'Need more quotes')} disabled={busy}>More Quotes</Button>
+                </div>
+              </Card>
+            );
+          })()}
 
           {pr.purchaseOrderIds?.length > 0 && (
             <Card header={<span className="text-sm font-medium">Purchase Orders</span>}>
@@ -222,26 +280,8 @@ export function PurchaseRequestDetail() {
               </div>
             )}
 
-            {/* Stage 7 — GM selects supplier per line (only those who quoted that item) */}
             {can('approve_supplier') && (
-              <div className="space-y-2">
-                <p className="text-xs text-text-secondary">Select supplier per line (split allowed):</p>
-                {pr.lineItems.map((li) => (
-                  <div key={li.ref}>
-                    <p className="text-[10px] text-text-muted">{li.ref}. {li.description}</p>
-                    <select className={`${fieldCls} w-full`} value={lineSel[li.ref] ?? ''}
-                      onChange={(e) => setLineSel((m) => ({ ...m, [li.ref]: e.target.value }))}>
-                      <option value="">Select supplier…</option>
-                      {quotedForRef(li.ref).map((q) => {
-                        const up = q.linePrices.find((lp) => lp.ref === li.ref)?.unitPrice;
-                        return <option key={q.supplierId} value={q.supplierId}>{q.supplierName} @ {up ?? '—'}</option>;
-                      })}
-                    </select>
-                  </div>
-                ))}
-                <Button variant="primary" size="sm" className="w-full" onClick={approveSuppliers} disabled={busy}>Approve Supplier(s)</Button>
-                <Button variant="secondary" size="sm" className="w-full" onClick={() => run('rfq_sent', undefined, 'Need more quotes')} disabled={busy}>Need More Quotes</Button>
-              </div>
+              <p className="text-xs text-text-muted">Review the <b>Price Comparison</b> on the left to select suppliers and approve.</p>
             )}
 
             {can('raise_po') && (
