@@ -7,7 +7,7 @@ import { listAll, listWhere, getById, listSub } from '../firebase/db';
 import type { Ticket } from '../../types/workflow-entities';
 import type { Asset } from '../../types/asset';
 import type { Site, Staff } from '../../types/org';
-import type { TimelineEvent } from '../workflow/types';
+import type { TimelineEvent, WorkflowNotification } from '../workflow/types';
 
 interface Loadable<T> {
   data: T;
@@ -94,6 +94,22 @@ export function useStaffList(sbuId = 'sbu-wli'): Loadable<(Staff & { id: string 
       .catch((e) => setError(e?.message ?? 'Failed to load staff'))
       .finally(() => setLoading(false));
   }, [sbuId]);
+  useEffect(load, [load]);
+  return { data, loading, error, refresh: load };
+}
+
+export function useNotifications(role: string | undefined): Loadable<(WorkflowNotification & { id: string })[]> {
+  const [data, setData] = useState<(WorkflowNotification & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    if (!role) { setData([]); setLoading(false); return; }
+    setLoading(true);
+    listWhere<WorkflowNotification>('notifications', 'recipientRole', '==', role)
+      .then((rows) => { setData(rows); setError(null); })
+      .catch((e) => setError(e?.message ?? 'Failed to load notifications'))
+      .finally(() => setLoading(false));
+  }, [role]);
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
 }
