@@ -294,16 +294,27 @@ export function PurchaseRequestDetail() {
                     {union.map((sid) => {
                       const itemsForSup = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid));
                       return (
-                        <div key={sid} className="border border-border rounded-lg p-2 space-y-1">
+                        <div key={sid} className="border border-border rounded-lg p-2 space-y-2">
                           <p className="text-[11px] font-medium text-text-primary">{supName(sid)}</p>
-                          {itemsForSup.map((li) => (
-                            <div key={li.ref} className="flex items-center gap-2">
-                              <span className="text-[10px] text-text-muted flex-1 truncate">{li.ref}. {li.description}</span>
-                              <input type="number" className={`${fieldCls} w-20`} placeholder="unit"
-                                value={quoteDraft[sid]?.[li.ref] ?? ''}
-                                onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
-                            </div>
-                          ))}
+                          {itemsForSup.map((li) => {
+                            const unit = Number(quoteDraft[sid]?.[li.ref]) || 0;
+                            return (
+                              <div key={li.ref} className="space-y-0.5">
+                                <p className="text-[10px] text-text-muted">{li.ref}. {li.description} · qty {li.quantity} {li.uom}</p>
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] text-text-muted">Unit price</span>
+                                  <span className="text-[10px] text-text-muted">MVR</span>
+                                  <input type="number" min="0" className={`${fieldCls} flex-1`} placeholder="0.00"
+                                    value={quoteDraft[sid]?.[li.ref] ?? ''}
+                                    onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
+                                  <span className="text-[10px] text-text-secondary whitespace-nowrap">= {(unit * li.quantity).toLocaleString()}</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          <p className="text-[10px] text-text-secondary text-right pt-1 border-t border-border-soft">
+                            Quote total: MVR {itemsForSup.reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0).toLocaleString()}
+                          </p>
                         </div>
                       );
                     })}
