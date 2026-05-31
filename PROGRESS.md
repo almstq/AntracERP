@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.6.0
-**Updated:** 2026-05-31 (session 3 — end of session)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.7.0
+**Updated:** 2026-05-31 (session 4 — CRM Phase A-D + money foundation)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,14 +12,15 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session paused — Mustarq shutting down. **Two workflows built & live-tested**
-(Issue→Closure + procurement/payment). Next, in order:
+Session 4 complete — CRM Phases A-D built, build clean. **Next, in order:**
 
-1. **Cross-cutting money foundation** — `Money {amount,currency}` + currency
-   selector + **global GST 8%** (`computeTotals`); retrofit PO + all finance docs.
-2. **CRM & Sales module** — see `docs/CRM_PLAN.md` (Phases A–F). Adds
-   `sales_staff`/`ops_staff` roles, Customer Register, Sales/Enquiry workflow,
-   Quotation + Invoice docs, Work Order, payment tracking, asset commercial status.
+1. **CRM Phase E** — Work Order + Invoice + Payment (Module C):
+   - `CREATE_WORK_ORDER` side-effect (auto-create on `quote_accepted`)
+   - `SOFT_RESERVE_ASSETS` / `DEPLOY_ASSETS` / `RELEASE_ASSETS` handlers
+   - WorkOrder list/detail pages + invoice generator (`buildInvoiceHtml`)
+   - Payment recording + `UPDATE_CUSTOMER_ROLLUPS` handler
+   - Antrac Finance read-only mirror of invoices
+2. **CRM Phase F** — Sales + Finance dashboards (active WOs, outstanding, overdue)
 3. Fuel/water workflow UI; file uploads (Firebase Storage); Google Maps API key (from user).
 4. **Doc consolidation** — migrate remaining Antrac content out of the starqOS
    processor into `docs/` (see `docs/README.md` "Deferred consolidation"); update
@@ -83,8 +84,10 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **WF Phase 4** | Live UI: tickets, TransitionPanel, Timeline, login splash, module sidebar, actor desks, Command Center, registers (Locations/Assets/Staff/Suppliers/Map) | ✅ Done | `→ 11e6830` |
 | **Procurement deep-dive** | Iterative RFQ sourcing matrix, competitive quotes, GM price comparison, RFQ+PO docs, Act-As testing | ✅ Done & live-tested | `dc50f26`, `5513e06` |
 | **v0.6.0 milestone** | Phase 4 + procurement/payment complete | ✅ Tagged | `v0.6.0` |
-| **Money foundation** | Currency selector + global GST 8% | ⬜ Next | — |
-| **CRM & Sales** | Customer Register → Sales → Quote → Work Order → Invoice → Payment (`docs/CRM_PLAN.md`) | ⬜ Planned | — |
+| **Money foundation** | `money.ts`, `computeTotals`, `formatMoney`, `CurrencySelector`, PO doc GST rows, PO detail breakdown | ✅ Done | `875db3b` |
+| **CRM Phase A-D** | Roles (sales/ops_staff), Asset commercialStatus, Customer Register + Detail, Enquiry workflow (10 states), Quotation doc generator, Work Order workflow | ✅ Done | `875db3b` |
+| **CRM Phase E** | Work Order pages, invoice generator, payment tracking, asset status handlers, customer rollups | ⬜ Next | — |
+| **CRM Phase F** | Sales + Finance dashboards, asset utilisation % | ⬜ Planned | — |
 | **Fuel/water UI** | Workflow 2 UI (modelled, no UI yet) | ⬜ Pending | — |
 
 ### Cross-cutting backlog
