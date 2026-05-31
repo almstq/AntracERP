@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.11.0
-**Updated:** 2026-06-01 (session 6 — File Uploads + Document Vault + pipeline formalised)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.11.1
+**Updated:** 2026-06-01 (session 6 — File Uploads + Document Vault + QA audit)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -20,6 +20,11 @@ Session 6 complete — Firebase Storage + Document Vault live, pipeline formalis
 4. **Mobile Responsive** — full responsive redesign (last — needs everything stable).
 
 **Pipeline decision (Mustarq, 2026-06-01):** UI Polish + Mobile + AI formally added to timeline. Build order locked as above.
+
+**QA audit (2026-06-01):** Full review done — `docs/QA_AUDIT_2026-06-01.md`. Fixed 3 critical
+token regressions + broken mobile shell this session. 10 findings mapped into the Polish
+(M1–M4, L1–L4) and Mobile (H2) phases. No data-loss or security defects. Next-session
+prompt: `D:\!starq\.claude_code_sync\NEXT_SESSION_PROMPT_2026-06-02.md`.
 
 **Organising principle (Mustarq):** every project is self-contained under
 `projects/<name>/`; starqOS indexes/visualises it but does not hold project
@@ -86,6 +91,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **Fuel/water UI** | FuelRequestList + NewFuelRequest + FuelRequestDetail + inventory balance | ✅ Done | `2b5f700` |
 | **File Uploads** | Firebase Storage live — `storage.ts`, `FileUpload` component, wired into PO / WorkOrder / FuelRequest / Ticket | ✅ Done | `942b861` |
 | **Document Vault** | `/wli/documents` — aggregated vault, docType auto-tag, view/download split, inline preview modal (image + PDF) | ✅ Done | `fff77e3` |
+| **QA Audit** | Full review — fixed 3 critical token regressions + broken mobile shell; 10 findings documented (`docs/QA_AUDIT_2026-06-01.md`) | ✅ Done | pending |
 | **OpenWeatherMap** | Vessel weather panel — wind, waves, visibility for WLI sea sites | 🔲 Next | — |
 | **AI Integration** | Gemini Flash — GM price compare, Command Center AI Brief, diagnosis assist | 🔲 Planned | — |
 | **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Planned | — |

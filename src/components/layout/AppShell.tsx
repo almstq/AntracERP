@@ -14,7 +14,7 @@ export function ProtectedRoute() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Navbar />
-      <main className="flex-1 overflow-y-auto bg-bg-base">
+      <main className="flex-1 overflow-y-auto bg-bg-base pt-12 md:pt-0">
         {isMock && (
           <div className="bg-amber/15 border-b border-amber/30 text-amber px-4 py-1.5 text-[11px] text-center">
             Developer Login (mock) — Firestore reads/writes are disabled. Sign in with Google to use live data.

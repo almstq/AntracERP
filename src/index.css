@@ -4,9 +4,12 @@
   --color-bg-base: #09090B;
   --color-bg-panel: #141417;
   --color-bg-surface: #1C1C1F;
+  --color-bg-card: #141417;
+  --color-bg-overlay: #141417;
   --color-bg-input: #18181B;
   --color-border: #33333A;
   --color-border-soft: #26262C;
+  --color-border-hover: #44444C;
   --color-text-primary: #FAFAFA;
   --color-text-secondary: #A3A3A3;
   --color-text-muted: #71717A;

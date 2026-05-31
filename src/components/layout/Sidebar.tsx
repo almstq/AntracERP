@@ -114,14 +114,20 @@ export function Navbar() {
 
   return (
     <>
-      <div className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-bg-panel">
+      {/* Mobile top bar — fixed, full width, sits above content */}
+      <div className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 border-b border-border bg-bg-panel">
         <span className="text-sm font-bold text-text-primary">{mod.brand}</span>
-        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-text-secondary">
+        <button onClick={() => setMobileOpen(!mobileOpen)} className="text-text-secondary" aria-label="Toggle menu">
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </div>
 
-      <aside className={`${mobileOpen ? 'block' : 'hidden'} md:block w-60 bg-bg-panel border-r border-border flex-shrink-0 overflow-y-auto relative`}>
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileOpen(false)} />
+      )}
+
+      <aside className={`${mobileOpen ? 'fixed inset-y-0 left-0 z-50' : 'hidden'} md:relative md:z-auto md:block w-60 bg-bg-panel border-r border-border flex-shrink-0 overflow-y-auto`}>
         <div className="p-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue">A</div>
