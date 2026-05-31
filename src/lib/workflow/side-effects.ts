@@ -6,12 +6,14 @@
  *
  * PDF (RFQ/PO) and Gemini (price comparison) are intentionally stubbed.
  */
-import { getById, listAll, createAuto, updateFields } from '../firebase/db';
+import { getById, listAll, createAuto, updateFields, listWhere } from '../firebase/db';
 import type { ExecuteFn, SideEffectTag, WorkflowActor } from './types';
 import type {
   Ticket, PurchaseRequest, PRLineItem, PurchaseOrder, POLineItem,
   FuelRequest, InventoryBalance,
 } from '../../types/workflow-entities';
+import type { Enquiry, Quotation, WorkOrder, Invoice, Payment } from '../../types/crm';
+import { getNextId } from '../utils/id';
 
 export interface SideEffectContext {
   entityId: string;
@@ -156,21 +158,90 @@ const handlers: Record<SideEffectTag, Handler> = {
     });
   },
 
-  // CRM stubs — handlers to be implemented in Phase E.
+  // ── CRM side-effects (Phase E) ─────────────────────────────────────────────
+
+  // GM approves enquiry → soft-reserve proposed assets so they aren't double-booked.
   SOFT_RESERVE_ASSETS: async ({ entityId }) => {
-    console.info(`[side-effect] SOFT_RESERVE_ASSETS for enquiry ${entityId} — stub (Phase E).`);
+    const enquiry = await getById<Enquiry>('enquiries', entityId);
+    if (!enquiry) return;
+    const assetIds = enquiry.assetRequests.flatMap(r => r.proposedAssetIds ?? []);
+    for (const assetId of assetIds) {
+      await updateFields('assets', assetId, { commercialStatus: 'soft_reserved' });
+    }
   },
+
+  // Enquiry accepted → auto-create Work Order from the linked Quotation.
   CREATE_WORK_ORDER: async ({ entityId }) => {
-    console.info(`[side-effect] CREATE_WORK_ORDER for enquiry ${entityId} — stub (Phase E).`);
+    const enquiry = await getById<Enquiry>('enquiries', entityId);
+    if (!enquiry || enquiry.workOrderId) return; // idempotent
+    const quotation = enquiry.quotationId
+      ? await getById<Quotation>('quotations', enquiry.quotationId)
+      : null;
+
+    const existing = await listAll<WorkOrder>('workOrders');
+    const displayId = getNextId(existing.map(w => w.displayId), 'workOrder');
+
+    const woId = await createAuto('workOrders', {
+      displayId,
+      orgId: enquiry.orgId,
+      sbuId: enquiry.sbuId,
+      enquiryId: enquiry.id,
+      quotationId: enquiry.quotationId ?? null,
+      customerId: enquiry.customerId,
+      customerName: enquiry.customerName,
+      status: 'active',
+      contractValue: quotation?.total ?? 0,
+      advancePaid: 0,
+      retentionHeld: 0,
+      currency: quotation?.currency ?? 'MVR',
+      assets: [],
+      startDate: enquiry.mobilisationDate ?? new Date(),
+      endDate: enquiry.demobilisationDate ?? null,
+      invoiceIds: [],
+      raisedById: 'system',
+    } as Record<string, unknown>);
+
+    await updateFields('enquiries', enquiry.id, { workOrderId: woId });
   },
+
+  // WO commences → hard-deploy all WO assets (commercialStatus → deployed).
   DEPLOY_ASSETS: async ({ entityId }) => {
-    console.info(`[side-effect] DEPLOY_ASSETS for work order ${entityId} — stub (Phase E).`);
+    const wo = await getById<WorkOrder>('workOrders', entityId);
+    if (!wo) return;
+    for (const a of wo.assets ?? []) {
+      await updateFields('assets', a.assetId, { commercialStatus: 'deployed' });
+    }
   },
+
+  // WO closed → release all assets back to available.
   RELEASE_ASSETS: async ({ entityId }) => {
-    console.info(`[side-effect] RELEASE_ASSETS for work order ${entityId} — stub (Phase E).`);
+    const wo = await getById<WorkOrder>('workOrders', entityId);
+    if (!wo) return;
+    for (const a of wo.assets ?? []) {
+      await updateFields('assets', a.assetId, { commercialStatus: 'available' });
+    }
   },
+
+  // Payment recorded / WO closed → recompute customer rollups from live data.
   UPDATE_CUSTOMER_ROLLUPS: async ({ entityId }) => {
-    console.info(`[side-effect] UPDATE_CUSTOMER_ROLLUPS for work order ${entityId} — stub (Phase E).`);
+    const wo = await getById<WorkOrder>('workOrders', entityId);
+    if (!wo) return;
+
+    const [invoices, payments, activeWOs] = await Promise.all([
+      listWhere<Invoice>('invoices', 'customerId', '==', wo.customerId),
+      listWhere<Payment>('payments', 'customerId', '==', wo.customerId),
+      listWhere<WorkOrder>('workOrders', 'customerId', '==', wo.customerId),
+    ]);
+
+    const lifetimeRevenue = payments.reduce((s, p) => s + (p.amount ?? 0), 0);
+    const outstandingBalance = invoices
+      .filter(inv => !['fully_paid', 'void'].includes(inv.status))
+      .reduce((s, inv) => s + (inv.balance ?? 0), 0);
+    const activeWorkOrders = activeWOs.filter(w => w.status !== 'closed').length;
+
+    await updateFields('customers', wo.customerId, {
+      lifetimeRevenue, outstandingBalance, activeWorkOrders,
+    });
   },
 
   // Fuel request closed → deduct WLI inventory balance.
