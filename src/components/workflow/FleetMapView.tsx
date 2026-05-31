@@ -46,18 +46,54 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
     const gmaps = (window.google as any).maps;
     const withCoords = sites.filter((s) => s.location);
     if (withCoords.length === 0) return;
-    const center = withCoords[0].location!;
-    const map = new gmaps.Map(mapEl.current, { center, zoom: 7, mapTypeId: 'hybrid', disableDefaultUI: false });
+
+    const map = new gmaps.Map(mapEl.current, {
+      center: withCoords[0].location!,
+      zoom: 10,
+      mapTypeId: 'roadmap',
+      disableDefaultUI: false,
+    });
+
+    // Auto-fit the map to show all sites
+    const bounds = new gmaps.LatLngBounds();
+    for (const site of withCoords) bounds.extend(site.location!);
+    map.fitBounds(bounds);
+    // Don't zoom in too far if only one site
+    gmaps.event.addListenerOnce(map, 'idle', () => {
+      if (map.getZoom() > 13) map.setZoom(13);
+    });
 
     for (const site of withCoords) {
       const siteAssets = assets.filter((a) => a.currentSiteId === site.id);
       const siteStaff = staff.filter((p) => p.siteId === site.id);
-      const marker = new gmaps.Marker({ position: site.location, map, title: site.name });
+
+      // Marker with visible site name label
+      const marker = new gmaps.Marker({
+        position: site.location,
+        map,
+        title: site.name,
+        label: {
+          text: site.name,
+          color: '#ffffff',
+          fontSize: '11px',
+          fontWeight: 'bold',
+        },
+        icon: {
+          path: gmaps.SymbolPath.CIRCLE,
+          scale: 10,
+          fillColor: '#3B82F6',
+          fillOpacity: 1,
+          strokeColor: '#ffffff',
+          strokeWeight: 2,
+        },
+      });
+
       const info = new gmaps.InfoWindow({
-        content: `<div style="color:#111;font-size:12px;min-width:160px">
-          <strong>${site.name}</strong><br/>${siteAssets.length} asset(s), ${siteStaff.length} staff
-          ${siteAssets.map((a) => `<div>• ${a.code} ${a.make} ${a.model}</div>`).join('')}
-          ${siteStaff.map((p) => `<div>· ${p.name} (${p.role})</div>`).join('')}
+        content: `<div style="color:#111;font-size:12px;min-width:180px;padding:4px">
+          <strong style="font-size:13px">${site.name}</strong>
+          <div style="color:#666;margin:4px 0">${siteAssets.length} asset(s) · ${siteStaff.length} staff</div>
+          ${siteAssets.map((a) => `<div style="padding:1px 0">• ${a.code} — ${a.make} ${a.model}</div>`).join('')}
+          ${siteStaff.map((p) => `<div style="padding:1px 0;color:#555">· ${p.name} (${p.role})</div>`).join('')}
         </div>`,
       });
       marker.addListener('click', () => info.open(map, marker));
