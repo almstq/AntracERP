@@ -91,7 +91,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **Fuel/water UI** | FuelRequestList + NewFuelRequest + FuelRequestDetail + inventory balance | ✅ Done | `2b5f700` |
 | **File Uploads** | Firebase Storage live — `storage.ts`, `FileUpload` component, wired into PO / WorkOrder / FuelRequest / Ticket | ✅ Done | `942b861` |
 | **Document Vault** | `/wli/documents` — aggregated vault, docType auto-tag, view/download split, inline preview modal (image + PDF) | ✅ Done | `fff77e3` |
-| **QA Audit** | Full review — fixed 3 critical token regressions + broken mobile shell; 10 findings documented (`docs/QA_AUDIT_2026-06-01.md`) | ✅ Done | pending |
+| **QA Audit** | Full review — fixed 3 critical token regressions + broken mobile shell; 10 findings documented (`docs/QA_AUDIT_2026-06-01.md`) | ✅ Done | `b862aa9` |
 | **OpenWeatherMap** | Vessel weather panel — wind, waves, visibility for WLI sea sites | 🔲 Next | — |
 | **AI Integration** | Gemini Flash — GM price compare, Command Center AI Brief, diagnosis assist | 🔲 Planned | — |
 | **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Planned | — |
