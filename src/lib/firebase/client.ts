@@ -2,8 +2,10 @@ import type { FirebaseApp } from 'firebase/app';
 import { initializeApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
@@ -17,6 +19,7 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null;
 let authInstance: Auth | null = null;
 let dbInstance: Firestore | null = null;
+let storageInstance: FirebaseStorage | null = null;
 
 export function isFirebaseConfigured(): boolean {
   return !!(firebaseConfig.apiKey && firebaseConfig.projectId);
@@ -31,8 +34,9 @@ export function initFirebase() {
     app = initializeApp(firebaseConfig);
     authInstance = getAuth(app);
     dbInstance = getFirestore(app);
+    storageInstance = getStorage(app);
   }
-  return { app, auth: authInstance!, db: dbInstance! };
+  return { app, auth: authInstance!, db: dbInstance!, storage: storageInstance! };
 }
 
 export function getAuthInstance(): Auth | null {
@@ -43,6 +47,11 @@ export function getAuthInstance(): Auth | null {
 export function getDbInstance(): Firestore | null {
   if (!dbInstance) initFirebase();
   return dbInstance;
+}
+
+export function getStorageInstance(): FirebaseStorage | null {
+  if (!storageInstance) initFirebase();
+  return storageInstance;
 }
 
 initFirebase();

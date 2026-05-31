@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
+import { FileUpload } from '../../../components/shared/FileUpload';
 import { ArrowLeft, Fuel, Droplets, Database } from 'lucide-react';
 import { getFuelRequest, getInventoryBalance } from '../../../lib/services/fuel';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -180,6 +181,15 @@ export function FuelRequestDetail() {
               </div>
             </Card>
           )}
+
+          <FileUpload
+            collection="fuelRequests"
+            entityId={request.id}
+            attachments={(request as any).attachments ?? []}
+            onUpdate={load}
+            label="Collection Receipt & Photos"
+            accept="image/*,.pdf"
+          />
 
           <Timeline collection="fuelRequests" entityId={request.id} />
         </div>

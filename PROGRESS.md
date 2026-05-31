@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.10.0
-**Updated:** 2026-05-31 (session 5 — CRM Phase F + Fuel/Water UI)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.11.0
+**Updated:** 2026-05-31 (session 6 — Firebase Storage file uploads)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,10 +12,10 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 5 complete — CRM Phase F + Fuel/Water UI built, build clean at 85%. **Next, in order:**
+Session 6 complete — Firebase Storage file uploads live, build clean at 88%. **Next, in order:**
 
-1. **File Uploads** — Firebase Storage for tax invoice, payment receipt, site photos (currently text-reference stubs)
-2. Google Maps API key (from user) — lights up Fleet Map / Command Center.
+1. **Enable Firebase Storage** in Firebase Console (Storage → Get Started → production rules) then deploy: `firebase deploy --only storage`
+2. **OpenWeatherMap** — vessel weather monitoring panel (planned, not started)
 3. **Doc consolidation** — migrate remaining Antrac content out of the starqOS
    processor into `docs/` (see `docs/README.md` "Deferred consolidation"); update
    indexer / VOID DECK / cron references; retire old copies to `_recyclebin/`.
@@ -83,6 +83,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **CRM Phase E** | Work Order pages, invoice generator, payment tracking, asset status handlers, customer rollups | ✅ Done | `b427ff3` |
 | **CRM Phase F** | Sales + Finance dashboards, asset utilisation %, useCrmData hooks | ✅ Done | `1558462` |
 | **Fuel/water UI** | FuelRequestList + NewFuelRequest + FuelRequestDetail + inventory balance | ✅ Done | `2b5f700` |
+| **File Uploads** | Firebase Storage live — `storage.ts`, `FileUpload` component, wired into PO / WorkOrder / FuelRequest / Ticket | ✅ Done | pending |
 
 ### Cross-cutting backlog
 - **Currency selector** + **Maldives GST 8%** — missing on all finance forms (PO, future quotes/invoices). Money model + shared totals calc. **Do before CRM.**

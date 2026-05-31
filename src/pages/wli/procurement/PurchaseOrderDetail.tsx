@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
+import { FileUpload } from '../../../components/shared/FileUpload';
 import { ArrowLeft, Download } from 'lucide-react';
 import { useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -87,6 +88,15 @@ export function PurchaseOrderDetail() {
               ))}
             </div>
           </Card>
+
+          <FileUpload
+            collection="purchaseOrders"
+            entityId={po.id}
+            attachments={(po as any).attachments ?? []}
+            onUpdate={refresh}
+            label="Tax Invoices & Receipts"
+            accept="image/*,.pdf"
+          />
 
           <Timeline collection="purchaseOrders" entityId={po.id} />
         </div>

@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
+import { FileUpload } from '../../../components/shared/FileUpload';
 import { ArrowLeft, Package } from 'lucide-react';
 import { useTicket, useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -81,6 +82,14 @@ export function TicketDetail() {
               <p className="text-[10px] text-text-muted mt-1">{pr.lineItems?.length ?? 0} line item(s)</p>
             </Card>
           )}
+
+          <FileUpload
+            collection="tickets"
+            entityId={ticket.id}
+            attachments={(ticket as any).attachments ?? []}
+            onUpdate={refresh}
+            label="Site Photos & Attachments"
+          />
 
           <Timeline collection="tickets" entityId={ticket.id} />
         </div>

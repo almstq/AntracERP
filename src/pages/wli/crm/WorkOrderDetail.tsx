@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { FileUpload } from '../../../components/shared/FileUpload';
 import { ArrowLeft, Download, Plus, CreditCard, Calendar, DollarSign } from 'lucide-react';
 import {
   getWorkOrder, getCustomer, getInvoice, createInvoice, createPayment,
@@ -449,6 +450,14 @@ export function WorkOrderDetail() {
               </div>
             )}
           </Card>
+
+          <FileUpload
+            collection="workOrders"
+            entityId={wo.id}
+            attachments={(wo as any).attachments ?? []}
+            onUpdate={load}
+            label="Site Photos & Documents"
+          />
 
           <Timeline collection="workOrders" entityId={wo.id} />
         </div>
