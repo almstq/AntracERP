@@ -1,0 +1,231 @@
+{
+  "_note": "Canonical progress file for Antrac ERP. Updated by Claude Code at the end of every build phase. Read by VOID DECK dashboard and Hermes. DO NOT hand-edit — update via Claude Code session.",
+  "project": "antrac-erp",
+  "name": "Antrac ERP",
+  "version": "0.7.0",
+  "updated_at": "2026-05-31",
+  "last_commit": "014e56e",
+  "stack": "React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase",
+  "repo_local": "D:\\!starq\\projects\\antrac-erp",
+  "dev_url": "http://localhost:3000",
+  "summary": {
+    "phases_total": 20,
+    "phases_done": 14,
+    "phases_in_progress": 0,
+    "phases_next": 1,
+    "phases_planned": 5,
+    "progress_pct": 67,
+    "build_status": "clean",
+    "status": "Active"
+  },
+  "phases": [
+    {
+      "id": "2a",
+      "label": "Phase 2A",
+      "title": "Scaffold, Auth, Routing, Mock Data, UI Kit",
+      "status": "done",
+      "commit": "b18fc03",
+      "completed_date": "2026-05-29",
+      "notes": "Base app shell, Firebase auth stub, Tailwind design tokens, component primitives"
+    },
+    {
+      "id": "2b-prep",
+      "label": "Phase 2B-prep",
+      "title": "Firestore Rules, Indexes, Seed Files",
+      "status": "done",
+      "commit": "5de63bc",
+      "completed_date": "2026-05-29",
+      "notes": "Security rules drafted, composite indexes defined"
+    },
+    {
+      "id": "firebase-init",
+      "label": "Firebase Init",
+      "title": "Firebase Project Live + Rules/Indexes Deployed",
+      "status": "done",
+      "commit": "c1c16a3",
+      "completed_date": "2026-05-29",
+      "notes": ".firebaserc, firebase.json, rules and indexes deployed to antrac-erp project"
+    },
+    {
+      "id": "seed",
+      "label": "Seed",
+      "title": "Admin Seed — 4 Orgs, 5 Sites, Super Admin",
+      "status": "done",
+      "commit": "22465be",
+      "completed_date": "2026-05-29",
+      "notes": "seed/admin-seed.ts, Firestore pre-populated with WLI master data"
+    },
+    {
+      "id": "wf1",
+      "label": "WF Phase 1",
+      "title": "11-Actor Role Model + Rules Realigned",
+      "status": "done",
+      "commit": "335330e",
+      "completed_date": "2026-05-29",
+      "notes": "Roles: super_admin, director, cfo, antrac_finance, holding_hr, gm, supervisor, proc_staff, finance_wli, inventory_staff, mechanic, operator, mpl_manager"
+    },
+    {
+      "id": "wf2",
+      "label": "WF Phase 2",
+      "title": "Workflow Engine + 4 Declarative State Machines",
+      "status": "done",
+      "commit": "1502a49",
+      "completed_date": "2026-05-29",
+      "notes": "engine.ts, executor.ts, ticket / purchase-request / purchase-order / fuel-request machines"
+    },
+    {
+      "id": "wf3",
+      "label": "WF Phase 3",
+      "title": "Executor → Firestore, Timeline, Notifications, Side-Effects",
+      "status": "done",
+      "commit": "9bb20b4",
+      "completed_date": "2026-05-29",
+      "notes": "executeTransition atomic batch, timeline subcollections, notification collection, side-effect handlers"
+    },
+    {
+      "id": "wf4",
+      "label": "WF Phase 4",
+      "title": "Live UI — Tickets, Registers, Command Center, Act-As",
+      "status": "done",
+      "commit": "11e6830",
+      "completed_date": "2026-05-30",
+      "notes": "TransitionPanel, Timeline, Sidebar, NotificationBell, ActorSwitcher, RoleInbox, all registers live"
+    },
+    {
+      "id": "procurement",
+      "label": "Procurement Deep-Dive",
+      "title": "RFQ Sourcing, Competitive Quotes, GM Award, PO Docs, 4-Tier Payment",
+      "status": "done",
+      "commit": "5513e06",
+      "completed_date": "2026-05-30",
+      "notes": "Iterative RFQ matrix, quote comparison, GM split-award, PO per supplier, payment chain. Live-tested end-to-end."
+    },
+    {
+      "id": "v060",
+      "label": "v0.6.0 Milestone",
+      "title": "Phase 4 + Procurement Complete — Tagged",
+      "status": "done",
+      "commit": "dc50f26",
+      "completed_date": "2026-05-30",
+      "notes": "Git tag v0.6.0. Two full workflows live-tested."
+    },
+    {
+      "id": "crm-a",
+      "label": "CRM Phase A",
+      "title": "Money Foundation — Currency + GST 8%",
+      "status": "done",
+      "commit": "875db3b",
+      "completed_date": "2026-05-31",
+      "notes": "money.ts (Currency, GST_RATE=0.08, computeTotals, formatMoney), CurrencySelector component, PO doc retrofitted with subtotal+GST+total rows, PO detail UI shows breakdown"
+    },
+    {
+      "id": "crm-b",
+      "label": "CRM Phase B",
+      "title": "Roles + Asset Commercial Status",
+      "status": "done",
+      "commit": "875db3b",
+      "completed_date": "2026-05-31",
+      "notes": "sales_staff + ops_staff roles added. AssetCommercialStatus (available/soft_reserved/deployed) on Asset type. createAsset defaults to available."
+    },
+    {
+      "id": "crm-c",
+      "label": "CRM Phase C",
+      "title": "Customer Register (Module A)",
+      "status": "done",
+      "commit": "875db3b",
+      "completed_date": "2026-05-31",
+      "notes": "types/crm.ts (Customer, Enquiry, Quotation, WorkOrder, Invoice, Payment), Firestore CRUD service, Customer list+create page, Customer detail with KPI tiles + activity shell. Routes: /wli/crm/customers"
+    },
+    {
+      "id": "crm-d",
+      "label": "CRM Phase D",
+      "title": "Sales Workflow — Enquiry → Quotation (Module B)",
+      "status": "done",
+      "commit": "875db3b",
+      "completed_date": "2026-05-31",
+      "notes": "enquiry.ts (10-state machine), work-order.ts (7-state machine), quotation.ts (buildQuotationHtml — letterhead, rate table, mob/demob, GST 8%, GM signature). EnquiryList + NewEnquiry + EnquiryDetail pages. Sidebar CRM section. Routes: /wli/crm/enquiries"
+    },
+    {
+      "id": "crm-e",
+      "label": "CRM Phase E",
+      "title": "Work Order + Invoice + Payment (Module C)",
+      "status": "next",
+      "commit": null,
+      "completed_date": null,
+      "notes": "WO list/detail pages, CREATE_WORK_ORDER side-effect auto-fires on quote_accepted, invoice generator (buildInvoiceHtml), payment recording, SOFT_RESERVE/DEPLOY/RELEASE_ASSETS handlers, UPDATE_CUSTOMER_ROLLUPS, Antrac Finance read-only invoice mirror"
+    },
+    {
+      "id": "crm-f",
+      "label": "CRM Phase F",
+      "title": "Sales + Finance Dashboards",
+      "status": "planned",
+      "commit": null,
+      "completed_date": null,
+      "notes": "Sales tab: active WOs, open enquiries, quotations sent, follow-ups. WLI Finance tab: outstanding invoices, payments this month, overdue, advances held. Asset utilisation % (Director metric)."
+    },
+    {
+      "id": "fuel-ui",
+      "label": "Fuel/Water UI",
+      "title": "Workflow 2 UI — WLI ↔ MPL Fuel/Water",
+      "status": "planned",
+      "commit": null,
+      "completed_date": null,
+      "notes": "Fuel request modelled (9-state machine + side-effects exist), no UI yet. FuelRequestList, FuelRequestDetail, inventory balance display."
+    },
+    {
+      "id": "file-uploads",
+      "label": "File Uploads",
+      "title": "Firebase Storage — Invoices, Receipts, Photos",
+      "status": "planned",
+      "commit": null,
+      "completed_date": null,
+      "notes": "Currently text-reference stubs. Need Storage integration for tax invoice upload, payment receipt upload, site/asset photos."
+    },
+    {
+      "id": "cloud-functions",
+      "label": "Cloud Functions",
+      "title": "Move Side-Effects Server-Side",
+      "status": "planned",
+      "commit": null,
+      "completed_date": null,
+      "notes": "Side-effects currently run client-side under actor auth (coarse rules). Hardening: move to Cloud Functions for proper authority isolation."
+    },
+    {
+      "id": "maps-api",
+      "label": "Maps API Key",
+      "title": "Google Maps — Fleet Map + Command Center",
+      "status": "waiting_on_user",
+      "commit": null,
+      "completed_date": null,
+      "notes": "VITE_GOOGLE_MAPS_API_KEY needed from Mustarq (+ billing enabled). Fleet Map + Command Center are wired, just locked behind missing key."
+    }
+  ],
+  "backlog": [
+    {
+      "id": "code-split",
+      "title": "Code Split (bundle >500KB warning)",
+      "priority": "low",
+      "notes": "Dynamic import() to split vendor chunks. Deferred until feature-complete."
+    },
+    {
+      "id": "pdf-gemini",
+      "title": "PDF/Gemini — Docs + AI Price Comparison",
+      "priority": "low",
+      "notes": "Docs are HTML/print-PDF. Gemini comparison stubbed. Real integration deferred."
+    },
+    {
+      "id": "auth-popup-race",
+      "title": "Google Popup Login Race Condition",
+      "priority": "low",
+      "notes": "Sometimes needs 2 attempts. Persistence/race issue in AuthContext. Fix later."
+    }
+  ],
+  "waiting_on_user": [
+    {
+      "id": "maps-key",
+      "title": "Google Maps API Key",
+      "description": "VITE_GOOGLE_MAPS_API_KEY env var. Needs billing enabled on the Google Cloud project.",
+      "blocks": ["Fleet Map", "Command Center geo layer"]
+    }
+  ]
+}
