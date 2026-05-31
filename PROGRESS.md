@@ -3,7 +3,7 @@
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
 **Firebase project:** `antrac-erp` (live) · **Version:** 0.11.0
-**Updated:** 2026-05-31 (session 6 — Firebase Storage file uploads)
+**Updated:** 2026-06-01 (session 6 — File Uploads + Document Vault + pipeline formalised)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,13 +12,14 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 6 complete — Firebase Storage file uploads live, build clean at 88%. **Next, in order:**
+Session 6 complete — Firebase Storage + Document Vault live, pipeline formalised. Build clean at **83%** (20/25 phases). **Next, in order:**
 
-1. **Enable Firebase Storage** in Firebase Console (Storage → Get Started → production rules) then deploy: `firebase deploy --only storage`
-2. **OpenWeatherMap** — vessel weather monitoring panel (planned, not started)
-3. **Doc consolidation** — migrate remaining Antrac content out of the starqOS
-   processor into `docs/` (see `docs/README.md` "Deferred consolidation"); update
-   indexer / VOID DECK / cron references; retire old copies to `_recyclebin/`.
+1. **OpenWeatherMap** — vessel weather panel for WLI sea sites (Thilafushi, Bodufinolhu, Muthaafushi, Goidhoo). Free API. Need key from Mustarq.
+2. **AI Integration** — Gemini Flash (free, Google Cloud project). 3 placements: GM price comparison, Command Center AI Brief, optional mechanic diagnosis assist.
+3. **UI Polish** — visual consistency pass across all pages before mobile.
+4. **Mobile Responsive** — full responsive redesign (last — needs everything stable).
+
+**Pipeline decision (Mustarq, 2026-06-01):** UI Polish + Mobile + AI formally added to timeline. Build order locked as above.
 
 **Organising principle (Mustarq):** every project is self-contained under
 `projects/<name>/`; starqOS indexes/visualises it but does not hold project
@@ -84,6 +85,11 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **CRM Phase F** | Sales + Finance dashboards, asset utilisation %, useCrmData hooks | ✅ Done | `1558462` |
 | **Fuel/water UI** | FuelRequestList + NewFuelRequest + FuelRequestDetail + inventory balance | ✅ Done | `2b5f700` |
 | **File Uploads** | Firebase Storage live — `storage.ts`, `FileUpload` component, wired into PO / WorkOrder / FuelRequest / Ticket | ✅ Done | `942b861` |
+| **Document Vault** | `/wli/documents` — aggregated vault, docType auto-tag, view/download split, inline preview modal (image + PDF) | ✅ Done | `fff77e3` |
+| **OpenWeatherMap** | Vessel weather panel — wind, waves, visibility for WLI sea sites | 🔲 Next | — |
+| **AI Integration** | Gemini Flash — GM price compare, Command Center AI Brief, diagnosis assist | 🔲 Planned | — |
+| **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Planned | — |
+| **Mobile Responsive** | Full responsive redesign — sidebar → bottom nav, tables → cards | 🔲 Planned | — |
 
 ### Cross-cutting backlog
 - **Currency selector** + **Maldives GST 8%** — missing on all finance forms (PO, future quotes/invoices). Money model + shared totals calc. **Do before CRM.**
