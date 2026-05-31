@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.9.0
-**Updated:** 2026-05-31 (session 5 — CRM Phase F: Sales + Finance dashboards)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.10.0
+**Updated:** 2026-05-31 (session 5 — CRM Phase F + Fuel/Water UI)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,15 +12,11 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 5 complete — CRM Phase F built, build clean. **Next, in order:**
+Session 5 complete — CRM Phase F + Fuel/Water UI built, build clean at 85%. **Next, in order:**
 
-1. **Fuel/Water UI** — Workflow 2 UI (machine + side-effects exist, no pages yet):
-   - FuelRequestList + FuelRequestDetail pages
-   - Inventory balance display (WLI stock, MPL deduction)
-   - Role-gated transitions wired
-2. **File Uploads** — Firebase Storage for tax invoice, payment receipt, site photos
-3. Google Maps API key (from user) — lights up Fleet Map / Command Center.
-4. **Doc consolidation** — migrate remaining Antrac content out of the starqOS
+1. **File Uploads** — Firebase Storage for tax invoice, payment receipt, site photos (currently text-reference stubs)
+2. Google Maps API key (from user) — lights up Fleet Map / Command Center.
+3. **Doc consolidation** — migrate remaining Antrac content out of the starqOS
    processor into `docs/` (see `docs/README.md` "Deferred consolidation"); update
    indexer / VOID DECK / cron references; retire old copies to `_recyclebin/`.
 
@@ -86,7 +82,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **CRM Phase A-D** | Roles (sales/ops_staff), Asset commercialStatus, Customer Register + Detail, Enquiry workflow (10 states), Quotation doc generator, Work Order workflow | ✅ Done | `875db3b` |
 | **CRM Phase E** | Work Order pages, invoice generator, payment tracking, asset status handlers, customer rollups | ✅ Done | `b427ff3` |
 | **CRM Phase F** | Sales + Finance dashboards, asset utilisation %, useCrmData hooks | ✅ Done | `1558462` |
-| **Fuel/water UI** | Workflow 2 UI (modelled, no UI yet) | ⬜ Next | — |
+| **Fuel/water UI** | FuelRequestList + NewFuelRequest + FuelRequestDetail + inventory balance | ✅ Done | `2b5f700` |
 
 ### Cross-cutting backlog
 - **Currency selector** + **Maldives GST 8%** — missing on all finance forms (PO, future quotes/invoices). Money model + shared totals calc. **Do before CRM.**
