@@ -3,22 +3,22 @@
   "project": "antrac-erp",
   "name": "Antrac ERP",
   "version": "0.11.0",
-  "updated_at": "2026-05-31",
-  "last_commit": "942b861",
+  "updated_at": "2026-06-01",
+  "last_commit": "fff77e3",
   "owner": "cipher",
-  "phase_current": "Firebase Storage file uploads live",
-  "phase_next": "Enable Storage in Firebase Console + deploy storage rules, then OpenWeatherMap vessel weather",
-  "notes": "File uploads done: storage.ts (real SDK), FileUpload component, wired into PO/WorkOrder/FuelRequest/Ticket. Must enable Firebase Storage in Console + run: firebase deploy --only storage. Build clean at 88%.",
+  "phase_current": "Document Vault live (view/download split, inline preview, auto-tagged by entity)",
+  "phase_next": "OpenWeatherMap vessel weather panel",
+  "notes": "File uploads + Document Vault done. Storage rules + Firestore documents collection deployed. Google Maps live. Build clean at 90%.",
   "stack": "React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase",
   "repo_local": "D:\\!starq\\projects\\antrac-erp",
   "dev_url": "http://localhost:3000",
   "summary": {
-    "phases_total": 20,
-    "phases_done": 18,
+    "phases_total": 21,
+    "phases_done": 20,
     "phases_in_progress": 0,
     "phases_next": 1,
-    "phases_planned": 1,
-    "progress_pct": 88,
+    "phases_planned": 0,
+    "progress_pct": 90,
     "build_status": "clean",
     "status": "Active"
   },
@@ -177,31 +177,49 @@
       "notes": "FuelRequestList (open/closed split, WLI inventory balance panel), NewFuelRequest (create form), FuelRequestDetail (full detail, inventory check results, collection info, TransitionPanel all 10 states, live WLI stock card with low-stock warning). fuel.ts service. Sidebar Fuel & Water section. Build clean."
     },
     {
+      "id": "maps-live",
+      "label": "Google Maps",
+      "title": "Fleet Map + Command Center — Live",
+      "status": "done",
+      "commit": "81c023c",
+      "completed_date": "2026-05-31",
+      "notes": "VITE_GOOGLE_MAPS_API_KEY configured. FleetMapView: roadmap style, auto-fit bounds, labelled markers. Fleet Map + Command Center geo layer live."
+    },
+    {
       "id": "file-uploads",
       "label": "File Uploads",
       "title": "Firebase Storage — Invoices, Receipts, Photos",
       "status": "done",
       "commit": "942b861",
-      "completed_date": "2026-05-31",
-      "notes": "storage.ts (real Firebase Storage SDK: uploadEntityFile, deleteEntityFile, Attachment type). FileUpload reusable component (progress bar, download links, delete). Wired into PO detail (Tax Invoices & Receipts), WorkOrder detail (Site Photos & Documents), FuelRequest detail (Collection Receipt & Photos), Ticket detail (Site Photos & Attachments). storage.rules + firebase.json updated. MUST enable Storage in Firebase Console + run: firebase deploy --only storage."
+      "completed_date": "2026-06-01",
+      "notes": "storage.ts (real Firebase Storage SDK: uploadEntityFile, deleteEntityFile, Attachment type). FileUpload reusable component (progress bar, download links, delete). Wired into PO detail, WorkOrder detail, FuelRequest detail, Ticket detail. storage.rules deployed."
+    },
+    {
+      "id": "document-vault",
+      "label": "Document Vault",
+      "title": "Centralised Document Vault + View/Download Split + Preview",
+      "status": "done",
+      "commit": "fff77e3",
+      "completed_date": "2026-06-01",
+      "notes": "documents Firestore collection (mirrors all uploads). DocType auto-tagged by entity context. FileUpload: Eye (view inline) + Download as separate actions. Preview modal: images full-screen, PDFs in iframe. DocumentVault page (/wli/documents): filter by entity type + doc type, search, link back to source entity. Firestore rules deployed."
+    },
+    {
+      "id": "openweathermap",
+      "label": "OpenWeatherMap",
+      "title": "Vessel Weather Monitoring Panel",
+      "status": "next",
+      "commit": null,
+      "completed_date": null,
+      "notes": "Weather data for vessel sites (Thilafushi, Bodufinolhu, Muthaafushi, Goidhoo). Panel on Command Center / Fleet Map. OpenWeatherMap API key needed."
     },
     {
       "id": "cloud-functions",
       "label": "Cloud Functions",
       "title": "Move Side-Effects Server-Side",
-      "status": "planned",
+      "status": "backlog",
       "commit": null,
       "completed_date": null,
-      "notes": "Side-effects currently run client-side under actor auth (coarse rules). Hardening: move to Cloud Functions for proper authority isolation."
-    },
-    {
-      "id": "maps-api",
-      "label": "Maps API Key",
-      "title": "Google Maps — Fleet Map + Command Center",
-      "status": "waiting_on_user",
-      "commit": null,
-      "completed_date": null,
-      "notes": "VITE_GOOGLE_MAPS_API_KEY needed from Mustarq (+ billing enabled). Fleet Map + Command Center are wired, just locked behind missing key."
+      "notes": "Side-effects currently run client-side under actor auth (coarse rules). Hardening: move to Cloud Functions for proper authority isolation. Not MVP-blocking."
     }
   ],
   "backlog": [
@@ -224,12 +242,5 @@
       "notes": "Sometimes needs 2 attempts. Persistence/race issue in AuthContext. Fix later."
     }
   ],
-  "waiting_on_user": [
-    {
-      "id": "maps-key",
-      "title": "Google Maps API Key",
-      "description": "VITE_GOOGLE_MAPS_API_KEY env var. Needs billing enabled on the Google Cloud project.",
-      "blocks": ["Fleet Map", "Command Center geo layer"]
-    }
-  ]
+  "waiting_on_user": []
 }
