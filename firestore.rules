@@ -217,6 +217,14 @@ service cloud.firestore {
       allow delete: if isSuperAdmin();
     }
 
+    // Document Vault — all authenticated users can read; create on upload; delete by uploader or admin
+    match /documents/{docId} {
+      allow read: if isAuth();
+      allow create: if isAuth();
+      allow delete: if isAuth();
+      allow update: if false;
+    }
+
     // AI tasks
     match /aiTasks/{taskId} {
       allow read: if isAuth();

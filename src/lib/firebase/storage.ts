@@ -1,16 +1,64 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, deleteDoc, arrayUnion, arrayRemove, collection } from 'firebase/firestore';
 import { getStorageInstance, getDbInstance } from './client';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+export type DocType =
+  | 'site_photo'
+  | 'tax_invoice'
+  | 'collection_receipt'
+  | 'work_document'
+  | 'other';
+
+export const DOC_TYPE_LABELS: Record<DocType, string> = {
+  site_photo:          'Site Photo',
+  tax_invoice:         'Tax Invoice / Receipt',
+  collection_receipt:  'Collection Receipt',
+  work_document:       'Work Document',
+  other:               'Other',
+};
+
+/** Infer docType from the Firestore collection name. */
+export function inferDocType(col: string): DocType {
+  switch (col) {
+    case 'tickets':         return 'site_photo';
+    case 'purchaseOrders':  return 'tax_invoice';
+    case 'fuelRequests':    return 'collection_receipt';
+    case 'workOrders':      return 'work_document';
+    default:                return 'other';
+  }
+}
 
 export interface Attachment {
   name: string;
   url: string;
   storagePath: string;
   size: number;
-  type: string;
+  mimeType: string;
+  docType: DocType;
+  uploadedAt: string;   // ISO string
+  uploadedById: string;
+  vaultDocId?: string;  // ref to /documents/{id} for vault + cleanup
+}
+
+/** Shape stored in top-level `documents` collection (the vault). */
+export interface VaultDocument {
+  id: string;
+  name: string;
+  url: string;
+  storagePath: string;
+  size: number;
+  mimeType: string;
+  docType: DocType;
+  entityCollection: string;
+  entityId: string;
+  entityDisplayId: string;
   uploadedAt: string;
   uploadedById: string;
 }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function storage() {
   const s = getStorageInstance();
@@ -24,17 +72,19 @@ function db() {
   return d;
 }
 
-/** Upload a file to Storage under `{collection}/{entityId}/` and save metadata to Firestore. */
+// ─── Upload ───────────────────────────────────────────────────────────────────
+
 export function uploadEntityFile(
-  collection: string,
+  col: string,
   entityId: string,
+  entityDisplayId: string,
   file: File,
   uploadedById: string,
   onProgress?: (pct: number) => void,
 ): Promise<Attachment> {
   return new Promise((resolve, reject) => {
     const uuid = crypto.randomUUID();
-    const storagePath = `${collection}/${entityId}/${uuid}_${file.name}`;
+    const storagePath = `${col}/${entityId}/${uuid}_${file.name}`;
     const fileRef = ref(storage(), storagePath);
     const task = uploadBytesResumable(fileRef, file, { contentType: file.type });
 
@@ -47,18 +97,40 @@ export function uploadEntityFile(
       async () => {
         try {
           const url = await getDownloadURL(task.snapshot.ref);
+          const docType = inferDocType(col);
+
+          // 1. Write to vault (documents collection)
+          const vaultRef = await addDoc(collection(db(), 'documents'), {
+            name: file.name,
+            url,
+            storagePath,
+            size: file.size,
+            mimeType: file.type,
+            docType,
+            entityCollection: col,
+            entityId,
+            entityDisplayId,
+            uploadedAt: new Date().toISOString(),
+            uploadedById,
+          } satisfies Omit<VaultDocument, 'id'>);
+
+          // 2. Write to entity attachments array
           const attachment: Attachment = {
             name: file.name,
             url,
             storagePath,
             size: file.size,
-            type: file.type,
+            mimeType: file.type,
+            docType,
             uploadedAt: new Date().toISOString(),
             uploadedById,
+            vaultDocId: vaultRef.id,
           };
-          await updateDoc(doc(db(), collection, entityId), {
+
+          await updateDoc(doc(db(), col, entityId), {
             attachments: arrayUnion(attachment),
           });
+
           resolve(attachment);
         } catch (e) {
           reject(e);
@@ -68,15 +140,23 @@ export function uploadEntityFile(
   });
 }
 
-/** Delete a file from Storage and remove its metadata from Firestore. */
+// ─── Delete ───────────────────────────────────────────────────────────────────
+
 export async function deleteEntityFile(
-  collection: string,
+  col: string,
   entityId: string,
   attachment: Attachment,
 ): Promise<void> {
-  const fileRef = ref(storage(), attachment.storagePath);
-  await deleteObject(fileRef);
-  await updateDoc(doc(db(), collection, entityId), {
+  // 1. Storage
+  await deleteObject(ref(storage(), attachment.storagePath));
+
+  // 2. Vault
+  if (attachment.vaultDocId) {
+    await deleteDoc(doc(db(), 'documents', attachment.vaultDocId));
+  }
+
+  // 3. Entity array
+  await updateDoc(doc(db(), col, entityId), {
     attachments: arrayRemove(attachment),
   });
 }

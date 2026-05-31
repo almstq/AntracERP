@@ -86,6 +86,7 @@ export function TicketDetail() {
           <FileUpload
             collection="tickets"
             entityId={ticket.id}
+            entityDisplayId={ticket.displayId}
             attachments={(ticket as any).attachments ?? []}
             onUpdate={refresh}
             label="Site Photos & Attachments"

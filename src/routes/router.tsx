@@ -32,6 +32,7 @@ import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
 import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
 import { NewFuelRequest } from '../pages/wli/fuel/NewFuelRequest';
 import { FuelRequestDetail } from '../pages/wli/fuel/FuelRequestDetail';
+import { DocumentVault } from '../pages/wli/vault/DocumentVault';
 import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
 import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
 import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
@@ -90,6 +91,8 @@ export const router = createBrowserRouter([
           { path: 'fuel/requests', element: <FuelRequestList /> },
           { path: 'fuel/requests/new', element: <NewFuelRequest /> },
           { path: 'fuel/requests/:id', element: <FuelRequestDetail /> },
+          // Document Vault
+          { path: 'documents', element: <DocumentVault /> },
         ],
       },
       {

@@ -92,6 +92,7 @@ export function PurchaseOrderDetail() {
           <FileUpload
             collection="purchaseOrders"
             entityId={po.id}
+            entityDisplayId={po.displayId}
             attachments={(po as any).attachments ?? []}
             onUpdate={refresh}
             label="Tax Invoices & Receipts"

@@ -454,6 +454,7 @@ export function WorkOrderDetail() {
           <FileUpload
             collection="workOrders"
             entityId={wo.id}
+            entityDisplayId={wo.displayId}
             attachments={(wo as any).attachments ?? []}
             onUpdate={load}
             label="Site Photos & Documents"

@@ -185,6 +185,7 @@ export function FuelRequestDetail() {
           <FileUpload
             collection="fuelRequests"
             entityId={request.id}
+            entityDisplayId={request.displayId}
             attachments={(request as any).attachments ?? []}
             onUpdate={load}
             label="Collection Receipt & Photos"
