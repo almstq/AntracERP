@@ -27,6 +27,8 @@ import { NewEnquiry } from '../pages/wli/crm/NewEnquiry';
 import { EnquiryDetail } from '../pages/wli/crm/EnquiryDetail';
 import { WorkOrderList } from '../pages/wli/crm/WorkOrderList';
 import { WorkOrderDetail } from '../pages/wli/crm/WorkOrderDetail';
+import { SalesDashboard } from '../pages/wli/crm/SalesDashboard';
+import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
 import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
 import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
 import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
@@ -79,6 +81,8 @@ export const router = createBrowserRouter([
           { path: 'crm/enquiries/:id', element: <EnquiryDetail /> },
           { path: 'crm/work-orders', element: <WorkOrderList /> },
           { path: 'crm/work-orders/:id', element: <WorkOrderDetail /> },
+          { path: 'crm/sales', element: <SalesDashboard /> },
+          { path: 'crm/finance', element: <FinanceDashboard /> },
         ],
       },
       {
