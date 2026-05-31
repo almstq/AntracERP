@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Ticket, ShoppingCart, MapPin, Truck, UserCog, Map as MapIcon,
   Users, LogOut, Menu, X, Building2, Fuel, Wrench, HardHat, ClipboardCheck,
   Boxes, Banknote, Package, Store, UserSquare2, Briefcase, ClipboardList,
-  TrendingUp, type LucideIcon,
+  TrendingUp, Droplets, type LucideIcon,
 } from 'lucide-react';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 import { ActorSwitcher } from './ActorSwitcher';
@@ -46,6 +46,12 @@ const WLI_NAV: ModuleNav = {
         { to: '/wli/crm/customers', label: 'Customers', icon: UserSquare2 },
         { to: '/wli/crm/enquiries', label: 'Enquiries', icon: Briefcase },
         { to: '/wli/crm/work-orders', label: 'Work Orders', icon: ClipboardList },
+      ],
+    },
+    {
+      title: 'Fuel & Water',
+      items: [
+        { to: '/wli/fuel/requests', label: 'Fuel Requests', icon: Droplets },
       ],
     },
     {

@@ -29,6 +29,9 @@ import { WorkOrderList } from '../pages/wli/crm/WorkOrderList';
 import { WorkOrderDetail } from '../pages/wli/crm/WorkOrderDetail';
 import { SalesDashboard } from '../pages/wli/crm/SalesDashboard';
 import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
+import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
+import { NewFuelRequest } from '../pages/wli/fuel/NewFuelRequest';
+import { FuelRequestDetail } from '../pages/wli/fuel/FuelRequestDetail';
 import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
 import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
 import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
@@ -83,6 +86,10 @@ export const router = createBrowserRouter([
           { path: 'crm/work-orders/:id', element: <WorkOrderDetail /> },
           { path: 'crm/sales', element: <SalesDashboard /> },
           { path: 'crm/finance', element: <FinanceDashboard /> },
+          // Fuel & Water
+          { path: 'fuel/requests', element: <FuelRequestList /> },
+          { path: 'fuel/requests/new', element: <NewFuelRequest /> },
+          { path: 'fuel/requests/:id', element: <FuelRequestDetail /> },
         ],
       },
       {
