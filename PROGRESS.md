@@ -83,7 +83,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **CRM Phase E** | Work Order pages, invoice generator, payment tracking, asset status handlers, customer rollups | ✅ Done | `b427ff3` |
 | **CRM Phase F** | Sales + Finance dashboards, asset utilisation %, useCrmData hooks | ✅ Done | `1558462` |
 | **Fuel/water UI** | FuelRequestList + NewFuelRequest + FuelRequestDetail + inventory balance | ✅ Done | `2b5f700` |
-| **File Uploads** | Firebase Storage live — `storage.ts`, `FileUpload` component, wired into PO / WorkOrder / FuelRequest / Ticket | ✅ Done | pending |
+| **File Uploads** | Firebase Storage live — `storage.ts`, `FileUpload` component, wired into PO / WorkOrder / FuelRequest / Ticket | ✅ Done | `942b861` |
 
 ### Cross-cutting backlog
 - **Currency selector** + **Maldives GST 8%** — missing on all finance forms (PO, future quotes/invoices). Money model + shared totals calc. **Do before CRM.**

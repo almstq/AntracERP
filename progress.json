@@ -4,7 +4,7 @@
   "name": "Antrac ERP",
   "version": "0.11.0",
   "updated_at": "2026-05-31",
-  "last_commit": "pending",
+  "last_commit": "942b861",
   "owner": "cipher",
   "phase_current": "Firebase Storage file uploads live",
   "phase_next": "Enable Storage in Firebase Console + deploy storage rules, then OpenWeatherMap vessel weather",
@@ -181,7 +181,7 @@
       "label": "File Uploads",
       "title": "Firebase Storage — Invoices, Receipts, Photos",
       "status": "done",
-      "commit": "pending",
+      "commit": "942b861",
       "completed_date": "2026-05-31",
       "notes": "storage.ts (real Firebase Storage SDK: uploadEntityFile, deleteEntityFile, Attachment type). FileUpload reusable component (progress bar, download links, delete). Wired into PO detail (Tax Invoices & Receipts), WorkOrder detail (Site Photos & Documents), FuelRequest detail (Collection Receipt & Photos), Ticket detail (Site Photos & Attachments). storage.rules + firebase.json updated. MUST enable Storage in Firebase Console + run: firebase deploy --only storage."
     },
