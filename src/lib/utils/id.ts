@@ -5,10 +5,12 @@ const prefixes: Record<string, string> = {
   po: 'PO',
   asset: 'FL',
   staff: 'ST',
-  customer: 'CU',
-  enquiry: 'EN',
-  job: 'JB',
+  customer: 'CUST',
+  enquiry: 'ENQ',
+  quotation: 'QTN',
+  workOrder: 'WO',
   invoice: 'INV',
+  payment: 'PMT',
 };
 
 export function generateDisplayId(prefix: string, sequence: number, year?: number): string {

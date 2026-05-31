@@ -3,6 +3,9 @@ export type AssetClass = 'vehicle' | 'vessel' | 'equipment';
 
 export type AssetOperationalStatus = 'operational' | 'down' | 'maintenance' | 'idle';
 
+/** Commercial / rental status — set by the CRM/sales flow. */
+export type AssetCommercialStatus = 'available' | 'soft_reserved' | 'deployed';
+
 export interface Asset {
   id: string;
   code: string;        // e.g. WL-HV-0002
@@ -14,6 +17,7 @@ export interface Asset {
   sbuId: string;
   currentSiteId: string; // current deployment location
   operationalStatus: AssetOperationalStatus;
+  commercialStatus: AssetCommercialStatus;  // defaults to 'available' on create
   createdAt?: Date;
 }
 

@@ -4,7 +4,7 @@ import { useAuth } from '../../lib/hooks/useAuth';
 import {
   LayoutDashboard, Ticket, ShoppingCart, MapPin, Truck, UserCog, Map as MapIcon,
   Users, LogOut, Menu, X, Building2, Fuel, Wrench, HardHat, ClipboardCheck,
-  Boxes, Banknote, Package, Store, type LucideIcon,
+  Boxes, Banknote, Package, Store, UserSquare2, Briefcase, type LucideIcon,
 } from 'lucide-react';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 import { ActorSwitcher } from './ActorSwitcher';
@@ -35,6 +35,13 @@ const WLI_NAV: ModuleNav = {
         { to: '/wli/tickets', label: 'Issue Tickets', icon: Ticket },
         { to: '/wli/procurement/requests', label: 'Purchase Requests', icon: ShoppingCart },
         { to: '/wli/procurement/orders', label: 'Purchase Orders', icon: Package },
+      ],
+    },
+    {
+      title: 'CRM & Sales',
+      items: [
+        { to: '/wli/crm/customers', label: 'Customers', icon: UserSquare2 },
+        { to: '/wli/crm/enquiries', label: 'Enquiries', icon: Briefcase },
       ],
     },
     {

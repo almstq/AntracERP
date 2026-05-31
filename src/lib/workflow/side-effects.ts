@@ -156,6 +156,23 @@ const handlers: Record<SideEffectTag, Handler> = {
     });
   },
 
+  // CRM stubs — handlers to be implemented in Phase E.
+  SOFT_RESERVE_ASSETS: async ({ entityId }) => {
+    console.info(`[side-effect] SOFT_RESERVE_ASSETS for enquiry ${entityId} — stub (Phase E).`);
+  },
+  CREATE_WORK_ORDER: async ({ entityId }) => {
+    console.info(`[side-effect] CREATE_WORK_ORDER for enquiry ${entityId} — stub (Phase E).`);
+  },
+  DEPLOY_ASSETS: async ({ entityId }) => {
+    console.info(`[side-effect] DEPLOY_ASSETS for work order ${entityId} — stub (Phase E).`);
+  },
+  RELEASE_ASSETS: async ({ entityId }) => {
+    console.info(`[side-effect] RELEASE_ASSETS for work order ${entityId} — stub (Phase E).`);
+  },
+  UPDATE_CUSTOMER_ROLLUPS: async ({ entityId }) => {
+    console.info(`[side-effect] UPDATE_CUSTOMER_ROLLUPS for work order ${entityId} — stub (Phase E).`);
+  },
+
   // Fuel request closed → deduct WLI inventory balance.
   DEDUCT_INVENTORY_BALANCE: async ({ entityId }) => {
     const fr = await getById<FuelRequest>('fuelRequests', entityId);

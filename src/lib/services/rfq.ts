@@ -4,6 +4,7 @@
  * proc sends it to the supplier out-of-band.
  */
 import type { PurchaseRequest, PRLineItem } from '../../types/workflow-entities';
+import { GST_RATE } from '../utils/money';
 
 export function rfqNumber(pr: PurchaseRequest, supplierId: string): string {
   const tail = pr.displayId.replace(/^PR-/, '');
@@ -77,9 +78,11 @@ export function buildRfqHtml(
 
 export function buildPoHtml(po: {
   displayId: string; supplierName: string; deliveryAddress: string; paymentTerms?: string;
-  currency: string; total: number;
+  currency: string; subtotal?: number; gst?: number; total: number;
   lineItems: { description: string; uom: string; quantity: number; unitPrice: number }[];
 }): string {
+  const subtotal = po.subtotal ?? po.lineItems.reduce((s, li) => s + li.unitPrice * li.quantity, 0);
+  const gst = po.gst ?? Math.round(subtotal * GST_RATE * 100) / 100;
   const today = new Date();
   const rows = po.lineItems.map((li, i) => `
     <tr>
@@ -121,10 +124,20 @@ export function buildPoHtml(po: {
       <th style="padding:6px 8px;border:1px solid #ddd">Total</th>
     </tr></thead>
     <tbody>${rows}</tbody>
-    <tfoot><tr>
-      <td colspan="5" style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">Grand Total (${po.currency})</td>
-      <td style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">${po.total.toLocaleString()}</td>
-    </tr></tfoot>
+    <tfoot>
+      <tr>
+        <td colspan="5" style="padding:4px 8px;border:1px solid #ddd;text-align:right">Subtotal (${po.currency})</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;text-align:right">${subtotal.toLocaleString('en-MV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      </tr>
+      <tr>
+        <td colspan="5" style="padding:4px 8px;border:1px solid #ddd;text-align:right">GST 8%</td>
+        <td style="padding:4px 8px;border:1px solid #ddd;text-align:right">${gst.toLocaleString('en-MV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      </tr>
+      <tr>
+        <td colspan="5" style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">Grand Total (${po.currency})</td>
+        <td style="padding:6px 8px;border:1px solid #ddd;text-align:right;font-weight:bold">${po.total.toLocaleString('en-MV', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+      </tr>
+    </tfoot>
   </table>
 
   <div style="margin-top:48px;font-size:12px">

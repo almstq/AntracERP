@@ -29,6 +29,9 @@ export const ROLES = {
   INVENTORY_STAFF: 'inventory_staff',
   MECHANIC: 'mechanic',
   OPERATOR: 'operator',
+  // CRM / Sales
+  SALES_STAFF: 'sales_staff',
+  OPS_STAFF: 'ops_staff',
   // Other SBUs
   MPL_MANAGER: 'mpl_manager',
   EMS_MANAGER: 'ems_manager',
@@ -46,6 +49,8 @@ export const ROLE_HIERARCHY: Record<string, number> = {
   [ROLES.MPL_MANAGER]: 70,
   [ROLES.EMS_MANAGER]: 70,
   [ROLES.SUPERVISOR]: 50,
+  [ROLES.SALES_STAFF]: 48,
+  [ROLES.OPS_STAFF]: 48,
   [ROLES.PROC_STAFF]: 45,
   [ROLES.FINANCE_WLI]: 45,
   [ROLES.INVENTORY_STAFF]: 40,
@@ -68,6 +73,8 @@ export const ROLE_LABELS: Record<string, string> = {
   [ROLES.INVENTORY_STAFF]: 'Inventory Staff',
   [ROLES.MECHANIC]: 'Mechanic',
   [ROLES.OPERATOR]: 'Operator',
+  [ROLES.SALES_STAFF]: 'Sales Staff',
+  [ROLES.OPS_STAFF]: 'Operations Staff',
   [ROLES.MPL_MANAGER]: 'MPL Manager',
   [ROLES.EMS_MANAGER]: 'EMS Manager',
   [ROLES.PENDING]: 'Pending Approval',
@@ -90,6 +97,8 @@ export const WLI_ROLES = [
   ROLES.PROC_STAFF,
   ROLES.FINANCE_WLI,
   ROLES.INVENTORY_STAFF,
+  ROLES.SALES_STAFF,
+  ROLES.OPS_STAFF,
 ];
 
 export const MPL_ROLES = [ROLES.SUPER_ADMIN, ROLES.MPL_MANAGER];

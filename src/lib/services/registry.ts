@@ -39,11 +39,17 @@ export async function updateLocation(id: string, patch: Partial<LocationInput>):
 
 // ─── Assets ────────────────────────────────────────────────────────────────
 
-export type AssetInput = Omit<Asset, 'id' | 'orgId' | 'sbuId' | 'createdAt'>;
+export type AssetInput = Omit<Asset, 'id' | 'orgId' | 'sbuId' | 'createdAt' | 'commercialStatus'> & {
+  commercialStatus?: Asset['commercialStatus'];
+};
 
 export async function createAsset(input: AssetInput): Promise<string> {
   const id = slug(input.code);
-  await createWithId('assets', id, { ...input, orgId: 'antrac-holding', sbuId: 'sbu-wli' });
+  await createWithId('assets', id, {
+    ...input,
+    commercialStatus: input.commercialStatus ?? 'available',
+    orgId: 'antrac-holding', sbuId: 'sbu-wli',
+  });
   return id;
 }
 

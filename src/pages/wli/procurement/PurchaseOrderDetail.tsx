@@ -5,6 +5,7 @@ import { useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { buildPoHtml, downloadHtml } from '../../../lib/services/rfq';
+import { computeTotals, formatMoney, type Currency } from '../../../lib/utils/money';
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
 import type { PurchaseOrder, POStatus } from '../../../types/workflow-entities';
 
@@ -22,6 +23,8 @@ export function PurchaseOrderDetail() {
   if (!po) return <div className="p-6 text-xs text-text-muted">PO not found.</div>;
 
   const idx = PAYMENT_CHAIN.indexOf(po.status as POStatus);
+  const totals = computeTotals(po.lineItems ?? []);
+  const cur = (po.currency ?? 'MVR') as Currency;
 
   return (
     <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
@@ -56,9 +59,19 @@ export function PurchaseOrderDetail() {
                   <span className="text-text-muted">×{li.quantity} {li.uom} @ {li.unitPrice} = {(li.quantity * li.unitPrice).toLocaleString()}</span>
                 </div>
               ))}
-              <div className="flex justify-between pt-2 border-t border-border font-medium">
-                <span className="text-text-primary">Total</span>
-                <span className="text-text-primary">{po.currency} {po.total?.toLocaleString()}</span>
+              <div className="space-y-1 pt-2 border-t border-border text-xs">
+                <div className="flex justify-between text-text-muted">
+                  <span>Subtotal</span>
+                  <span>{formatMoney(totals.subtotal, cur)}</span>
+                </div>
+                <div className="flex justify-between text-text-muted">
+                  <span>GST 8%</span>
+                  <span>{formatMoney(totals.gst, cur)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-text-primary pt-1 border-t border-border">
+                  <span>Grand Total</span>
+                  <span>{formatMoney(totals.total, cur)}</span>
+                </div>
               </div>
             </div>
           </Card>

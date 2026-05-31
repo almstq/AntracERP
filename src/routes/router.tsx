@@ -20,6 +20,11 @@ import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestD
 import { RFQList } from '../pages/wli/procurement/RFQList';
 import { PurchaseOrderList } from '../pages/wli/procurement/PurchaseOrderList';
 import { PurchaseOrderDetail } from '../pages/wli/procurement/PurchaseOrderDetail';
+import { CustomerRegister } from '../pages/wli/crm/CustomerRegister';
+import { CustomerDetail } from '../pages/wli/crm/CustomerDetail';
+import { EnquiryList } from '../pages/wli/crm/EnquiryList';
+import { NewEnquiry } from '../pages/wli/crm/NewEnquiry';
+import { EnquiryDetail } from '../pages/wli/crm/EnquiryDetail';
 import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
 import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
 import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
@@ -64,6 +69,12 @@ export const router = createBrowserRouter([
           { path: 'procurement/rfqs', element: <RFQList /> },
           { path: 'procurement/orders', element: <PurchaseOrderList /> },
           { path: 'procurement/orders/:id', element: <PurchaseOrderDetail /> },
+          // CRM & Sales
+          { path: 'crm/customers', element: <CustomerRegister /> },
+          { path: 'crm/customers/:id', element: <CustomerDetail /> },
+          { path: 'crm/enquiries', element: <EnquiryList /> },
+          { path: 'crm/enquiries/new', element: <NewEnquiry /> },
+          { path: 'crm/enquiries/:id', element: <EnquiryDetail /> },
         ],
       },
       {

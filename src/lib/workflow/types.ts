@@ -14,7 +14,9 @@ export type WorkflowId =
   | 'ticket'
   | 'purchase_request'
   | 'purchase_order'
-  | 'fuel_request';
+  | 'fuel_request'
+  | 'enquiry'
+  | 'work_order';
 
 /**
  * Side-effect tags. The engine declares them; Phase 3 maps each tag to a
@@ -29,7 +31,12 @@ export type SideEffectTag =
   | 'TRIGGER_DELIVERY'        // PO closed → notify inventory to deliver to requestee
   | 'CLOSE_LINKED_PR_PO'      // ticket resolved → close linked PR/PO
   | 'SPAWN_CHILD_TICKET'      // ticket persists → new child ticket
-  | 'DEDUCT_INVENTORY_BALANCE'; // fuel_request closed → deduct WLI balance
+  | 'DEDUCT_INVENTORY_BALANCE'  // fuel_request closed → deduct WLI balance
+  | 'SOFT_RESERVE_ASSETS'       // enquiry gm_approved → assets → soft_reserved
+  | 'CREATE_WORK_ORDER'         // enquiry quote_accepted → auto-create work order
+  | 'DEPLOY_ASSETS'             // work_order active → assets → deployed
+  | 'RELEASE_ASSETS'            // work_order closed → assets → available
+  | 'UPDATE_CUSTOMER_ROLLUPS';  // work_order / payment closed → update customer lifetime/balance
 
 export interface WorkflowTransition<S extends string = string> {
   /** Current state this transition departs from. */
