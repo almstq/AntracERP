@@ -3,6 +3,7 @@ import { Card } from '../../components/ui/Card';
 import { Ticket as TicketIcon, ShoppingCart, Package } from 'lucide-react';
 import { useActionInbox } from '../../lib/hooks/useWorkflowData';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
+import { PageContainer } from '../../components/shared/PageContainer';
 
 const ICON = { ticket: TicketIcon, pr: ShoppingCart, po: Package };
 
@@ -13,7 +14,7 @@ export function RoleInbox() {
   const label = ROLE_LABELS[role] ?? role;
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="mb-4">
         <h1 className="text-lg font-bold text-text-primary">{label} Desk</h1>
         <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${items.length} item(s) awaiting your action`}</p>
@@ -46,6 +47,6 @@ export function RoleInbox() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

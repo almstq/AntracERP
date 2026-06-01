@@ -5,6 +5,7 @@ import { MapPin, Plus } from 'lucide-react';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createLocation } from '../../../lib/services/registry';
 import type { Site } from '../../../types/org';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const TYPES: Site['type'][] = ['project', 'yard', 'office', 'vessel', 'depot', 'hq'];
 
@@ -31,7 +32,7 @@ export function LocationRegister() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Locations</h1>
@@ -73,6 +74,6 @@ export function LocationRegister() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

@@ -4,6 +4,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { MOCK_FUEL_DISPATCHES, MOCK_FUEL_TANKS, MOCK_INTER_SBU_TRANSFERS } from '../../lib/mock-data/mpl-data';
+import { PageContainer } from '../../components/shared/PageContainer';
 
 const fuelTankIcon = (current: number, capacity: number) => {
   const pct = (current / capacity) * 100;
@@ -76,7 +77,7 @@ export function MPLDashboard() {
     .reduce((sum, d) => sum + d.cost, 0);
 
   return (
-    <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
+    <PageContainer className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-text-primary">MPL Dashboard</h1>
@@ -214,6 +215,6 @@ export function MPLDashboard() {
           )}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

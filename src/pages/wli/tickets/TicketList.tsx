@@ -5,12 +5,13 @@ import { Ticket, Plus } from 'lucide-react';
 import { useTicketList } from '../../../lib/hooks/useWorkflowData';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 export function TicketList() {
   const { data: tickets, loading, error } = useTicketList();
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Issue Tickets</h1>
@@ -49,6 +50,6 @@ export function TicketList() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

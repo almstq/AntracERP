@@ -9,6 +9,7 @@ import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { fuelRequestWorkflow } from '../../../lib/workflow/definitions';
 import { formatDate } from '../../../lib/utils/format';
 import type { FuelRequest, InventoryBalance, FuelRequestStatus } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<string, string> = {
   draft:                'bg-border text-text-muted',
@@ -58,7 +59,7 @@ export function FuelRequestDetail() {
   const typeColor = isWater ? 'text-blue' : 'text-amber';
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+    <PageContainer className="max-w-4xl space-y-4">
 
       {/* Header */}
       <div className="flex items-center gap-3">
@@ -231,6 +232,6 @@ export function FuelRequestDetail() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

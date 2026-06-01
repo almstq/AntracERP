@@ -1,5 +1,6 @@
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { PageContainer } from '../../components/shared/PageContainer';
 
 const mockUsers = [
   { name: 'Ali Mustarq', email: 'ali@antrac.com', role: 'Super Admin', org: 'Antrac Holding', status: 'active' },
@@ -10,7 +11,7 @@ const mockUsers = [
 
 export function UserList() {
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">User Management</h1>
@@ -38,6 +39,6 @@ export function UserList() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

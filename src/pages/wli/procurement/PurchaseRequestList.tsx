@@ -4,6 +4,7 @@ import { ShoppingCart } from 'lucide-react';
 import { usePRList } from '../../../lib/hooks/useWorkflowData';
 import { purchaseRequestWorkflow } from '../../../lib/workflow/definitions';
 import type { PRStatus } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 export function PurchaseRequestList() {
   const { data: prs, loading } = usePRList();
@@ -11,7 +12,7 @@ export function PurchaseRequestList() {
   const visible = prs.filter((p) => p.status !== 'on_hold');
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="mb-4">
         <h1 className="text-lg font-bold text-text-primary">Purchase Requests</h1>
         <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${visible.length} active`}</p>
@@ -38,6 +39,6 @@ export function PurchaseRequestList() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

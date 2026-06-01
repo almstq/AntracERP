@@ -9,6 +9,7 @@ import { Timeline } from '../../../components/workflow/Timeline';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { executeTransition } from '../../../lib/workflow/executor';
 import { purchaseRequestWorkflow as prWf } from '../../../lib/workflow/definitions';
+import { PageContainer } from '../../../components/shared/PageContainer';
 import { getAvailableTransitions } from '../../../lib/workflow/engine';
 import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
 import { isAiConfigured, generateText } from '../../../lib/services/ai';
@@ -131,7 +132,7 @@ export function PurchaseRequestDetail() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+    <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/procurement/requests" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <div className="flex-1">
@@ -395,6 +396,6 @@ export function PurchaseRequestDetail() {
           </Card>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

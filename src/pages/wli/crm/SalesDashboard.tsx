@@ -7,6 +7,7 @@ import { formatDate } from '../../../lib/utils/format';
 import {
   Briefcase, TrendingUp, Send, RotateCcw, BarChart2, ChevronRight,
 } from 'lucide-react';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const WO_STATUS_STYLE: Record<string, string> = {
   active:          'bg-blue/10 text-blue',
@@ -104,7 +105,7 @@ export function SalesDashboard() {
         <span className="text-[10px] text-text-muted">CRM & Revenue</span>
       </div>
 
-      <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
+      <PageContainer className="space-y-5">
 
         {/* Stats bar */}
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
@@ -290,7 +291,7 @@ export function SalesDashboard() {
           </div>
         )}
 
-      </div>
+      </PageContainer>
     </div>
   );
 }

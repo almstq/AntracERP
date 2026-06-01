@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { useAllStockMovements, useInventoryItems, useStores } from '../../../lib/hooks/useInventory';
 import type { MovementType } from '../../../types/inventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const TYPE_LABELS: Record<MovementType, string> = {
   receipt: 'Receipt',
@@ -48,7 +49,7 @@ export function MovementsLedger() {
   const storeName = (id: string | undefined) => id ? (stores.find((s) => s.id === id)?.name ?? id.slice(0, 8)) : '—';
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Movements Ledger</h1>
@@ -112,6 +113,6 @@ export function MovementsLedger() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

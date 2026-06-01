@@ -3,6 +3,7 @@ import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { MOCK_FUEL_DISPATCHES } from '../../lib/mock-data/mpl-data';
+import { PageContainer } from '../../components/shared/PageContainer';
 
 const STATUS_MAP: Record<string, string> = {
   requested: 'Requested',
@@ -13,7 +14,7 @@ const STATUS_MAP: Record<string, string> = {
 
 export function FuelDispatchList() {
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Fuel Dispatches</h1>
@@ -51,6 +52,6 @@ export function FuelDispatchList() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

@@ -8,6 +8,7 @@ import { useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { createTicket } from '../../../lib/services/tickets';
 import { assetLabel } from '../../../types/asset';
 import type { Urgency } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
@@ -60,7 +61,7 @@ export function NewTicket() {
   const field = 'w-full text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
+    <PageContainer className="max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/tickets" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <h1 className="text-lg font-bold text-text-primary">Raise Issue</h1>
@@ -117,6 +118,6 @@ export function NewTicket() {
           </Button>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

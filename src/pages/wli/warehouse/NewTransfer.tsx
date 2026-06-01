@@ -7,6 +7,7 @@ import { useAuth } from '../../../lib/hooks/useAuth';
 import { useStores, useInventoryItems } from '../../../lib/hooks/useInventory';
 import { createTransfer } from '../../../lib/services/inventory';
 import type { StockTransferLine } from '../../../types/inventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary w-full';
 
@@ -67,7 +68,7 @@ export function NewTransfer() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+    <PageContainer className="max-w-3xl space-y-4">
       <Link to="/wli/warehouse/transfers" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
         <ArrowLeft size={14} /> Transfers
       </Link>
@@ -142,6 +143,6 @@ export function NewTransfer() {
       <Button variant="primary" size="md" onClick={submit} disabled={busy} className="w-full">
         {busy ? 'Creating…' : 'Create Transfer'}
       </Button>
-    </div>
+    </PageContainer>
   );
 }

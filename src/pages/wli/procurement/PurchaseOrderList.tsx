@@ -4,12 +4,13 @@ import { Package } from 'lucide-react';
 import { usePOList } from '../../../lib/hooks/useWorkflowData';
 import { purchaseOrderWorkflow } from '../../../lib/workflow/definitions';
 import type { POStatus } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 export function PurchaseOrderList() {
   const { data: pos, loading } = usePOList();
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="mb-4">
         <h1 className="text-lg font-bold text-text-primary">Purchase Orders</h1>
         <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${pos.length} orders`}</p>
@@ -36,6 +37,6 @@ export function PurchaseOrderList() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

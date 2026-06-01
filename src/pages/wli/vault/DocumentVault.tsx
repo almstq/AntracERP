@@ -4,6 +4,7 @@ import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { getDbInstance } from '../../../lib/firebase/client';
 import { DOC_TYPE_LABELS, type DocType, type VaultDocument } from '../../../lib/firebase/storage';
 import { Download, Eye, FileText, Image, FolderOpen, X } from 'lucide-react';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -110,7 +111,7 @@ export function DocumentVault() {
 
   return (
     <>
-      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
+      <PageContainer className="space-y-4">
 
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -216,7 +217,7 @@ export function DocumentVault() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {preview && <PreviewModal doc={preview} onClose={() => setPreview(null)} />}
     </>

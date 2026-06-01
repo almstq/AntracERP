@@ -10,6 +10,7 @@ import { downloadQuotation } from '../../../lib/services/quotation';
 import { formatDate } from '../../../lib/utils/format';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Enquiry, Customer, Quotation } from '../../../types/crm';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<string, string> = {
   logged: 'bg-blue/10 text-blue',
@@ -56,7 +57,7 @@ export function EnquiryDetail() {
   const statusLabel = wf.statusLabels[enquiry.status as keyof typeof wf.statusLabels] ?? enquiry.status;
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+    <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/crm/enquiries" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <div className="flex-1">
@@ -185,6 +186,6 @@ export function EnquiryDetail() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

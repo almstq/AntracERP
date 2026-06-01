@@ -6,6 +6,7 @@ import { Briefcase, Plus } from 'lucide-react';
 import { listEnquiries } from '../../../lib/services/crm';
 import { formatDate } from '../../../lib/utils/format';
 import type { Enquiry } from '../../../types/crm';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<string, string> = {
   logged: 'bg-blue/10 text-blue',
@@ -45,7 +46,7 @@ export function EnquiryList() {
   const closed = enquiries.filter(e => ['quote_declined', 'closed'].includes(e.status));
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Sales Enquiries</h1>
@@ -88,6 +89,6 @@ export function EnquiryList() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

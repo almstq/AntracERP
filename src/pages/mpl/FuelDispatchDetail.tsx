@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { Button } from '../../components/ui/Button';
 import { MOCK_FUEL_DISPATCHES } from '../../lib/mock-data/mpl-data';
+import { PageContainer } from '../../components/shared/PageContainer';
 
 const STATUS_MAP: Record<string, string> = {
   requested: 'Requested',
@@ -27,7 +28,7 @@ export function FuelDispatchDetail() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto">
+    <PageContainer>
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-text-muted text-xs mb-4 hover:text-text-primary">
         <ArrowLeft size={14} /> Back to Dispatches
       </button>
@@ -58,6 +59,6 @@ export function FuelDispatchDetail() {
           </div>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

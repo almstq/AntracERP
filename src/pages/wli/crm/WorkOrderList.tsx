@@ -6,6 +6,7 @@ import { listWorkOrders } from '../../../lib/services/crm';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import type { WorkOrder } from '../../../types/crm';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<string, string> = {
   active:          'bg-blue/10 text-blue',
@@ -39,7 +40,7 @@ export function WorkOrderList() {
   const closed = wos.filter(w => w.status === 'closed');
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="mb-4">
         <h1 className="text-lg font-bold text-text-primary">Work Orders</h1>
         <p className="text-xs text-text-muted">
@@ -88,6 +89,6 @@ export function WorkOrderList() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

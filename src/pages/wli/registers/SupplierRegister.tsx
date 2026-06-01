@@ -4,6 +4,7 @@ import { Button } from '../../../components/ui/Button';
 import { Store, Plus } from 'lucide-react';
 import { useSupplierList } from '../../../lib/hooks/useWorkflowData';
 import { createSupplier } from '../../../lib/services/registry';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 export function SupplierRegister() {
   const { data: suppliers, loading, refresh } = useSupplierList();
@@ -30,7 +31,7 @@ export function SupplierRegister() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Supplier Register</h1>
@@ -68,6 +69,6 @@ export function SupplierRegister() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

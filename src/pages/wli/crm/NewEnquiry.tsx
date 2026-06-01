@@ -6,6 +6,7 @@ import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { listCustomers, createEnquiry } from '../../../lib/services/crm';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import type { Customer, EnquiryAssetRequest } from '../../../types/crm';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const BLANK_REQUEST: EnquiryAssetRequest = {
   assetType: '', quantity: 1, notes: '',
@@ -76,7 +77,7 @@ export function NewEnquiry() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
+    <PageContainer className="max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/crm/enquiries" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <h1 className="text-lg font-bold text-text-primary">New Enquiry</h1>
@@ -159,6 +160,6 @@ export function NewEnquiry() {
         <Button variant="primary" onClick={submit} disabled={busy}>{busy ? 'Saving…' : 'Log Enquiry'}</Button>
         <Link to="/wli/crm/enquiries"><Button variant="secondary">Cancel</Button></Link>
       </div>
-    </div>
+    </PageContainer>
   );
 }

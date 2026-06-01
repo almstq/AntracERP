@@ -8,6 +8,7 @@ import { listFuelRequests } from '../../../lib/services/fuel';
 import { listInventoryBalances } from '../../../lib/services/fuel';
 import { formatDate } from '../../../lib/utils/format';
 import type { FuelRequest, InventoryBalance } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<string, string> = {
   draft:                  'bg-border text-text-muted',
@@ -61,7 +62,7 @@ export function FuelRequestList() {
   const closed = requests.filter(r => r.status === 'closed');
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
+    <PageContainer className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Fuel & Water Requests</h1>
@@ -162,6 +163,6 @@ export function FuelRequestList() {
           </Card>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

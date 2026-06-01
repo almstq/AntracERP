@@ -7,6 +7,7 @@ import { useAuth } from '../../../lib/hooks/useAuth';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createFuelRequest } from '../../../lib/services/fuel';
 import type { FuelRequest, Urgency } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
@@ -60,7 +61,7 @@ export function NewFuelRequest() {
   const field = 'w-full text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
 
   return (
-    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-4">
+    <PageContainer className="max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/fuel/requests" className="text-text-muted hover:text-text-primary">
           <ArrowLeft size={18} />
@@ -180,6 +181,6 @@ export function NewFuelRequest() {
           </div>
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

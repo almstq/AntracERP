@@ -7,6 +7,7 @@ import { useStockTransfer } from '../../../lib/hooks/useInventory';
 import { dispatchTransfer, receiveTransfer } from '../../../lib/services/inventory';
 import type { TransferStatus } from '../../../types/inventory';
 import { useState } from 'react';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<TransferStatus, string> = {
   requested:  'bg-amber/10 text-amber',
@@ -57,7 +58,7 @@ export function TransferDetail() {
     ['inventory_staff', 'supervisor', 'gm', 'super_admin'].includes(effectiveRole ?? '');
 
   return (
-    <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-4">
+    <PageContainer className="max-w-3xl space-y-4">
       <Link to="/wli/warehouse/transfers" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
         <ArrowLeft size={14} /> Transfers
       </Link>
@@ -145,6 +146,6 @@ export function TransferDetail() {
           <CheckCircle size={14} /> {busy ? 'Receiving…' : 'Confirm Receipt — Update Stock'}
         </Button>
       )}
-    </div>
+    </PageContainer>
   );
 }

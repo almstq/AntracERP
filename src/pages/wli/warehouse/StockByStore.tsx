@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { useStores, useInventoryItems, useAllStockBalances } from '../../../lib/hooks/useInventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 export function StockByStore() {
   const { data: stores, loading: storesLoading } = useStores();
@@ -23,7 +24,7 @@ export function StockByStore() {
   const storeObj = stores.find((s) => s.id === viewStore);
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Stock by Store</h1>
@@ -99,6 +100,6 @@ export function StockByStore() {
           })}
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

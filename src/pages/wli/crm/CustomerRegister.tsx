@@ -7,6 +7,7 @@ import { listCustomers, createCustomer } from '../../../lib/services/crm';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Customer, CreditTerms } from '../../../types/crm';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const CREDIT_TERMS: { value: CreditTerms; label: string }[] = [
   { value: 'cod', label: 'COD' },
@@ -80,7 +81,7 @@ export function CustomerRegister() {
   );
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Customer Register</h1>
@@ -184,6 +185,6 @@ export function CustomerRegister() {
           <span>Some customers are over their credit limit. Review outstanding balances.</span>
         </div>
       )}
-    </div>
+    </PageContainer>
   );
 }

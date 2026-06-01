@@ -1,5 +1,6 @@
 import { Card } from '../../components/ui/Card';
 import { Factory, Fuel, Settings } from 'lucide-react';
+import { PageContainer } from '../../components/shared/PageContainer';
 
 const sbuCards = [
   { name: 'WLI', desc: 'Well Land Investment', icon: Factory, bgClass: 'bg-blue/10', iconClass: 'text-blue', stats: { tickets: 12, pending: 5 } },
@@ -9,7 +10,7 @@ const sbuCards = [
 
 export function HoldingDashboard() {
   return (
-    <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
+    <PageContainer className="space-y-4">
       <div>
         <h1 className="text-lg font-bold text-text-primary">Antrac Holding</h1>
         <p className="text-xs text-text-muted">Group overview</p>
@@ -42,6 +43,6 @@ export function HoldingDashboard() {
           );
         })}
       </div>
-    </div>
+    </PageContainer>
   );
 }

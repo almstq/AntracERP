@@ -5,6 +5,7 @@ import { Truck, Ship, Wrench, Plus } from 'lucide-react';
 import { useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createAsset, assignAssetLocation } from '../../../lib/services/registry';
 import type { Asset, AssetClass } from '../../../types/asset';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const CLASSES: AssetClass[] = ['vehicle', 'vessel', 'equipment'];
 const STATUSES: Asset['operationalStatus'][] = ['operational', 'down', 'maintenance', 'idle'];
@@ -42,7 +43,7 @@ export function AssetRegister() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Asset Register</h1>
@@ -97,6 +98,6 @@ export function AssetRegister() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

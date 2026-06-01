@@ -11,6 +11,7 @@ import {
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { workOrderWorkflow as wf } from '../../../lib/workflow/definitions';
+import { PageContainer } from '../../../components/shared/PageContainer';
 import { downloadInvoice } from '../../../lib/services/invoice';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
@@ -342,7 +343,7 @@ export function WorkOrderDetail() {
   const canRaiseInvoice = wo.status === 'completed' && !raisingInvoice;
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+    <PageContainer className="max-w-4xl space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/wli/crm/work-orders" className="text-text-muted hover:text-text-primary">
@@ -489,6 +490,6 @@ export function WorkOrderDetail() {
           )}
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

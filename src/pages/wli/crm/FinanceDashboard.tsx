@@ -5,6 +5,7 @@ import { useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import { AlertTriangle, DollarSign, Clock, TrendingDown, ChevronRight, BarChart2 } from 'lucide-react';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const INV_STATUS_STYLE: Record<string, string> = {
   draft:           'bg-border text-text-muted',
@@ -89,7 +90,7 @@ export function FinanceDashboard() {
         <span className="text-[10px] text-text-muted">WLI Revenue Tracking</span>
       </div>
 
-      <div className="p-4 md:p-6 space-y-5 max-w-6xl mx-auto">
+      <PageContainer className="space-y-5">
 
         {/* Stats bar */}
         <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
@@ -239,7 +240,7 @@ export function FinanceDashboard() {
           </Card>
         </div>
 
-      </div>
+      </PageContainer>
     </div>
   );
 }

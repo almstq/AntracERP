@@ -6,6 +6,7 @@ import { Button } from '../../../components/ui/Button';
 import { useInventoryItems, useAllStockBalances } from '../../../lib/hooks/useInventory';
 import { createItem } from '../../../lib/services/inventory';
 import type { InventoryItem } from '../../../types/inventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const CATS: InventoryItem['category'][] = ['parts', 'consumables', 'tools', 'other'];
 const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
@@ -45,7 +46,7 @@ export function ItemCatalog() {
   );
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Item Catalog</h1>
@@ -110,6 +111,6 @@ export function ItemCatalog() {
           )}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

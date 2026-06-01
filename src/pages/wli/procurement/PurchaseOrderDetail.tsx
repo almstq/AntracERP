@@ -10,6 +10,7 @@ import { buildPoHtml, downloadHtml } from '../../../lib/services/rfq';
 import { computeTotals, formatMoney, type Currency } from '../../../lib/utils/money';
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
 import type { PurchaseOrder, POStatus } from '../../../types/workflow-entities';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 // Pay-first order: full payment chain settles before goods are collected.
 const PAYMENT_CHAIN: POStatus[] = [
@@ -30,7 +31,7 @@ export function PurchaseOrderDetail() {
   const cur = (po.currency ?? 'MVR') as Currency;
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+    <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/procurement/orders" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <div className="flex-1">
@@ -111,6 +112,6 @@ export function PurchaseOrderDetail() {
           }
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 }

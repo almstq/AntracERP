@@ -5,6 +5,7 @@ import { ArrowLeft, Building2, Phone, Mail, MapPin, TrendingUp, FileText, Briefc
 import { getCustomer } from '../../../lib/services/crm';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Customer } from '../../../types/crm';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const CREDIT_TERMS_LABELS: Record<string, string> = {
   cod: 'Cash on Delivery', net_15: 'Net 15 Days', net_30: 'Net 30 Days', net_60: 'Net 60 Days',
@@ -43,7 +44,7 @@ export function CustomerDetail() {
     ? Math.round((customer.outstandingBalance / customer.creditLimit) * 100) : 0;
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+    <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/wli/crm/customers" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <div className="flex-1">
@@ -126,6 +127,6 @@ export function CustomerDetail() {
           </div>
         </Card>
       </div>
-    </div>
+    </PageContainer>
   );
 }

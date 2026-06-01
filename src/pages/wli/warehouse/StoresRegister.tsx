@@ -6,6 +6,7 @@ import { useStores } from '../../../lib/hooks/useInventory';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createStore, updateStore } from '../../../lib/services/inventory';
 import type { Store } from '../../../types/inventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STORE_TYPES: Store['type'][] = ['main', 'yard', 'site', 'transit'];
 const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
@@ -48,7 +49,7 @@ export function StoresRegister() {
   const unassigned = stores.filter((s) => !sites.find((site) => site.id === s.siteId));
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Stores Register</h1>
@@ -130,6 +131,6 @@ export function StoresRegister() {
           </Card>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }

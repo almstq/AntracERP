@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useStockTransfers } from '../../../lib/hooks/useInventory';
 import type { TransferStatus } from '../../../types/inventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_STYLE: Record<TransferStatus, string> = {
   requested:  'bg-amber/10 text-amber',
@@ -29,7 +30,7 @@ export function TransferList() {
   const { data: transfers, loading } = useStockTransfers();
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Stock Transfers</h1>
@@ -75,6 +76,6 @@ export function TransferList() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

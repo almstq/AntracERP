@@ -3,6 +3,7 @@ import { StatusBadge } from '../../../components/shared/StatusBadge';
 import { Button } from '../../../components/ui/Button';
 import { Plus, Filter, FileSearch, Eye } from 'lucide-react';
 import { MOCK_RFQS } from '../../../lib/mock-data/procurement';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_MAP: Record<string, string> = {
   open: 'Open',
@@ -13,7 +14,7 @@ const STATUS_MAP: Record<string, string> = {
 
 export function RFQList() {
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Requests for Quotation</h1>
@@ -48,6 +49,6 @@ export function RFQList() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }

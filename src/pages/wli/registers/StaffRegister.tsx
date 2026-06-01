@@ -5,6 +5,7 @@ import { UserCog, Plus } from 'lucide-react';
 import { useStaffList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createStaff, assignStaffSite } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
+import { PageContainer } from '../../../components/shared/PageContainer';
 
 const ASSIGNABLE_ROLES = [
   ROLES.OPERATOR, ROLES.MECHANIC, ROLES.SUPERVISOR, ROLES.PROC_STAFF,
@@ -45,7 +46,7 @@ export function StaffRegister() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto">
+    <PageContainer>
       <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Staff Register</h1>
@@ -96,6 +97,6 @@ export function StaffRegister() {
           ))}
         </div>
       </Card>
-    </div>
+    </PageContainer>
   );
 }
