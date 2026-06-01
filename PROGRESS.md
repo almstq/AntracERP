@@ -56,10 +56,15 @@ workflows**, not CRUD data screens. Specs in `~/Downloads/`:
 ### Workflow 1 — Issue → Closure (spine = ticket, 14 stages)
 Operator raises → Mechanic diagnoses (**PR auto-spawns ON_HOLD**) → Supervisor
 checks → **GM approves (activates PR)** → Proc: accept → RFQ (1 PDF/supplier) →
-quotes → GM selects supplier(s), can split → **PO (1/supplier)** → collection →
-**4-tier payment chain** (WLI Finance → Antrac Finance → CFO → Director →
-execute → receipt) → PO closed → delivery → requestee confirms → **ticket
-closed** (or child ticket if issue persists). Ticket stays OPEN throughout.
+quotes → GM selects supplier(s), can split → **PO (1/supplier)** → supplier
+confirms → **4-tier payment chain** (WLI Finance → Antrac Finance → CFO →
+Director → execute → WLI Finance confirms settled) → **collection** (tax invoice)
+→ PO closed → delivery → requestee confirms → **ticket closed** (or child ticket
+if issue persists). Ticket stays OPEN throughout.
+
+> **PAY-FIRST (Mustarq decision, 2026-06-01):** the full payment chain settles
+> **before** goods are collected — no items received until payment is confirmed.
+> Payment runs against the PO total. (Reversed from the original collect-first spec.)
 
 ### Workflow 2 — WLI ↔ MPL Fuel/Water (9 stages)
 Supervisor raises → WLI Inventory checks balance → GM approves → MPL Manager

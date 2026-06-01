@@ -10,10 +10,11 @@ import { computeTotals, formatMoney, type Currency } from '../../../lib/utils/mo
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
 import type { PurchaseOrder, POStatus } from '../../../types/workflow-entities';
 
+// Pay-first order: full payment chain settles before goods are collected.
 const PAYMENT_CHAIN: POStatus[] = [
-  'raised', 'supplier_confirmed', 'items_collected', 'payment_request_sent',
+  'raised', 'supplier_confirmed', 'payment_request_sent',
   'antrac_finance_accepted', 'cfo_verified', 'director_approved',
-  'payment_completed', 'wli_finance_confirmed', 'po_closed',
+  'payment_completed', 'wli_finance_confirmed', 'items_collected', 'po_closed',
 ];
 
 export function PurchaseOrderDetail() {
