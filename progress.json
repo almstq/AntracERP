@@ -4,7 +4,7 @@
   "name": "Antrac ERP",
   "version": "0.13.0",
   "updated_at": "2026-06-01",
-  "last_commit": "pending",
+  "last_commit": "67e34d5",
   "owner": "cipher",
   "phase_current": "AI Integration (Gemini Flash) — all 3 placements live",
   "phase_next": "UI Polish — visual consistency pass + QA audit M/L items",
@@ -217,7 +217,7 @@
       "label": "AI Integration",
       "title": "Gemini Flash — Surgical AI (Price Compare + AI Brief + Diagnosis Assist)",
       "status": "done",
-      "commit": "pending",
+      "commit": "67e34d5",
       "completed_date": "2026-06-01",
       "notes": "Gemini Flash via REST (gemini-2.0-flash, no SDK) in src/lib/services/ai.ts: generateText + cachedGenerate (sessionStorage). 3 placements ALL DONE: (1) AiBrief.tsx — Command Center ops brief, replaced the 'coming soon' stub, 1hr cache + refresh; (2) PurchaseRequestDetail — 'Ask AI to recommend' on the price-comparison grid, advisory award suggestion; (3) AiDiagnosisHint.tsx — mechanic-only diagnosis assist on submitted tickets. All advisory/read-only, role-gated, graceful no-key fallback. VITE_GEMINI_API_KEY in .env.local. Free tier never near limits at WLI scale."
     },
