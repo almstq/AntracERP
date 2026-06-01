@@ -1,6 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { FileUpload } from '../../../components/shared/FileUpload';
+import { AiDiagnosisHint } from '../../../components/workflow/AiDiagnosisHint';
 import { ArrowLeft, Package } from 'lucide-react';
 import { useTicket, useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -51,6 +52,11 @@ export function TicketDetail() {
               </div>
             )}
           </Card>
+
+          {/* AI diagnosis assist — mechanic only, while awaiting diagnosis */}
+          {ticket.status === 'submitted' && (
+            <AiDiagnosisHint description={ticket.description} assetLabel={ticket.assetLabel} />
+          )}
 
           {((ticket.materials?.length ?? 0) > 0 || (ticket.services?.length ?? 0) > 0) && (
             <Card header={<span className="text-sm font-medium">Required Items</span>}>

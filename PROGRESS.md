@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.12.0
-**Updated:** 2026-06-01 (session 7 — OpenWeatherMap vessel weather panel)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.13.0
+**Updated:** 2026-06-01 (session 7 — OpenWeatherMap + AI Integration)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,13 +12,13 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 7 — OpenWeatherMap vessel weather panel live. Build clean at **84%** (21/25 phases). **Next, in order:**
+Session 7 — OpenWeatherMap + AI Integration (all 3 placements) live. Build clean at **88%** (22/25 phases). **Next, in order:**
 
-1. **AI Integration** — Gemini Flash (free, Google Cloud project). 3 placements: GM price comparison, Command Center AI Brief, optional mechanic diagnosis assist. Needs Gemini API key.
-2. **UI Polish** — visual consistency pass across all pages before mobile (incl. QA audit M1–M4, L1–L4).
-3. **Mobile Responsive** — full responsive redesign (last — needs everything stable; nav shell already fixed).
+1. **UI Polish** — visual consistency pass across all pages (incl. QA audit M1–M4, L1–L4 + map-label overlap).
+2. **Mobile Responsive** — full responsive redesign (last — needs everything stable; nav shell already fixed).
 
-✅ **OpenWeatherMap done** — `weather.ts` + `WeatherPanel.tsx` on Command Center. Wind + visibility (free-tier marine signals), colour-coded, 30-min cache, graceful no-key fallback. Needs `VITE_OPENWEATHER_API_KEY` in `.env.local` (new keys take ~2h to activate).
+✅ **OpenWeatherMap** — `weather.ts` + `WeatherPanel.tsx` on Command Center. Wind + visibility, colour-coded, 30-min cache. `VITE_OPENWEATHER_API_KEY`.
+✅ **AI Integration (Gemini Flash)** — `ai.ts` (REST, no SDK) + 3 surgical placements: Command Center **AI Brief** (`AiBrief.tsx`, replaced the stub), GM **price-comparison recommendation** (PurchaseRequestDetail), mechanic **diagnosis assist** (`AiDiagnosisHint.tsx`). All advisory/read-only, role-gated, graceful no-key fallback. Needs `VITE_GEMINI_API_KEY`.
 
 **Pipeline decision (Mustarq, 2026-06-01):** UI Polish + Mobile + AI formally added to timeline. Build order locked as above.
 
@@ -94,6 +94,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **Document Vault** | `/wli/documents` — aggregated vault, docType auto-tag, view/download split, inline preview modal (image + PDF) | ✅ Done | `fff77e3` |
 | **QA Audit** | Full review — fixed 3 critical token regressions + broken mobile shell; 10 findings documented (`docs/QA_AUDIT_2026-06-01.md`) | ✅ Done | `b862aa9` |
 | **OpenWeatherMap** | `weather.ts` + `WeatherPanel.tsx` — per-site wind/visibility tiles on Command Center, colour-coded, 30-min cache, no-key fallback | ✅ Done | `ef78d96` |
+| **AI Integration** | `ai.ts` (Gemini Flash REST) + AI Brief, GM price-comparison recommendation, mechanic diagnosis assist — advisory, role-gated, no-key fallback | ✅ Done | pending |
 | **OpenWeatherMap** | Vessel weather panel — wind, waves, visibility for WLI sea sites | 🔲 Next | — |
 | **AI Integration** | Gemini Flash — GM price compare, Command Center AI Brief, diagnosis assist | 🔲 Planned | — |
 | **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Planned | — |

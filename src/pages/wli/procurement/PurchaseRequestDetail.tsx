@@ -11,6 +11,8 @@ import { executeTransition } from '../../../lib/workflow/executor';
 import { purchaseRequestWorkflow as prWf } from '../../../lib/workflow/definitions';
 import { getAvailableTransitions } from '../../../lib/workflow/engine';
 import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
+import { isAiConfigured, generateText } from '../../../lib/services/ai';
+import { Sparkles } from 'lucide-react';
 import type { PurchaseRequest, PRStatus, PRLineItem, PRQuote } from '../../../types/workflow-entities';
 
 export function PurchaseRequestDetail() {
@@ -27,6 +29,17 @@ export function PurchaseRequestDetail() {
   const [extraCols, setExtraCols] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // AI price-comparison recommendation (advisory only)
+  const [aiRec, setAiRec] = useState<string | null>(null);
+  const [aiBusy, setAiBusy] = useState(false);
+  const [aiErr, setAiErr] = useState<string | null>(null);
+
+  async function runAi(prompt: string) {
+    setAiBusy(true); setAiErr(null);
+    try { setAiRec(await generateText(prompt, { temperature: 0.2, maxTokens: 400 })); }
+    catch (e) { setAiErr(e instanceof Error ? e.message : 'AI unavailable'); }
+    finally { setAiBusy(false); }
+  }
 
   // Seed the quote-entry grid from any quotes already saved on the PR.
   useEffect(() => {
@@ -280,6 +293,52 @@ export function PurchaseRequestDetail() {
                   </table>
                 </div>
                 <p className="text-[10px] text-text-muted mt-2">★ = lowest quote · click a price to select that supplier for the item (split allowed)</p>
+
+                {/* AI recommendation (advisory) */}
+                {isAiConfigured() && (() => {
+                  const buildAiPrompt = () => {
+                    const lines = pr.lineItems.map((li) => {
+                      const quotes = cols
+                        .map((c) => { const p = priceFor(c, li.ref); return p != null ? `${supName(c)} ${p}` : null; })
+                        .filter(Boolean).join(', ');
+                      return `- ${li.description} (qty ${li.quantity} ${li.uom}): ${quotes || 'no quotes'}`;
+                    }).join('\n');
+                    return [
+                      'You are a procurement advisor for Well Land Investment, a heavy-equipment',
+                      'rental company in the Maldives. Below are supplier unit-price quotes (MVR) per',
+                      'line item. Recommend which supplier to award each line to, and whether to',
+                      'consolidate to one supplier or split the award. Lead with total cost, but note',
+                      'if consolidating to a single supplier is worth a small premium for simpler',
+                      'logistics/delivery. Be concise: one short line per item, then a one-line summary.',
+                      'Plain prose, no markdown.',
+                      '',
+                      'Line items and quotes:',
+                      lines,
+                    ].join('\n');
+                  };
+                  return (
+                    <div className="mt-3 pt-3 border-t border-border-soft">
+                      <button
+                        onClick={() => runAi(buildAiPrompt())}
+                        disabled={aiBusy || busy}
+                        className="flex items-center gap-1.5 text-[11px] text-amber hover:opacity-80 disabled:opacity-40"
+                      >
+                        <Sparkles size={12} /> {aiBusy ? 'Analysing quotes…' : 'Ask AI to recommend'}
+                      </button>
+                      {aiErr && <p className="text-[11px] text-red mt-1">{aiErr}</p>}
+                      {aiRec && (
+                        <div className="mt-2 rounded-lg bg-bg-surface border border-border p-2.5">
+                          <p className="text-[10px] font-semibold text-amber mb-1 flex items-center gap-1">
+                            <Sparkles size={10} /> AI RECOMMENDATION
+                          </p>
+                          <p className="text-[11px] text-text-secondary whitespace-pre-line leading-snug">{aiRec}</p>
+                          <p className="text-[9px] text-text-muted mt-1.5">Advisory only — you decide the award below.</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {err && <p className="text-xs text-red mt-2">{err}</p>}
                 <div className="flex gap-2 mt-3">
                   <Button variant="secondary" size="sm" onClick={autoLowest} disabled={busy}>Auto-pick lowest</Button>

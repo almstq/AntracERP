@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { Card } from '../../components/ui/Card';
-import { Sparkles, Truck, Ship, ChevronRight, AlertCircle } from 'lucide-react';
+import { Truck, Ship, ChevronRight, AlertCircle } from 'lucide-react';
 import { NotificationBell } from '../../components/layout/NotificationBell';
 import { FleetMapView } from '../../components/workflow/FleetMapView';
 import { WeatherPanel } from '../../components/dashboard/WeatherPanel';
+import { AiBrief } from '../../components/dashboard/AiBrief';
 import { useTicketList, useAssetList, useSiteList, useStaffList, useActionInbox } from '../../lib/hooks/useWorkflowData';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 
@@ -52,10 +53,14 @@ export function WLIDashboard() {
       <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
         {/* AI Advisor + Map */}
         <div className="relative rounded-lg border border-border overflow-hidden">
-          <div className="absolute top-3 left-3 z-[1] max-w-[240px] rounded-lg bg-black/70 backdrop-blur px-3 py-2">
-            <div className="flex items-center gap-1.5 text-amber"><Sparkles size={13} /><span className="text-[11px] font-semibold">NEXUS AI ADVISOR</span></div>
-            <p className="text-[10px] text-white/70 mt-0.5">Daily operational brief — coming soon</p>
-          </div>
+          <AiBrief
+            openTickets={openTickets.length}
+            criticalTickets={openTickets.filter((t) => t.urgency === 'critical').length}
+            approvals={approvals.length}
+            landReady={landReady} landTotal={land.length}
+            vesselReady={vesselReady} vesselTotal={vessels.length}
+            sites={sites.length}
+          />
           <FleetMapView sites={sites} assets={assets} staff={staff} height="38vh" />
         </div>
 
