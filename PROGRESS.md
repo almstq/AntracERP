@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.13.0
-**Updated:** 2026-06-01 (session 7 — OpenWeatherMap + AI Integration)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.17.0
+**Updated:** 2026-06-01 (session 9 — Inventory / Warehouse Module 6 complete, cc-023 resolved)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,16 +12,13 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 7 + 8 — features + cosmetic layer + two-agent (Claude Code + Gemini CLI). Build clean at **v0.16.0**, HEAD `7c75cc4`. **FIRST MOVE next session:**
+Session 9 — Inventory/Warehouse Module 6 complete. Build clean at **v0.17.0**, HEAD `827b651`.
 
-1. **🚩 cc-023 — RECONCILE the inventory foundation (BLOCKER).** Gemini CLI committed a
-   *lighter* Phase-A (`src/types/inventory.ts`, `src/lib/services/inventory.ts`) that
-   does NOT match `docs/INVENTORY_SCM_PLAN.md` (missing separate `StockBalance` by
-   `storeId`, `StockTransfer`/logistics, weighted-avg cost, pick-or-create at collection,
-   Stores-attached-to-sites register, append-only ledger, services=direct-expense).
-   **Decide: extend it to the plan, or replace it — then build Module 6 on that.**
-2. **Inventory / SCM Module 6** build (phases A–F) per the plan, once §1 is reconciled.
-3. **UI Polish** (QA audit M1–M4, L1–L4, map-label overlap, numeric hardening) → **Mobile** (last).
+**Next priorities:**
+1. **UI Polish** — QA audit M1–M4 (spacing, state, cards, forms), map-label overlap, numeric hardening. See `docs/QA_AUDIT_2026-06-01.md`.
+2. **Mobile Responsive** — sidebar → bottom nav, tables → cards. (Last.)
+3. **Seed stores** — add at least one Store doc per site in Firestore so the Warehouse module is functional on first load. Run via Firebase Console or add to seed script.
+4. **Firestore indexes** — `stockMovements` by `itemId` + `createdAt` may need a composite index once data grows. Check Firebase Console after first use.
 
 **Two-agent state:** Gemini CLI is now also building in this repo. Coordination doc
 (I maintain it): `D:\!starq\.GeminiCLI\CLAUDE_CODE_SYNC.md`. Protocol: never edit
@@ -34,7 +31,11 @@ concurrently; commit+push before handoff; read the other agent's latest doc firs
 - ✅ **Cosmetic layer (design system):** light/dark theme + `ThemeToggle`, `Card`
   elevation, `PageContainer` (8pt spacing), `SectionHeading`, Plus Jakarta Sans font
 - ✅ **(Gemini CLI)** super-admin unified nav, `/holding` landing, "Antrac Holding Group"
-  branding, AppShell cleanup, inventory Phase-A foundation (pending reconciliation §1)
+  branding, AppShell cleanup
+- ✅ **Module 6 — Warehouse/SCM (cc-023 resolved):** full data model (Store, InventoryItem,
+  StockBalance, StockMovement, StockTransfer), Phases A–F, 6 warehouse pages, CollectItemsPanel
+  pick-or-create, RECEIVE_INTO_INVENTORY + TRIGGER_DELIVERY side-effects, Firestore rules deployed
+- ✅ Login splash copyright → "Antrac Holding Group" only (Well Land removed globally)
 
 **Open UX (untracked):** login-splash may still show "Well Land" — should be Antrac
 globally, Well Land only inside the WLI module.
@@ -114,9 +115,8 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **QA Audit** | Full review — fixed 3 critical token regressions + broken mobile shell; 10 findings documented (`docs/QA_AUDIT_2026-06-01.md`) | ✅ Done | `b862aa9` |
 | **OpenWeatherMap** | `weather.ts` + `WeatherPanel.tsx` — per-site wind/visibility tiles on Command Center, colour-coded, 30-min cache, no-key fallback | ✅ Done | `ef78d96` |
 | **AI Integration** | `ai.ts` (Gemini Flash REST) + AI Brief, GM price-comparison recommendation, mechanic diagnosis assist — advisory, role-gated, no-key fallback | ✅ Done | `67e34d5` |
-| **OpenWeatherMap** | Vessel weather panel — wind, waves, visibility for WLI sea sites | 🔲 Next | — |
-| **AI Integration** | Gemini Flash — GM price compare, Command Center AI Brief, diagnosis assist | 🔲 Planned | — |
-| **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Planned | — |
+| **Inventory/Warehouse** | Module 6: Store register, Item Catalog, Stock-by-Store, Movements ledger, Transfers (A–F), CollectItemsPanel, RECEIVE_INTO_INVENTORY, TRIGGER_DELIVERY | ✅ Done | `827b651` |
+| **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Next | — |
 | **Mobile Responsive** | Full responsive redesign — sidebar → bottom nav, tables → cards | 🔲 Planned | — |
 
 ### Cross-cutting backlog
