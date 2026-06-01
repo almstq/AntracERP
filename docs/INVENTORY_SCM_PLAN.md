@@ -24,6 +24,11 @@ edges; the ledger is the journey.
 
 This is its **own Warehouse module** in the nav — not an action under Operations.
 
+> **REFLECT, DON'T ENFORCE (Decision 26):** the system digitizes Antrac's *existing*
+> practice. SAP-grade controls (three-way match, reorder, etc.) are added as **optional
+> capture + advisory flags — never hard gates that change behavior.** Practice changes
+> are recommendations for leadership, not software mandates. See `SCM_BENCHMARK_SAP.md`.
+
 ---
 
 ## 2. Decisions (locked 2026-06-01)
@@ -35,6 +40,19 @@ This is its **own Warehouse module** in the nav — not an action under Operatio
 | D-INV-3 | Inter-store transfer | **Operational, no approval.** Inventory/supervisor raises → in-transit → destination confirms receipt. Logistics tracking, no GM gate. |
 | D-INV-4 | Costing | **Weighted moving average** per item (recomputed on each receipt). Consumption + transfers value at avg cost. (FIFO deferred.) |
 | D-INV-5 | Stock location granularity | **Stores** (named, attached to a Site). A site may have 1+ stores. Stock balances + movements key off `storeId`. Prerequisite for everything else. |
+| D-INV-6 | Reflect not enforce | SAP-grade controls are **optional capture + advisory flags**, never hard gates that change Antrac practice. See `SCM_BENCHMARK_SAP.md`. |
+
+### SAP-informed enhancements (all optional / advisory — D-INV-6)
+Folded into the phases below, none change practice:
+- **3-way reconciliation flag** — received qty + invoice qty/price vs PO; shows a
+  mismatch badge, does **not** block payment (Phase B).
+- **Landed cost** — optional freight + customs-duty capture at receipt → truer
+  weighted-avg cost; blank behaves as today (Phase B).
+- **Batch/serial** — optional per-item flag `none|batch|serial` (Phase A item, Phase E capture).
+- **Reorder point** — optional per item-store; advisory low-stock alert, no auto-PO (Phase C).
+- **Stock reservation** — optional, reserve vs ticket/work order (Phase E).
+- **Transfer = marine logistics** — link transfer to vessel/trip + shipping cost (Phase D, the differentiator).
+- Alt-UoM, cycle-count UI, GL/cost-center — fields now where cheap, UI deferred.
 
 ---
 
