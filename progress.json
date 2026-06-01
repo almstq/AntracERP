@@ -4,7 +4,7 @@
   "name": "Antrac ERP",
   "version": "0.12.0",
   "updated_at": "2026-06-01",
-  "last_commit": "pending",
+  "last_commit": "ef78d96",
   "owner": "cipher",
   "phase_current": "OpenWeatherMap vessel weather panel — live on Command Center",
   "phase_next": "AI Integration — Gemini Flash (price comparison, AI Brief, diagnosis assist)",
@@ -208,7 +208,7 @@
       "label": "OpenWeatherMap",
       "title": "Vessel Weather Monitoring Panel",
       "status": "done",
-      "commit": "pending",
+      "commit": "ef78d96",
       "completed_date": "2026-06-01",
       "notes": "weather.ts service (free-tier current weather, 30-min sessionStorage cache, windCategory helper) + WeatherPanel.tsx on Command Center below stats bar. Per-site tiles: temp, wind (colour-coded calm/moderate/rough), visibility (amber <5km), condition + icon. Wind+visibility = the free-tier marine-safety signals (no wave data on free tier). Graceful no-key fallback. Promise.allSettled so one site failing doesn't blank the panel. VITE_OPENWEATHER_API_KEY in .env.local."
     },
