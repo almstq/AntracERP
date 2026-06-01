@@ -24,7 +24,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggle}
-      className="flex items-center gap-2 px-3 py-2 w-full text-xs text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors"
+      className="flex items-center gap-2 px-5 py-3 w-full text-xs text-text-muted hover:text-text-primary hover:bg-bg-surface transition-colors"
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       aria-label="Toggle theme"
     >

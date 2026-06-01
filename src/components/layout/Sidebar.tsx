@@ -186,7 +186,7 @@ export function Navbar() {
           </div>
         </div>
 
-        <nav className="p-3 pb-28 space-y-8">
+        <nav className="px-5 py-5 pb-28 space-y-8">
           {visibleModules.map((mod) => (
             <div key={mod.key} className="space-y-1">
               {isSA && (
@@ -240,8 +240,8 @@ export function Navbar() {
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-bg-panel">
           <ActorSwitcher />
-          <div className="flex items-center gap-2 mb-2 p-3 pb-0">
-            <div className="w-7 h-7 rounded-full bg-blue/20 flex items-center justify-center text-[10px] font-bold text-blue">
+          <div className="flex items-center gap-3 mb-2 px-5 pt-4 pb-0">
+            <div className="w-8 h-8 rounded-full bg-blue/20 flex items-center justify-center text-[11px] font-bold text-blue shrink-0">
               {user?.displayName?.charAt(0) || 'U'}
             </div>
             <div className="flex-1 min-w-0">
@@ -250,7 +250,7 @@ export function Navbar() {
             </div>
           </div>
           <ThemeToggle />
-          <button onClick={() => logout()} className="flex items-center gap-2 px-3 py-2 pb-3 w-full text-xs text-text-muted hover:text-red transition-colors">
+          <button onClick={() => logout()} className="flex items-center gap-2 px-5 py-3 pb-4 w-full text-xs text-text-muted hover:text-red transition-colors">
             <LogOut size={14} /> Logout
           </button>
         </div>

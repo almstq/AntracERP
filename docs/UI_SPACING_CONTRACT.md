@@ -68,6 +68,23 @@ In Tailwind terms (what we actually use):
 
 ---
 
+## CHROME COUNTS TOO (sidebar, headers, footers)
+
+The contract is NOT only for `PageContainer`/`Card` content. **App chrome** — the
+sidebar nav, its section headers, the Act-As switcher, theme toggle, user-info
+footer, logout — must also keep content **≥20px inset from the panel edge**.
+The sidebar uses neither shared component, so it must be checked by hand.
+
+| Sidebar element | File | Setting |
+|-----------------|------|---------|
+| Header | `Sidebar.tsx` | `p-5` |
+| Nav wrapper | `Sidebar.tsx` | `px-5 py-5` (active pill insets 20px from wall) |
+| Act As switcher | `ActorSwitcher.tsx` | `px-5 py-4` |
+| Theme toggle | `ThemeToggle.tsx` | `px-5 py-3` |
+| User info + logout | `Sidebar.tsx` | `px-5` |
+
+---
+
 ## WHY THIS KEEPS BREAKING
 
 New components are written without cross-checking this contract.
