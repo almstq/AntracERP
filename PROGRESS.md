@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.17.0
-**Updated:** 2026-06-01 (session 9 — Inventory / Warehouse Module 6 complete, cc-023 resolved)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.18.0
+**Updated:** 2026-06-01 (session 10 — PROOF CHAIN: upload attribution, SHA-256, weekly snapshot Cloud Function)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,13 +12,14 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 9 — Inventory/Warehouse Module 6 complete. Build clean at **v0.17.0**, HEAD `827b651`.
+Session 10 — PROOF CHAIN complete. Build clean at **v0.18.0**, HEAD `6b98e0e`.
 
 **Next priorities:**
-1. **UI Polish** — QA audit M1–M4 (spacing, state, cards, forms), map-label overlap, numeric hardening. See `docs/QA_AUDIT_2026-06-01.md`.
-2. **Mobile Responsive** — sidebar → bottom nav, tables → cards. (Last.)
-3. **Seed stores** — add at least one Store doc per site in Firestore so the Warehouse module is functional on first load. Run via Firebase Console or add to seed script.
-4. **Firestore indexes** — `stockMovements` by `itemId` + `createdAt` may need a composite index once data grows. Check Firebase Console after first use.
+1. **Deploy Cloud Function:** `cd functions && npm install && npm run build && firebase deploy --only functions` (requires Firebase CLI + billing enabled for scheduled functions)
+2. **UI Polish** — QA audit M1–M4 (spacing, state, cards, forms). See `docs/QA_AUDIT_2026-06-01.md`.
+3. **Mobile Responsive** — sidebar → bottom nav, tables → cards. (Last.)
+4. **Seed stores** — add at least one Store doc per site in Firestore so Warehouse module works on first load.
+5. **Email-to-Vault** — awaiting Mustarq decision on domain. See `docs/EMAIL_VAULT_PLAN.md`.
 
 **Two-agent state:** Gemini CLI is now also building in this repo. Coordination doc
 (I maintain it): `D:\!starq\.GeminiCLI\CLAUDE_CODE_SYNC.md`. Protocol: never edit
@@ -36,6 +37,11 @@ concurrently; commit+push before handoff; read the other agent's latest doc firs
   StockBalance, StockMovement, StockTransfer), Phases A–F, 6 warehouse pages, CollectItemsPanel
   pick-or-create, RECEIVE_INTO_INVENTORY + TRIGGER_DELIVERY side-effects, Firestore rules deployed
 - ✅ Login splash copyright → "Antrac Holding Group" only (Well Land removed globally)
+- ✅ **PROOF CHAIN — upload attribution:** `uploadedByName` stored + displayed in Vault and FileUpload panels
+- ✅ **PROOF CHAIN — SHA-256 integrity:** SubtleCrypto client-side hash on every upload; ShieldCheck chip in Vault; legacy shows `—`
+- ✅ **PROOF CHAIN — weekly snapshot:** `functions/weeklyOpsSnapshot` — PDF via pdfkit, Sunday 23:59 MV, auto-saved to `snapshots/` + vault doc tagged `weekly_snapshot`
+- ✅ **Email-to-Vault architecture:** `docs/EMAIL_VAULT_PLAN.md` — full spec, deferred (Decision 29)
+- ✅ **UI_SPACING_CONTRACT.md** — written, enforced, memory-indexed
 
 **Open UX (untracked):** login-splash may still show "Well Land" — should be Antrac
 globally, Well Land only inside the WLI module.
@@ -116,6 +122,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **OpenWeatherMap** | `weather.ts` + `WeatherPanel.tsx` — per-site wind/visibility tiles on Command Center, colour-coded, 30-min cache, no-key fallback | ✅ Done | `ef78d96` |
 | **AI Integration** | `ai.ts` (Gemini Flash REST) + AI Brief, GM price-comparison recommendation, mechanic diagnosis assist — advisory, role-gated, no-key fallback | ✅ Done | `67e34d5` |
 | **Inventory/Warehouse** | Module 6: Store register, Item Catalog, Stock-by-Store, Movements ledger, Transfers (A–F), CollectItemsPanel, RECEIVE_INTO_INVENTORY, TRIGGER_DELIVERY | ✅ Done | `827b651` |
+| **PROOF CHAIN** | Upload attribution (name+timestamp), SHA-256 (SubtleCrypto), weekly snapshot Cloud Function (pdfkit), Email-to-Vault plan, UI_SPACING_CONTRACT | ✅ Done | `6b98e0e` |
 | **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Next | — |
 | **Mobile Responsive** | Full responsive redesign — sidebar → bottom nav, tables → cards | 🔲 Planned | — |
 
