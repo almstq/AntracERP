@@ -5,6 +5,7 @@ import { ArrowLeft, Download } from 'lucide-react';
 import { useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
+import { CollectItemsPanel } from '../../../components/workflow/CollectItemsPanel';
 import { buildPoHtml, downloadHtml } from '../../../lib/services/rfq';
 import { computeTotals, formatMoney, type Currency } from '../../../lib/utils/money';
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
@@ -104,7 +105,10 @@ export function PurchaseOrderDetail() {
         </div>
 
         <div className="space-y-4">
-          <TransitionPanel workflowId="purchase_order" entityId={po.id} status={po.status} onDone={refresh} />
+          {po.status === 'wli_finance_confirmed'
+            ? <CollectItemsPanel po={po} onDone={refresh} />
+            : <TransitionPanel workflowId="purchase_order" entityId={po.id} status={po.status} onDone={refresh} />
+          }
         </div>
       </div>
     </div>

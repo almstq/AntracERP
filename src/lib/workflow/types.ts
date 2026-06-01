@@ -36,7 +36,9 @@ export type SideEffectTag =
   | 'CREATE_WORK_ORDER'         // enquiry quote_accepted → auto-create work order
   | 'DEPLOY_ASSETS'             // work_order active → assets → deployed
   | 'RELEASE_ASSETS'            // work_order closed → assets → available
-  | 'UPDATE_CUSTOMER_ROLLUPS';  // work_order / payment closed → update customer lifetime/balance
+  | 'UPDATE_CUSTOMER_ROLLUPS'  // work_order / payment closed → update customer lifetime/balance
+  | 'RECEIVE_INTO_INVENTORY'   // PO items_collected → post receipt movements + upsert stock balances
+  | 'CONSUME_TICKET_MATERIALS'; // ticket closed → post consumption movements from requestee store
 
 export interface WorkflowTransition<S extends string = string> {
   /** Current state this transition departs from. */

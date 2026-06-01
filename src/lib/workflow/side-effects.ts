@@ -13,6 +13,8 @@ import type {
   FuelRequest, InventoryBalance,
 } from '../../types/workflow-entities';
 import type { Enquiry, Quotation, WorkOrder, Invoice, Payment } from '../../types/crm';
+import type { PoReceiptLine } from '../../types/inventory';
+import { receiveIntoInventory, triggerDeliveryTransfer } from '../services/inventory';
 import { getNextId } from '../utils/id';
 
 export interface SideEffectContext {
@@ -118,9 +120,42 @@ const handlers: Record<SideEffectTag, Handler> = {
     await updateFields('purchaseRequests', pr.id, { purchaseOrderIds: poIds });
   },
 
-  // PO closed → notify inventory to deliver (delivery folded; notification handled in transition).
-  TRIGGER_DELIVERY: async ({ entityId }) => {
-    console.info(`[side-effect] TRIGGER_DELIVERY for PO ${entityId} — inventory notified to deliver to requestee.`);
+  // PO items_collected → post receipt movements + upsert stock balances.
+  // Reads po.inventoryReceipt (set by CollectItemsPanel before calling executeTransition).
+  RECEIVE_INTO_INVENTORY: async ({ entityId, actor }) => {
+    const po = await getById<PurchaseOrder & {
+      inventoryReceipt?: { receivedStoreId: string; lines: PoReceiptLine[] };
+    }>('purchaseOrders', entityId);
+    if (!po?.inventoryReceipt) {
+      console.warn(`[side-effect] RECEIVE_INTO_INVENTORY: no inventoryReceipt on PO ${entityId} — skipped.`);
+      return;
+    }
+    const { receivedStoreId, lines } = po.inventoryReceipt;
+    await receiveIntoInventory(lines, receivedStoreId, actor.id, entityId);
+  },
+
+  // PO closed → create a StockTransfer from the receiving store to the requestee site's store.
+  TRIGGER_DELIVERY: async ({ entityId, actor }) => {
+    const po = await getById<PurchaseOrder & {
+      inventoryReceipt?: { receivedStoreId: string; receivedStoreName: string; lines: PoReceiptLine[] };
+    }>('purchaseOrders', entityId);
+    if (!po?.inventoryReceipt?.lines?.length) {
+      console.info(`[side-effect] TRIGGER_DELIVERY: PO ${entityId} has no inventory receipt — skipping transfer.`);
+      return;
+    }
+    const { receivedStoreId, receivedStoreName, lines } = po.inventoryReceipt;
+    const ticket = po.ticketId ? await getById<Ticket>('tickets', po.ticketId) : null;
+    const requesteeSiteId = ticket?.siteId ?? po.deliveryAddress;
+    if (!requesteeSiteId || requesteeSiteId === 'unknown') {
+      console.warn(`[side-effect] TRIGGER_DELIVERY: no requestee site for PO ${entityId}`);
+      return;
+    }
+    const transferId = await triggerDeliveryTransfer(
+      entityId, receivedStoreId, receivedStoreName, requesteeSiteId, lines, actor.id,
+    );
+    if (transferId) {
+      console.info(`[side-effect] TRIGGER_DELIVERY: transfer ${transferId} created for PO ${entityId}`);
+    }
   },
 
   // Ticket resolved/closed → close the linked PR and its POs (best-effort).
@@ -242,6 +277,22 @@ const handlers: Record<SideEffectTag, Handler> = {
     await updateFields('customers', wo.customerId, {
       lifetimeRevenue, outstandingBalance, activeWorkOrders,
     });
+  },
+
+  // Ticket closed → consume materials from the requestee site's store (best-effort).
+  CONSUME_TICKET_MATERIALS: async ({ entityId, actor }) => {
+    const ticket = await getById<Ticket & {
+      consumptionLines?: Array<{ itemId: string; storeId: string; qty: number; uom: string }>;
+    }>('tickets', entityId);
+    if (!ticket?.consumptionLines?.length) return;
+    const { consumeStock } = await import('../services/inventory');
+    for (const line of ticket.consumptionLines) {
+      await consumeStock({
+        itemId: line.itemId, storeId: line.storeId,
+        qty: line.qty, uom: line.uom,
+        actorId: actor.id, sourceType: 'ticket', sourceId: entityId,
+      }).catch((e) => console.warn('[side-effect] CONSUME_TICKET_MATERIALS line failed:', e));
+    }
   },
 
   // Fuel request closed → deduct WLI inventory balance.

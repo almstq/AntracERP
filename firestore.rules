@@ -35,6 +35,10 @@ service cloud.firestore {
       return isAuth() && getUserRole() in ['finance_wli', 'antrac_finance', 'super_admin'];
     }
 
+    function isInventoryStaff() {
+      return isAuth() && getUserRole() in ['inventory_staff', 'super_admin'];
+    }
+
     function isWLIStaff() {
       return isAuth() && getUserRole() in ['operator', 'mechanic', 'supervisor', 'gm', 'proc_staff', 'finance_wli', 'inventory_staff', 'super_admin'];
     }
@@ -129,29 +133,43 @@ service cloud.firestore {
       }
     }
 
-    // Inventory items
+    // Stores register — named stock-holding places attached to sites
+    match /stores/{storeId} {
+      allow read: if isAuth();
+      allow create, update: if isSiteManager() || isInventoryStaff() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Inventory items (catalog — no quantity)
     match /inventoryItems/{itemId} {
       allow read: if isAuth();
-      allow write: if isProcurement() || isSiteManager() || isSuperAdmin();
+      allow write: if isProcurement() || isSiteManager() || isInventoryStaff() || isSuperAdmin();
     }
 
-    // Stock balances
+    // Stock balances — quantity per item × store
     match /stockBalances/{balanceId} {
       allow read: if isAuth();
-      allow write: if isProcurement() || isSiteManager() || isSuperAdmin();
+      allow write: if isProcurement() || isSiteManager() || isInventoryStaff() || isSuperAdmin();
     }
 
-    // Storage locations
-    match /storageLocations/{locationId} {
-      allow read: if isAuth();
-      allow write: if isSiteManager() || isSuperAdmin();
-    }
-
-    // Stock movements
+    // Stock movements — append-only ledger
     match /stockMovements/{movementId} {
       allow read: if isAuth();
-      allow create: if isSiteManager() || isProcurement() || isSuperAdmin();
-      allow update, delete: if isSuperAdmin();
+      allow create: if isSiteManager() || isProcurement() || isInventoryStaff() || isSuperAdmin();
+      allow update, delete: if false;
+    }
+
+    // Stock transfers — logistics (store → store)
+    match /stockTransfers/{transferId} {
+      allow read: if isAuth();
+      allow create: if isInventoryStaff() || isSiteManager() || isSuperAdmin();
+      allow update: if isInventoryStaff() || isSiteManager() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Sequence counters — written by inventory service
+    match /_sequences/{seqId} {
+      allow read, write: if isAuth();
     }
 
     // Customers

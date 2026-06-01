@@ -33,6 +33,14 @@ import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
 import { NewFuelRequest } from '../pages/wli/fuel/NewFuelRequest';
 import { FuelRequestDetail } from '../pages/wli/fuel/FuelRequestDetail';
 import { DocumentVault } from '../pages/wli/vault/DocumentVault';
+import { StoresRegister } from '../pages/wli/warehouse/StoresRegister';
+import { ItemCatalog } from '../pages/wli/warehouse/ItemCatalog';
+import { ItemDetail } from '../pages/wli/warehouse/ItemDetail';
+import { StockByStore } from '../pages/wli/warehouse/StockByStore';
+import { MovementsLedger } from '../pages/wli/warehouse/MovementsLedger';
+import { TransferList } from '../pages/wli/warehouse/TransferList';
+import { NewTransfer } from '../pages/wli/warehouse/NewTransfer';
+import { TransferDetail } from '../pages/wli/warehouse/TransferDetail';
 import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
 import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
 import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
@@ -95,6 +103,15 @@ export const router = createBrowserRouter([
           { path: 'fuel/requests/:id', element: <FuelRequestDetail /> },
           // Document Vault
           { path: 'documents', element: <DocumentVault /> },
+          // Warehouse / Inventory
+          { path: 'warehouse/stores', element: <StoresRegister /> },
+          { path: 'warehouse/items', element: <ItemCatalog /> },
+          { path: 'warehouse/items/:id', element: <ItemDetail /> },
+          { path: 'warehouse/stock', element: <StockByStore /> },
+          { path: 'warehouse/movements', element: <MovementsLedger /> },
+          { path: 'warehouse/transfers', element: <TransferList /> },
+          { path: 'warehouse/transfers/new', element: <NewTransfer /> },
+          { path: 'warehouse/transfers/:id', element: <TransferDetail /> },
         ],
       },
       {

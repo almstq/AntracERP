@@ -90,11 +90,12 @@ export const purchaseOrderWorkflow: WorkflowDefinition<POStatus> = {
       label: 'Confirm Payment Settled', allowedRoles: ['finance_wli', 'super_admin'],
       notify: ['inventory_staff'],
     },
-    // Inventory collects the goods AFTER payment; tax invoice required
+    // Inventory collects the goods AFTER payment; tax invoice + store + line mapping required
     {
       from: 'wli_finance_confirmed', to: 'items_collected', action: 'collect_items',
       label: 'Mark Collected', allowedRoles: ['inventory_staff', 'super_admin'],
       requiresFields: ['taxInvoice'],
+      sideEffects: ['RECEIVE_INTO_INVENTORY'],
       notify: ['proc_staff', 'gm'],
     },
     // Proc closes the PO → triggers delivery to the requestee

@@ -62,7 +62,7 @@ export function Login() {
             ))}
           </div>
         </div>
-        <p className="relative text-[11px] text-white/40">© {new Date().getFullYear()} Antrac Holding Group · Well Land Investment Pvt Ltd</p>
+        <p className="relative text-[11px] text-white/40">© {new Date().getFullYear()} Antrac Holding Group</p>
       </div>
 
       {/* Login form */}
