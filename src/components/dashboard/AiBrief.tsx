@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { Sparkles, RefreshCw } from 'lucide-react';
 import { isAiConfigured, cachedGenerate } from '../../lib/services/ai';
 
@@ -51,7 +51,20 @@ export function AiBrief(props: Props) {
     }
   }, [signature, openTickets, criticalTickets, approvals, landReady, landTotal, vesselReady, vesselTotal, sites]);
 
-  useEffect(() => { run(false); }, [run]);
+  // Fire ONCE after the dashboard data settles. The dashboard's data hooks resolve
+  // at different times, so the signature changes a few times on load — debounce so we
+  // make a single Gemini call (not one per re-render), and never re-fire the same snapshot.
+  const firedSig = useRef<string>('');
+  useEffect(() => {
+    if (!isAiConfigured()) return;
+    const t = setTimeout(() => {
+      if (firedSig.current === signature) return;
+      firedSig.current = signature;
+      run(false);
+    }, 1200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [signature]);
 
   return (
     <div className="absolute top-3 left-3 z-[1] max-w-[300px] rounded-lg bg-black/70 backdrop-blur px-3 py-2">
