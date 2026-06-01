@@ -126,8 +126,9 @@ export function TransitionPanel({ workflowId, entityId, status, onDone }: Props)
                   <input placeholder="uom" value={m.uom}
                     onChange={(e) => setMaterials((arr) => arr.map((x, j) => j === i ? { ...x, uom: e.target.value } : x))}
                     className="w-14 text-xs p-1.5 rounded bg-bg-surface border border-border text-text-primary" />
-                  <input type="number" value={m.quantity}
-                    onChange={(e) => setMaterials((arr) => arr.map((x, j) => j === i ? { ...x, quantity: Number(e.target.value) } : x))}
+                  <input type="number" min={1} step={1} inputMode="numeric" placeholder="qty" value={m.quantity}
+                    onKeyDown={(e) => { if (['e', 'E', '+', '-', '.'].includes(e.key)) e.preventDefault(); }}
+                    onChange={(e) => { const n = parseInt(e.target.value, 10); setMaterials((arr) => arr.map((x, j) => j === i ? { ...x, quantity: Number.isNaN(n) || n < 1 ? 1 : n } : x)); }}
                     className="w-14 text-xs p-1.5 rounded bg-bg-surface border border-border text-text-primary" />
                 </div>
               ))}

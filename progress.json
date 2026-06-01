@@ -228,7 +228,7 @@
       "status": "next",
       "commit": null,
       "completed_date": null,
-      "notes": "Audit all pages for visual consistency: colour tokens, spacing, card layout, empty states, loading states, error states. Tighten dashboard metric cards. Improve form UX (validation feedback, field focus). Standardise table/list layouts. Polish login and transitions. Do after AI integration, before mobile — polish once. BACKLOG ITEM (logged 2026-06-01): FleetMapView marker labels overlap when sites are geographically close (Goidhoo/Muthaafushi, Thilafushi/Malé HQ, Bodufinolhu) — add marker clustering or offset labels."
+      "notes": "Audit all pages for visual consistency: colour tokens, spacing, card layout, empty states, loading states, error states. Tighten dashboard metric cards. Improve form UX (validation feedback, field focus). Standardise table/list layouts. Polish login and transitions. Do after AI integration, before mobile — polish once. BACKLOG ITEM (logged 2026-06-01): FleetMapView marker labels overlap when sites are geographically close (Goidhoo/Muthaafushi, Thilafushi/Malé HQ, Bodufinolhu) — add marker clustering or offset labels. BACKLOG ITEM (logged 2026-06-01): numeric-input hardening across all forms — diagnosis material qty fixed (int-only, blocks e/+/-/.), but apply same pattern to fuel quantity, invoice qty/rate, procurement price fields (prices allow decimals — different rule)."
     },
     {
       "id": "mobile-responsive",
