@@ -7,6 +7,7 @@ import { FleetMapView } from '../../components/workflow/FleetMapView';
 import { WeatherPanel } from '../../components/dashboard/WeatherPanel';
 import { AiBrief } from '../../components/dashboard/AiBrief';
 import { SectionHeading } from '../../components/shared/SectionHeading';
+import { PageContainer } from '../../components/shared/PageContainer';
 import { useTicketList, useAssetList, useSiteList, useStaffList, useActionInbox } from '../../lib/hooks/useWorkflowData';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 
@@ -43,7 +44,7 @@ export function WLIDashboard() {
   return (
     <div className="pb-8">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border bg-bg-panel sticky top-0 z-10">
+      <div className="flex items-center justify-between px-5 md:px-8 lg:px-10 py-4 border-b border-border bg-bg-panel sticky top-0 z-10">
         <h1 className="text-base font-bold text-text-primary">Command Center</h1>
         <div className="flex items-center gap-3">
           <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{ROLE_LABELS[role] ?? role}</span>
@@ -51,7 +52,7 @@ export function WLIDashboard() {
         </div>
       </div>
 
-      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+      <PageContainer>
         {/* Fleet map + AI advisor overlay */}
         <div className="relative rounded-lg border border-border overflow-hidden">
           <AiBrief
@@ -129,7 +130,7 @@ export function WLIDashboard() {
             </Card>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }
