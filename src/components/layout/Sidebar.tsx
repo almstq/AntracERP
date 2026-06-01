@@ -5,13 +5,13 @@ import {
   LayoutDashboard, Ticket, ShoppingCart, MapPin, Truck, UserCog, Map as MapIcon,
   Users, LogOut, Menu, X, Building2, Fuel, Wrench, HardHat, ClipboardCheck,
   Boxes, Banknote, Package, Store, UserSquare2, Briefcase, ClipboardList,
-  TrendingUp, Droplets, FolderOpen, type LucideIcon,
+  TrendingUp, Droplets, FolderOpen, ChevronDown, ChevronRight, type LucideIcon,
 } from 'lucide-react';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 import { ActorSwitcher } from './ActorSwitcher';
 
 interface NavItem { to: string; label: string; icon: LucideIcon; end?: boolean }
-interface NavSection { title?: string; items: NavItem[] }
+interface NavSection { title?: string; items: NavItem[]; defaultCollapsed?: boolean }
 interface ModuleNav { key: string; brand: string; subtitle: string; sections: NavSection[] }
 
 const WLI_NAV: ModuleNav = {
@@ -19,7 +19,8 @@ const WLI_NAV: ModuleNav = {
   sections: [
     { items: [{ to: '/wli', label: 'Command Center', icon: LayoutDashboard, end: true }] },
     {
-      title: 'Dashboards',
+      title: 'Role Desks',
+      defaultCollapsed: true,
       items: [
         { to: '/wli/desk/operator', label: 'Operator', icon: HardHat },
         { to: '/wli/desk/mechanic', label: 'Mechanic', icon: Wrench },
@@ -62,6 +63,7 @@ const WLI_NAV: ModuleNav = {
     },
     {
       title: 'Registers',
+      defaultCollapsed: true,
       items: [
         { to: '/wli/locations', label: 'Locations', icon: MapPin },
         { to: '/wli/assets', label: 'Asset Register', icon: Truck },
@@ -112,6 +114,15 @@ export function Navbar() {
   const isActive = (item: NavItem) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
 
+  // Collapsible sections — start with the noisy ones (Role Desks, Registers) collapsed.
+  const [collapsed, setCollapsed] = useState<Set<string>>(() => {
+    const s = new Set<string>();
+    for (const sec of mod.sections) if (sec.title && sec.defaultCollapsed) s.add(sec.title);
+    return s;
+  });
+  const toggleSection = (title: string) =>
+    setCollapsed((c) => { const n = new Set(c); n.has(title) ? n.delete(title) : n.add(title); return n; });
+
   return (
     <>
       {/* Mobile top bar — fixed, full width, sits above content */}
@@ -138,12 +149,26 @@ export function Navbar() {
           </div>
         </div>
 
-        <nav className="p-2 pb-24 space-y-3">
-          {mod.sections.map((section, si) => (
+        <nav className="p-2 pb-24 space-y-2">
+          {mod.sections.map((section, si) => {
+            const sectionActive = section.items.some(isActive);
+            // collapsed unless it holds the active route (never hide where you are)
+            const isCollapsed = !!section.title && collapsed.has(section.title) && !sectionActive;
+            return (
             <div key={si}>
               {section.title && (
-                <p className="px-3 pt-2 pb-1 text-[9px] font-semibold uppercase tracking-wider text-text-muted">{section.title}</p>
+                <button
+                  onClick={() => toggleSection(section.title!)}
+                  className="w-full flex items-center justify-between px-3 pt-2 pb-1 group"
+                  aria-expanded={!isCollapsed}
+                >
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
+                  {isCollapsed
+                    ? <ChevronRight size={11} className="text-text-muted group-hover:text-text-secondary" />
+                    : <ChevronDown size={11} className="text-text-muted group-hover:text-text-secondary" />}
+                </button>
               )}
+              {!isCollapsed && (
               <div className="space-y-0.5">
                 {section.items.map((item) => {
                   const Icon = item.icon;
@@ -160,8 +185,10 @@ export function Navbar() {
                   );
                 })}
               </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-bg-panel">

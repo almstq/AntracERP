@@ -6,6 +6,7 @@ import { NotificationBell } from '../../components/layout/NotificationBell';
 import { FleetMapView } from '../../components/workflow/FleetMapView';
 import { WeatherPanel } from '../../components/dashboard/WeatherPanel';
 import { AiBrief } from '../../components/dashboard/AiBrief';
+import { SectionHeading } from '../../components/shared/SectionHeading';
 import { useTicketList, useAssetList, useSiteList, useStaffList, useActionInbox } from '../../lib/hooks/useWorkflowData';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 
@@ -50,8 +51,8 @@ export function WLIDashboard() {
         </div>
       </div>
 
-      <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
-        {/* AI Advisor + Map */}
+      <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+        {/* Fleet map + AI advisor overlay */}
         <div className="relative rounded-lg border border-border overflow-hidden">
           <AiBrief
             openTickets={openTickets.length}
@@ -64,14 +65,17 @@ export function WLIDashboard() {
           <FleetMapView sites={sites} assets={assets} staff={staff} height="38vh" />
         </div>
 
-        {/* Stats bar */}
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
-          {stats.map((s) => (
-            <Card key={s.label} className="text-center py-3">
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-              <p className="text-[9px] tracking-wide text-text-muted mt-0.5">{s.label}</p>
-            </Card>
-          ))}
+        {/* At a glance */}
+        <div>
+          <SectionHeading title="At a Glance" />
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+            {stats.map((s) => (
+              <Card key={s.label} className="text-center py-3">
+                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-[10px] tracking-wide text-text-muted mt-0.5">{s.label}</p>
+              </Card>
+            ))}
+          </div>
         </div>
 
         {/* Site Weather (vessel safety — wind + visibility) */}
@@ -79,7 +83,7 @@ export function WLIDashboard() {
 
         {/* Action Required (Inbox) */}
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-2">Action Required (Inbox)</p>
+          <SectionHeading title="Action Required" hint={inbox.length > 0 ? `${inbox.length} item${inbox.length !== 1 ? 's' : ''}` : undefined} />
           <Card>
             {inbox.length === 0 ? (
               <p className="text-xs text-text-muted p-1">Nothing awaiting you right now.</p>
@@ -107,7 +111,7 @@ export function WLIDashboard() {
 
         {/* Fleet Readiness */}
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-2">Fleet Readiness</p>
+          <SectionHeading title="Fleet Readiness" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Card>
               <div className="flex items-center justify-between">
