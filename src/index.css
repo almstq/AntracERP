@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+/* ── Design tokens — DARK is the default theme ───────────────────────────── */
 @theme {
   --color-bg-base: #09090B;
   --color-bg-panel: #141417;
@@ -23,14 +24,39 @@
   --color-amber: #F99C00;
   --color-red: #E40014;
   --color-neutral: #71717A;
+  /* elevation */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.20), 0 1px 3px rgba(0,0,0,0.12);
+}
+
+:root { color-scheme: dark; }
+
+/* ── LIGHT theme — override the same semantic tokens under html.light ──────── */
+html.light {
+  color-scheme: light;
+  --color-bg-base: #F5F6F8;
+  --color-bg-panel: #FFFFFF;
+  --color-bg-surface: #F0F1F4;
+  --color-bg-card: #FFFFFF;
+  --color-bg-overlay: #FFFFFF;
+  --color-bg-input: #FFFFFF;
+  --color-border: #E3E4E9;
+  --color-border-soft: #EDEEF1;
+  --color-border-hover: #CDCFD6;
+  --color-text-primary: #18181B;
+  --color-text-secondary: #4B4C57;
+  --color-text-muted: #8B8C97;
+  --color-text-inverted: #FAFAFA;
+  --shadow-card: 0 1px 2px rgba(16,24,40,0.06), 0 1px 3px rgba(16,24,40,0.10);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-html, body, #root {
-  height: 100%;
-  width: 100%;
+/* smooth theme switch (surfaces + borders only — never text, to avoid flicker) */
+*, *::before, *::after {
+  transition: background-color 0.18s ease, border-color 0.18s ease;
 }
+
+html, body, #root { height: 100%; width: 100%; }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -41,9 +67,10 @@ body {
   overflow-x: hidden;
 }
 
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-border-hover); }
 
 @media (max-width: 768px) {
   body { font-size: 13px; }

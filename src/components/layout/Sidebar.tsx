@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 import { ActorSwitcher } from './ActorSwitcher';
+import { ThemeToggle } from '../shared/ThemeToggle';
 
 interface NavItem { to: string; label: string; icon: LucideIcon; end?: boolean }
 interface NavSection { title?: string; items: NavItem[]; defaultCollapsed?: boolean }
@@ -202,7 +203,8 @@ export function Navbar() {
               <p className="text-[10px] text-text-muted truncate">{user ? (ROLE_LABELS[user.role] ?? user.role) : ''}</p>
             </div>
           </div>
-          <button onClick={() => logout()} className="flex items-center gap-2 px-3 pb-3 text-xs text-text-muted hover:text-red transition-colors">
+          <ThemeToggle />
+          <button onClick={() => logout()} className="flex items-center gap-2 px-3 py-2 pb-3 w-full text-xs text-text-muted hover:text-red transition-colors">
             <LogOut size={14} /> Logout
           </button>
         </div>

@@ -7,6 +7,11 @@ import { OrgProvider } from './lib/context/OrgContext';
 import { router } from './routes/router';
 import './index.css';
 
+// Apply saved theme before first paint (no flash). Default = dark.
+try {
+  if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
+} catch { /* ignore */ }
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
