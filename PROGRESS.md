@@ -12,21 +12,34 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 7 — OpenWeatherMap + AI Integration live, PO → pay-first, live-test fixes. Build clean at **85%** (22/26 phases). **Next, in order:**
+Session 7 + 8 — features + cosmetic layer + two-agent (Claude Code + Gemini CLI). Build clean at **v0.16.0**, HEAD `7c75cc4`. **FIRST MOVE next session:**
 
-1. **Inventory / SCM module** (Module 6, full build) — **plan written: `docs/INVENTORY_SCM_PLAN.md`** (review then build phases A–F). Items=permanent catalog, qty-by-location ledger; procurement populates catalog; received-location logged; transfers (logistics); consumption on use; services=direct expense. **Next major build.**
-2. **UI Polish** — visual consistency pass (incl. QA audit M1–M4, L1–L4, map-label overlap, numeric-input hardening).
-3. **Mobile Responsive** — full responsive redesign (last).
+1. **🚩 cc-023 — RECONCILE the inventory foundation (BLOCKER).** Gemini CLI committed a
+   *lighter* Phase-A (`src/types/inventory.ts`, `src/lib/services/inventory.ts`) that
+   does NOT match `docs/INVENTORY_SCM_PLAN.md` (missing separate `StockBalance` by
+   `storeId`, `StockTransfer`/logistics, weighted-avg cost, pick-or-create at collection,
+   Stores-attached-to-sites register, append-only ledger, services=direct-expense).
+   **Decide: extend it to the plan, or replace it — then build Module 6 on that.**
+2. **Inventory / SCM Module 6** build (phases A–F) per the plan, once §1 is reconciled.
+3. **UI Polish** (QA audit M1–M4, L1–L4, map-label overlap, numeric hardening) → **Mobile** (last).
 
-✅ **OpenWeatherMap** — `weather.ts` + `WeatherPanel.tsx` on Command Center. Wind + visibility, colour-coded, 30-min cache. `VITE_OPENWEATHER_API_KEY`.
-✅ **AI Integration (Gemini Flash)** — `ai.ts` (REST, no SDK) + 3 surgical placements: Command Center **AI Brief** (`AiBrief.tsx`, replaced the stub), GM **price-comparison recommendation** (PurchaseRequestDetail), mechanic **diagnosis assist** (`AiDiagnosisHint.tsx`). All advisory/read-only, role-gated, graceful no-key fallback. Needs `VITE_GEMINI_API_KEY`.
+**Two-agent state:** Gemini CLI is now also building in this repo. Coordination doc
+(I maintain it): `D:\!starq\.GeminiCLI\CLAUDE_CODE_SYNC.md`. Protocol: never edit
+concurrently; commit+push before handoff; read the other agent's latest doc first.
 
-**Pipeline decision (Mustarq, 2026-06-01):** UI Polish + Mobile + AI formally added to timeline. Build order locked as above.
+**Shipped since the plan (committed + pushed):**
+- ✅ OpenWeatherMap weather panel · ✅ AI Advisor (Gemini Flash, demo-mode fallback,
+  `/v1/` + `gemini-1.5-flash`) · ✅ PO **pay-first** (Decision 24) · ✅ QA audit + fixes
+  (legacy-attachment crash, ErrorBoundary, AiBrief 429 debounce, qty validation)
+- ✅ **Cosmetic layer (design system):** light/dark theme + `ThemeToggle`, `Card`
+  elevation, `PageContainer` (8pt spacing), `SectionHeading`, Plus Jakarta Sans font
+- ✅ **(Gemini CLI)** super-admin unified nav, `/holding` landing, "Antrac Holding Group"
+  branding, AppShell cleanup, inventory Phase-A foundation (pending reconciliation §1)
 
-**QA audit (2026-06-01):** Full review done — `docs/QA_AUDIT_2026-06-01.md`. Fixed 3 critical
-token regressions + broken mobile shell this session. 10 findings mapped into the Polish
-(M1–M4, L1–L4) and Mobile (H2) phases. No data-loss or security defects. Next-session
-prompt: `D:\!starq\.claude_code_sync\NEXT_SESSION_PROMPT_2026-06-02.md`.
+**Open UX (untracked):** login-splash may still show "Well Land" — should be Antrac
+globally, Well Land only inside the WLI module.
+
+**Knowledge-gap report for Mustarq/Nexus:** `D:\!starq\.claude_code_sync\CLAUDE_KNOWLEDGE_GAP_REPORT.md`.
 
 **Organising principle (Mustarq):** every project is self-contained under
 `projects/<name>/`; starqOS indexes/visualises it but does not hold project
