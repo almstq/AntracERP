@@ -4,7 +4,7 @@
   "name": "Antrac ERP",
   "version": "0.14.0",
   "updated_at": "2026-06-01",
-  "last_commit": "pending",
+  "last_commit": "92c9836",
   "owner": "cipher",
   "phase_current": "AI Integration live + PO workflow → pay-first (Mustarq decision)",
   "phase_next": "UI Polish — visual consistency pass + QA audit M/L items + numeric-input hardening",
