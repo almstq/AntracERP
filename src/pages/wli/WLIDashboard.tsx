@@ -4,6 +4,7 @@ import { Card } from '../../components/ui/Card';
 import { Sparkles, Truck, Ship, ChevronRight, AlertCircle } from 'lucide-react';
 import { NotificationBell } from '../../components/layout/NotificationBell';
 import { FleetMapView } from '../../components/workflow/FleetMapView';
+import { WeatherPanel } from '../../components/dashboard/WeatherPanel';
 import { useTicketList, useAssetList, useSiteList, useStaffList, useActionInbox } from '../../lib/hooks/useWorkflowData';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 
@@ -67,6 +68,9 @@ export function WLIDashboard() {
             </Card>
           ))}
         </div>
+
+        {/* Site Weather (vessel safety — wind + visibility) */}
+        <WeatherPanel sites={sites} />
 
         {/* Action Required (Inbox) */}
         <div>
