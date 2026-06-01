@@ -62,7 +62,7 @@ export function AiBrief(props: Props) {
   const configured = isAiConfigured();
 
   return (
-    <div className="absolute top-4 left-4 z-[5] max-w-[320px] rounded-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-2xl p-3 select-none">
+    <div className="absolute top-4 left-4 z-[5] max-w-[320px] rounded-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-2xl p-5 select-none">
       <div className="flex items-center justify-between gap-2 mb-1.5">
         <div className="flex items-center gap-2 text-amber">
           <Sparkles size={14} />

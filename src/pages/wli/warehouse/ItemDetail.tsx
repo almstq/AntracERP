@@ -2,6 +2,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, TrendingDown, ArrowLeftRight, Minus } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { useInventoryItem, useStockBalancesForItem, useStockMovementsForItem, useStores } from '../../../lib/hooks/useInventory';
+import { PageContainer } from '../../../components/shared/PageContainer';
 import type { MovementType } from '../../../types/inventory';
 
 const TYPE_CONFIG: Record<MovementType, { label: string; colour: string; Icon: typeof TrendingUp }> = {
@@ -30,11 +31,11 @@ export function ItemDetail() {
 
   const totalQty = balances.reduce((s, b) => s + (b.qtyOnHand ?? 0), 0);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
-  if (!item) return <div className="p-6 text-xs text-red">Item not found.</div>;
+  if (loading) return <PageContainer><p className="text-xs text-text-muted">Loading…</p></PageContainer>;
+  if (!item) return <PageContainer><p className="text-xs text-red">Item not found.</p></PageContainer>;
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
+    <PageContainer>
       <Link to="/wli/warehouse/items" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
         <ArrowLeft size={14} /> Item Catalog
       </Link>
@@ -103,6 +104,6 @@ export function ItemDetail() {
           </div>
         )}
       </Card>
-    </div>
+    </PageContainer>
   );
 }

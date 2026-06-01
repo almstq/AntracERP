@@ -77,7 +77,7 @@ export function MPLDashboard() {
     .reduce((sum, d) => sum + d.cost, 0);
 
   return (
-    <PageContainer className="space-y-4">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-text-primary">MPL Dashboard</h1>
@@ -90,7 +90,7 @@ export function MPLDashboard() {
       </div>
 
       {/* KPI Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         <Card className="text-center py-3">
           <div className="flex items-center justify-center gap-1.5 mb-1">
             <Clock size={14} className="text-amber" />
@@ -123,9 +123,9 @@ export function MPLDashboard() {
 
       {/* Fuel Tank Levels */}
       <Card header={<span className="text-sm font-medium">Fuel Tank Levels</span>}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {tanks.map(tank => (
-            <div key={tank.id} className="p-3 rounded-lg bg-bg-surface border border-border-soft">
+            <div key={tank.id} className="p-5 rounded-lg bg-bg-surface border border-border-soft">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-medium text-text-primary">{tank.name}</p>
                 {fuelTankIcon(tank.current, tank.capacity)}

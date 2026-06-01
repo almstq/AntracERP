@@ -136,7 +136,7 @@ function InvoiceForm({ wo, onCreated, onCancel }: InvoiceFormProps) {
         </div>
       </div>
 
-      <div className="bg-bg-surface rounded-lg p-3 space-y-1 text-xs border border-border">
+      <div className="bg-bg-surface rounded-lg p-5 space-y-1 text-xs border border-border">
         <div className="flex justify-between text-text-muted"><span>Subtotal</span><span>{formatMoney(subtotal, cur)}</span></div>
         {lessAdvance > 0 && <div className="flex justify-between text-text-muted"><span>Less Advance</span><span>({formatMoney(lessAdvance, cur)})</span></div>}
         {lessRetention > 0 && <div className="flex justify-between text-text-muted"><span>Less Retention</span><span>({formatMoney(lessRetention, cur)})</span></div>}
@@ -207,7 +207,7 @@ function PaymentForm({ inv, wo, onRecorded }: PaymentFormProps) {
   }
 
   return (
-    <div className="space-y-2 p-3 bg-bg-surface rounded-lg border border-border">
+    <div className="space-y-2 p-5 bg-bg-surface rounded-lg border border-border">
       <p className="text-xs font-medium text-text-primary">Record Payment</p>
       <p className="text-[10px] text-text-muted">Balance outstanding: {formatMoney(inv.balance, cur)}</p>
       <div className="grid grid-cols-2 gap-2">

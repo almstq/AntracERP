@@ -96,7 +96,7 @@ export function EnquiryDetail() {
                 <p className="text-text-secondary">{enquiry.notes}</p>
               )}
               {enquiry.availabilityNotes && (
-                <div className="p-2 rounded-lg bg-bg-surface border border-border">
+                <div className="p-5 rounded-lg bg-bg-surface border border-border">
                   <p className="text-[9px] uppercase tracking-wide text-text-muted mb-1">Availability Check Notes</p>
                   <p className="text-text-secondary">{enquiry.availabilityNotes}</p>
                 </div>

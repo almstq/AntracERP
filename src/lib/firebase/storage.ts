@@ -1,5 +1,5 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
-import { doc, updateDoc, addDoc, deleteDoc, arrayUnion, collection } from 'firebase/firestore';
+import { doc, updateDoc, addDoc, deleteDoc, arrayUnion, arrayRemove, collection } from 'firebase/firestore';
 import { getStorageInstance, getDbInstance } from './client';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -194,11 +194,9 @@ export async function deleteEntityFile(
     await deleteDoc(doc(db(), 'documents', attachment.vaultDocId));
   }
 
-  // 3. Remove from entity array — safe filter-and-write (avoids arrayRemove object-identity issues)
-  // Note: caller must reload entity and pass updated attachments if needed.
-  // For now we optimistically remove by storagePath match via arrayRemove on the exact object.
-  // Full storagePath-based safe delete is a future hardening task (M4).
-  const { arrayRemove } = await import('firebase/firestore');
+  // 3. Remove from entity array via exact-object arrayRemove.
+  // Known limitation (QA M4): relies on byte-exact object match; storagePath-based
+  // filter-and-write is the future hardening path.
   await updateDoc(doc(db(), col, entityId), {
     attachments: arrayRemove(attachment),
   });

@@ -115,7 +115,7 @@ export function DocumentVault() {
 
   return (
     <>
-      <PageContainer className="space-y-4">
+      <PageContainer>
 
         {/* Header */}
         <div className="flex items-center gap-3">
@@ -165,12 +165,12 @@ export function DocumentVault() {
         )}
 
         {!loading && filtered.length > 0 && (
-          <div className="space-y-1.5">
+          <div className="space-y-3">
             {filtered.map(doc => {
               const viewable  = isViewable(doc.mimeType);
               const entityRoute = `${ENTITY_ROUTES[doc.entityCollection] ?? '#'}/${doc.entityId}`;
               return (
-                <div key={doc.id} className="flex items-center gap-3 p-3 rounded-xl bg-bg-card border border-border hover:border-border-hover transition-colors">
+                <div key={doc.id} className="flex items-center gap-4 p-5 rounded-xl bg-bg-card border border-border hover:border-border-hover transition-colors">
                   <FileIcon mimeType={doc.mimeType} />
 
                   {/* Name + meta */}

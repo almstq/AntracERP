@@ -62,7 +62,7 @@ export function FuelRequestList() {
   const closed = requests.filter(r => r.status === 'closed');
 
   return (
-    <PageContainer className="space-y-5">
+    <PageContainer>
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-lg font-bold text-text-primary">Fuel & Water Requests</h1>
@@ -79,7 +79,7 @@ export function FuelRequestList() {
       {!loading && balances.length > 0 && (
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-2">WLI Inventory Balances</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
             {balances.map(b => (
               <Card key={b.id} className="text-center py-3">
                 <p className="text-xl font-bold text-teal">{b.currentQty.toLocaleString()}</p>

@@ -85,15 +85,15 @@ export function FinanceDashboard() {
 
   return (
     <div className="pb-8">
-      <div className="flex items-center justify-between px-4 md:px-6 py-3 border-b border-border bg-bg-panel sticky top-0 z-10">
-        <h1 className="text-base font-bold text-text-primary">Finance Dashboard</h1>
-        <span className="text-[10px] text-text-muted">WLI Revenue Tracking</span>
+      <div className="flex items-center justify-between px-8 md:px-14 lg:px-16 py-5 border-b border-border bg-bg-panel sticky top-0 z-10">
+        <h1 className="text-lg font-bold text-text-primary">Finance Dashboard</h1>
+        <span className="text-xs text-text-muted">WLI Revenue Tracking</span>
       </div>
 
-      <PageContainer className="space-y-5">
+      <PageContainer>
 
         {/* Stats bar */}
-        <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-3 md:grid-cols-5 gap-5">
           {stats.map(({ label, value, icon: Icon, color }) => (
             <Card key={label} className="text-center py-3 px-2">
               <Icon size={14} className={`mx-auto mb-1 ${color}`} />
@@ -105,7 +105,7 @@ export function FinanceDashboard() {
 
         {/* Advances + Retention summary */}
         {(advancesHeld > 0 || retentionHeld > 0) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {advancesHeld > 0 && (
               <Card>
                 <p className="text-[10px] uppercase tracking-wider text-text-muted mb-1">Advances Held</p>

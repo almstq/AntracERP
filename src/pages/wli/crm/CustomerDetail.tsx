@@ -15,7 +15,7 @@ function StatTile({ label, value, sub, icon: Icon, accent = false }: {
   label: string; value: string; sub?: string; icon: React.ElementType; accent?: boolean;
 }) {
   return (
-    <div className="p-3 rounded-lg bg-bg-surface border border-border">
+    <div className="p-5 rounded-lg bg-bg-surface border border-border">
       <div className="flex items-center gap-2 mb-1">
         <Icon size={13} className={accent ? 'text-teal' : 'text-text-muted'} />
         <span className="text-[9px] uppercase tracking-wider text-text-muted">{label}</span>
@@ -59,7 +59,7 @@ export function CustomerDetail() {
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
         <StatTile label="Lifetime Revenue" value={formatMoney(customer.lifetimeRevenue, cur)} icon={TrendingUp} accent />
         <StatTile label="Outstanding" value={formatMoney(customer.outstandingBalance, cur)}
           sub={customer.creditLimit > 0 ? `${creditUtilPct}% of limit` : undefined}

@@ -80,7 +80,7 @@ export function StockByStore() {
 
       {/* All stores summary */}
       {activeStores.length > 1 && (
-        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-5">
           {activeStores.map((store) => {
             const count = balances.filter((b) => b.storeId === store.id && b.qtyOnHand > 0).length;
             return (
