@@ -219,7 +219,7 @@
       "status": "next",
       "commit": null,
       "completed_date": null,
-      "notes": "NEXT MAJOR BUILD. Plan: docs/INVENTORY_SCM_PLAN.md. Items=permanent catalog, qty-by-location moves via append-only ledger. Procurement populates catalog (pick-or-create at collection); received location logged; weighted-avg costing; operational inter-location transfers (logistics); consumption on ticket use; services=direct expense (no stock). Phases A-F (A+B+C = usable core). Decisions D-INV-1..4 locked 2026-06-01. Slots ahead of UI Polish + Mobile."
+      "notes": "NEXT MAJOR BUILD — its own WAREHOUSE module (not under Operations). Plan: docs/INVENTORY_SCM_PLAN.md (rev 2). FOUNDATION = Store entity + Stores register (add stores to sites) — qty lives in STORES, not loosely at sites; built FIRST in Phase A. Items=permanent catalog, qty-by-store append-only ledger (the journey). Procurement populates catalog (pick-or-create at collection; received STORE logged; weighted-avg cost). Operational store→store transfers (logistics). Consumption on ticket use. Services=direct expense. Phases A-F (A+B+C=usable core). Decisions D-INV-1..5 locked 2026-06-01. Slots ahead of UI Polish + Mobile."
     },
     {
       "id": "ai-integration",
