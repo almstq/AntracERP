@@ -172,9 +172,9 @@ export function Navbar() {
       )}
 
       <aside className={`${mobileOpen ? 'fixed inset-y-0 left-0 z-50' : 'hidden'} md:relative md:z-auto md:block w-60 bg-bg-panel border-r border-border flex-shrink-0 overflow-y-auto`}>
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue">A</div>
+        <div className="p-5 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue">A</div>
             <div className="min-w-0">
               <h1 className="text-sm font-bold text-text-primary leading-tight truncate">
                 {isSA ? 'Antrac Holding Group' : visibleModules[0].brand}
@@ -186,31 +186,31 @@ export function Navbar() {
           </div>
         </div>
 
-        <nav className="p-2 pb-24 space-y-6">
+        <nav className="p-3 pb-28 space-y-8">
           {visibleModules.map((mod) => (
-            <div key={mod.key} className="space-y-2">
+            <div key={mod.key} className="space-y-1">
               {isSA && (
-                <div className="px-3 py-1 mb-1">
+                <div className="px-2 pt-1 pb-2">
                   <span className="text-[10px] font-black text-blue/60 uppercase tracking-[0.2em]">{mod.brand}</span>
                 </div>
               )}
-              
+
               {mod.sections.map((section, si) => {
                 const sectionActive = section.items.some(isActive);
                 const isCollapsed = !!section.title && collapsed.has(section.title) && !sectionActive;
-                
+
                 return (
-                  <div key={si}>
+                  <div key={si} className={section.title ? 'pt-3' : ''}>
                     {section.title && (
                       <button
                         onClick={() => toggleSection(section.title!)}
-                        className="w-full flex items-center justify-between px-3 pt-2 pb-1 group"
+                        className="w-full flex items-center justify-between px-2 pb-2 group"
                         aria-expanded={!isCollapsed}
                       >
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
                         {isCollapsed
-                          ? <ChevronRight size={11} className="text-text-muted group-hover:text-text-secondary" />
-                          : <ChevronDown size={11} className="text-text-muted group-hover:text-text-secondary" />}
+                          ? <ChevronRight size={12} className="text-text-muted group-hover:text-text-secondary" />
+                          : <ChevronDown size={12} className="text-text-muted group-hover:text-text-secondary" />}
                       </button>
                     )}
                     {!isCollapsed && (
@@ -221,11 +221,11 @@ export function Navbar() {
                           return (
                             <Link
                               key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all ${
                                 active ? 'bg-blue/10 text-blue' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
                               }`}
                             >
-                              <Icon size={15} /> {item.label}
+                              <Icon size={16} /> {item.label}
                             </Link>
                           );
                         })}

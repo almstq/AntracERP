@@ -14,11 +14,11 @@ interface Props {
  */
 export function SectionHeading({ title, icon: Icon, hint, action }: Props) {
   return (
-    <div className="flex items-center justify-between mb-4">
+    <div className="flex items-center justify-between mb-5">
       <div className="flex items-center gap-2 min-w-0">
-        {Icon && <Icon size={15} className="text-text-muted shrink-0" />}
-        <h2 className="text-[13px] font-semibold tracking-tight text-text-primary truncate">{title}</h2>
-        {hint && <span className="text-[10px] text-text-muted truncate">· {hint}</span>}
+        {Icon && <Icon size={16} className="text-text-muted shrink-0" />}
+        <h2 className="text-sm font-semibold tracking-tight text-text-primary truncate">{title}</h2>
+        {hint && <span className="text-xs text-text-muted truncate">· {hint}</span>}
       </div>
       {action && <div className="shrink-0">{action}</div>}
     </div>

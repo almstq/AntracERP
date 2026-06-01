@@ -44,10 +44,10 @@ export function WLIDashboard() {
   return (
     <div className="pb-8">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-5 md:px-8 lg:px-10 py-4 border-b border-border bg-bg-panel sticky top-0 z-10">
-        <h1 className="text-base font-bold text-text-primary">Command Center</h1>
+      <div className="flex items-center justify-between px-8 md:px-14 lg:px-16 py-5 border-b border-border bg-bg-panel sticky top-0 z-10">
+        <h1 className="text-lg font-bold text-text-primary">Command Center</h1>
         <div className="flex items-center gap-3">
-          <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{ROLE_LABELS[role] ?? role}</span>
+          <span className="text-xs px-2.5 py-1 rounded-full bg-bg-surface text-text-secondary">{ROLE_LABELS[role] ?? role}</span>
           <NotificationBell />
         </div>
       </div>
@@ -69,11 +69,11 @@ export function WLIDashboard() {
         {/* At a glance */}
         <div>
           <SectionHeading title="At a Glance" />
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-5">
             {stats.map((s) => (
               <Card key={s.label} className="text-center">
-                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
-                <p className="text-[10px] tracking-wide text-text-muted mt-1">{s.label}</p>
+                <p className={`text-3xl font-bold ${s.color}`}>{s.value}</p>
+                <p className="text-xs tracking-wide text-text-muted mt-2">{s.label}</p>
               </Card>
             ))}
           </div>
@@ -91,7 +91,7 @@ export function WLIDashboard() {
             ) : (
               <div className="space-y-1">
                 {inbox.slice(0, 8).map((it) => (
-                  <Link key={`${it.kind}-${it.id}`} to={it.to} className="flex items-center justify-between p-2.5 rounded-lg hover:bg-bg-surface">
+                  <Link key={`${it.kind}-${it.id}`} to={it.to} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <AlertCircle size={15} className="text-amber flex-shrink-0" />
                       <div className="min-w-0">
@@ -113,7 +113,7 @@ export function WLIDashboard() {
         {/* Fleet Readiness */}
         <div>
           <SectionHeading title="Fleet Readiness" />
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Card>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2"><Truck size={16} className="text-teal" /><span className="text-xs font-medium text-text-primary">Land Fleet</span></div>

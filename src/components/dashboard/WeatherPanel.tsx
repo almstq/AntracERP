@@ -20,7 +20,7 @@ function WeatherTile({ w }: { w: SiteWeather }) {
   const wind = windCategory(w.windMs);
   const visKm = w.visibilityM / 1000;
   return (
-    <div className="rounded-lg bg-bg-surface border border-border p-4 flex flex-col gap-3">
+    <div className="rounded-lg bg-bg-surface border border-border p-6 flex flex-col gap-5">
       {/* Name + condition + icon */}
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -110,7 +110,7 @@ export function WeatherPanel({ sites }: Props) {
           Weather unavailable. If the key is new, it can take ~2h to activate.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {weather.map((w) => <WeatherTile key={w.siteId} w={w} />)}
         </div>
       )}

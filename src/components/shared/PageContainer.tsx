@@ -12,7 +12,7 @@ interface Props {
  */
 export function PageContainer({ children, className = '' }: Props) {
   return (
-    <div className={`px-6 py-8 md:px-8 lg:px-10 max-w-6xl mx-auto space-y-8 ${className}`}>
+    <div className={`px-8 py-12 md:px-14 lg:px-16 max-w-6xl mx-auto space-y-10 ${className}`}>
       {children}
     </div>
   );

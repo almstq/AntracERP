@@ -114,7 +114,11 @@ export function FileUpload({
       if (file.size > 20 * 1024 * 1024) { setErr(`${file.name} exceeds 20 MB limit`); continue; }
       try {
         setProgress(0);
-        await uploadEntityFile(collection, entityId, entityDisplayId, file, user.uid, setProgress);
+        await uploadEntityFile(
+          collection, entityId, entityDisplayId, file,
+          { uid: user.uid, displayName: user.displayName ?? 'Unknown' },
+          setProgress,
+        );
         setProgress(null);
         onUpdate();
       } catch (e) {
@@ -207,7 +211,27 @@ export function FileUpload({
                     <p className={`truncate ${viewable ? 'text-blue hover:underline' : 'text-text-primary'}`}>
                       {att.name}
                     </p>
-                    <p className="text-[10px] text-text-muted">{formatBytes(att.size)}</p>
+                    <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                      <span className="text-[10px] text-text-muted">{formatBytes(att.size)}</span>
+                      {att.uploadedByName && (
+                        <span className="text-[10px] text-text-muted">· {att.uploadedByName}</span>
+                      )}
+                      {att.uploadedAt && (
+                        <span className="text-[10px] text-text-muted">
+                          · {new Date(att.uploadedAt).toLocaleDateString('en-MV', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                      {att.sha256 !== undefined && (
+                        <button
+                          type="button"
+                          title="File integrity checksum — proves document was not modified after upload"
+                          onClick={e => { e.stopPropagation(); navigator.clipboard.writeText(att.sha256 ?? ''); }}
+                          className="text-[10px] font-mono text-text-muted hover:text-text-secondary truncate max-w-[80px]"
+                        >
+                          {att.sha256 ? att.sha256.slice(0, 8) + '…' : '—'}
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* View — images + PDFs only */}

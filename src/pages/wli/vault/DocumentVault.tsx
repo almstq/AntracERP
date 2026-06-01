@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { getDbInstance } from '../../../lib/firebase/client';
 import { DOC_TYPE_LABELS, type DocType, type VaultDocument } from '../../../lib/firebase/storage';
-import { Download, Eye, FileText, Image, FolderOpen, X } from 'lucide-react';
+import { Download, Eye, FileText, Image, FolderOpen, X, ShieldCheck } from 'lucide-react';
 import { PageContainer } from '../../../components/shared/PageContainer';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -51,7 +51,11 @@ function PreviewModal({ doc, onClose }: { doc: VaultDocument; onClose: () => voi
       <div className="flex items-center justify-between px-4 py-3 bg-bg-overlay shrink-0" onClick={e => e.stopPropagation()}>
         <div className="min-w-0">
           <p className="text-sm font-medium text-text-primary truncate max-w-xs">{doc.name}</p>
-          <p className="text-[10px] text-text-muted">{doc.entityDisplayId} · {DOC_TYPE_LABELS[doc.docType]}</p>
+          <p className="text-[10px] text-text-muted">
+            {doc.entityDisplayId} · {DOC_TYPE_LABELS[doc.docType]}
+            {doc.uploadedByName && ` · ${doc.uploadedByName}`}
+            {doc.uploadedAt && ` · ${formatDate(doc.uploadedAt)}`}
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <a href={doc.url} download={doc.name} className="flex items-center gap-1 text-xs text-blue hover:underline" onClick={e => e.stopPropagation()}>
@@ -177,18 +181,31 @@ export function DocumentVault() {
                     >
                       {doc.name}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-bg-surface text-text-muted">
                         {DOC_TYPE_LABELS[doc.docType] ?? doc.docType}
                       </span>
-                      <Link
-                        to={entityRoute}
-                        className="text-[10px] text-blue hover:underline"
-                      >
+                      <Link to={entityRoute} className="text-[10px] text-blue hover:underline">
                         {ENTITY_LABELS[doc.entityCollection] ?? doc.entityCollection} · {doc.entityDisplayId}
                       </Link>
-                      <span className="text-[10px] text-text-muted">{formatDate(doc.uploadedAt)}</span>
                       <span className="text-[10px] text-text-muted">{formatBytes(doc.size)}</span>
+                      <span className="text-[10px] text-text-muted">
+                        {doc.uploadedByName ?? doc.uploadedById}
+                      </span>
+                      <span className="text-[10px] text-text-muted">{formatDate(doc.uploadedAt)}</span>
+                      {'sha256' in doc && (
+                        <button
+                          type="button"
+                          title="File integrity checksum — proves document was not modified after upload. Click to copy."
+                          onClick={() => (doc as VaultDocument).sha256 && navigator.clipboard.writeText((doc as VaultDocument).sha256!)}
+                          className="flex items-center gap-1 text-[10px] font-mono text-text-muted hover:text-teal transition-colors"
+                        >
+                          <ShieldCheck size={10} className={(doc as VaultDocument).sha256 ? 'text-teal' : 'text-text-muted'} />
+                          {(doc as VaultDocument).sha256
+                            ? (doc as VaultDocument).sha256!.slice(0, 8) + '…'
+                            : '—'}
+                        </button>
+                      )}
                     </div>
                   </div>
 
