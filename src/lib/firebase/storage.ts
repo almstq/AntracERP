@@ -36,10 +36,17 @@ export interface Attachment {
   storagePath: string;
   size: number;
   mimeType: string;
+  /** @deprecated legacy field name (pre-Document-Vault uploads stored MIME as `type`). Read via mimeOf(). */
+  type?: string;
   docType: DocType;
   uploadedAt: string;   // ISO string
   uploadedById: string;
   vaultDocId?: string;  // ref to /documents/{id} for vault + cleanup
+}
+
+/** MIME type of an attachment, tolerant of legacy records that used `type`. */
+export function mimeOf(att: { mimeType?: string; type?: string }): string {
+  return att.mimeType ?? att.type ?? '';
 }
 
 /** Shape stored in top-level `documents` collection (the vault). */

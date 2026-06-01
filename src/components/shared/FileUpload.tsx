@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { Paperclip, Download, Trash2, Upload, FileText, Image, Eye, X } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { uploadEntityFile, deleteEntityFile, type Attachment } from '../../lib/firebase/storage';
+import { uploadEntityFile, deleteEntityFile, mimeOf, type Attachment } from '../../lib/firebase/storage';
 import { useAuth } from '../../lib/hooks/useAuth';
 
 interface Props {
@@ -33,8 +33,9 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 // ─── Preview Modal ────────────────────────────────────────────────────────────
 
 function PreviewModal({ att, onClose }: { att: Attachment; onClose: () => void }) {
-  const isImage = att.mimeType.startsWith('image/');
-  const isPdf   = att.mimeType === 'application/pdf';
+  const mime = mimeOf(att);
+  const isImage = mime.startsWith('image/');
+  const isPdf   = mime === 'application/pdf';
 
   return (
     <div
@@ -189,13 +190,14 @@ export function FileUpload({
         ) : (
           <div className="space-y-1.5">
             {attachments.map((att) => {
-              const viewable = isViewable(att.mimeType);
+              const mime = mimeOf(att);
+              const viewable = isViewable(mime);
               return (
                 <div
                   key={att.storagePath}
                   className="flex items-center gap-2 p-2 rounded-lg bg-bg-surface text-xs group"
                 >
-                  <FileIcon mimeType={att.mimeType} />
+                  <FileIcon mimeType={mime} />
 
                   {/* Name + meta */}
                   <div

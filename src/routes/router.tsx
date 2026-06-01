@@ -40,6 +40,7 @@ import { MPLDashboard } from '../pages/mpl/MPLDashboard';
 import { EMSDashboard } from '../pages/ems/EMSDashboard';
 import { UserList } from '../pages/admin/UserList';
 import { HOLDING_ROLES, WLI_ROLES, MPL_ROLES, EMS_ROLES } from '../lib/permissions/roles';
+import { RouteError } from '../components/shared/RouteError';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -48,6 +49,7 @@ export const router = createBrowserRouter([
   {
     path: '/',
     element: <ProtectedRoute />,
+    errorElement: <RouteError />,
     children: [
       { index: true, element: <DeskRedirect /> },
       { path: 'dashboard', element: <Dashboard /> },
