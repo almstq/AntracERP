@@ -69,7 +69,7 @@ export function WLIDashboard() {
         {/* At a glance */}
         <div>
           <SectionHeading title="At a Glance" />
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
             {stats.map((s) => (
               <Card key={s.label} className="text-center">
                 <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
