@@ -11,12 +11,25 @@
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 
-// Free-tier Flash model. If Google retires/renames it, this is the one line to change.
-const MODEL = 'gemini-2.0-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// Model names: gemini-1.5-flash is the stable workhorse. 
+const MODEL = 'gemini-1.5-flash';
+const ENDPOINT = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent`;
 
 export function isAiConfigured(): boolean {
   return !!API_KEY;
+}
+
+/** 
+ * Returns a high-quality mock response for demo purposes when AI is not configured.
+ */
+function getMockResponse(prompt: string): string {
+  if (prompt.includes('operations advisor')) {
+    return 'Operations are currently stable. Land fleet is at 85% capacity; consider scheduling maintenance for Excavator EX-04. One critical ticket at Site A requires immediate supervisor attention.';
+  }
+  if (prompt.includes('maintenance advisor')) {
+    return 'Probable cause: Hydraulic seal failure or contaminated fluid. Check for leaks around the main cylinder. Parts needed: Seal kit #442, 20L hydraulic fluid.';
+  }
+  return 'AI Advisor is ready to assist. Please configure your API key for live operational insights.';
 }
 
 interface GenerateOpts {
@@ -25,34 +38,44 @@ interface GenerateOpts {
   signal?: AbortSignal;
 }
 
-/** One-shot text generation. Throws on missing key or API error. */
+/** One-shot text generation. Returns mock data if no key, or throws on API error. */
 export async function generateText(prompt: string, opts: GenerateOpts = {}): Promise<string> {
-  if (!API_KEY) throw new Error('Gemini API key not configured');
+  if (!API_KEY) {
+    // Graceful fallback to demo mode
+    await new Promise(r => setTimeout(r, 800)); // Simulate latency
+    return getMockResponse(prompt);
+  }
 
-  const res = await fetch(`${ENDPOINT}?key=${API_KEY}`, {
+  const res = await fetch(`${ENDPOINT}?key=${API_KEY}`, {  
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },       
     signal: opts.signal,
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: {
-        temperature: opts.temperature ?? 0.3,
+        temperature: opts.temperature ?? 0.4,
         maxOutputTokens: opts.maxTokens ?? 600,
       },
     }),
   });
 
   if (!res.ok) {
-    if (res.status === 400) throw new Error('Gemini rejected the request (check API key / model name)');
-    if (res.status === 403) throw new Error('Gemini key not authorised yet (new keys can take a few minutes)');
-    if (res.status === 429) throw new Error('Gemini rate limit reached — try again shortly');
-    throw new Error(`Gemini error (${res.status})`);
+    const errorBody = await res.json().catch(() => ({}));
+    const msg = errorBody?.error?.message || `Gemini error (${res.status})`;
+    throw new Error(msg);
   }
 
   const j = await res.json();
-  const parts = j?.candidates?.[0]?.content?.parts as { text?: string }[] | undefined;
+  const candidate = j?.candidates?.[0];
+
+  if (candidate?.finishReason === 'SAFETY') {
+    return 'I cannot provide advice on this specific query due to safety filters. Please rephrase.';
+  }
+
+  const parts = candidate?.content?.parts as { text?: string }[] | undefined;
   const text = parts?.map((p) => p.text ?? '').join('').trim() ?? '';
-  if (!text) throw new Error('Gemini returned no text');
+
+  if (!text) throw new Error('Gemini returned an empty response');   
   return text;
 }
 

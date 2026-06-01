@@ -77,7 +77,7 @@ const WLI_NAV: ModuleNav = {
 };
 
 const HQ_NAV: ModuleNav = {
-  key: 'holding', brand: 'Antrac HQ', subtitle: 'Holding · Finance · Directors',
+  key: 'holding', brand: 'Antrac Holding Group', subtitle: 'Operations · Finance · Directors',
   sections: [
     { items: [{ to: '/holding', label: 'Group Overview', icon: Building2, end: true }] },
     { title: 'Admin', items: [{ to: '/admin/users', label: 'Users', icon: Users }] },
@@ -106,11 +106,24 @@ function moduleForPath(path: string): ModuleNav {
   return WLI_NAV;
 }
 
+/** 
+ * Refined logic: super_admin sees EVERYTHING. 
+ * Standard users see the module relevant to their current path.
+ */
+function getVisibleModules(userRole: string | undefined, currentPath: string): ModuleNav[] {
+  if (userRole === 'super_admin') {
+    return [HQ_NAV, WLI_NAV, MPL_NAV, EMS_NAV];
+  }
+  return [moduleForPath(currentPath)];
+}
+
 export function Navbar() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const mod = moduleForPath(location.pathname);
+  
+  const isSA = user?.role === 'super_admin';
+  const visibleModules = getVisibleModules(user?.role, location.pathname);
 
   const isActive = (item: NavItem) =>
     item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
@@ -118,9 +131,17 @@ export function Navbar() {
   // Collapsible sections — start with the noisy ones (Role Desks, Registers) collapsed.
   const [collapsed, setCollapsed] = useState<Set<string>>(() => {
     const s = new Set<string>();
-    for (const sec of mod.sections) if (sec.title && sec.defaultCollapsed) s.add(sec.title);
+    // Collapse for SA by default to keep the long list tidy
+    if (isSA) {
+      s.add('Role Desks');
+      s.add('Registers');
+    } else {
+      const activeMod = visibleModules[0];
+      for (const sec of activeMod.sections) if (sec.title && sec.defaultCollapsed) s.add(sec.title);
+    }
     return s;
   });
+
   const toggleSection = (title: string) =>
     setCollapsed((c) => { const n = new Set(c); n.has(title) ? n.delete(title) : n.add(title); return n; });
 
@@ -128,7 +149,7 @@ export function Navbar() {
     <>
       {/* Mobile top bar — fixed, full width, sits above content */}
       <div className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 border-b border-border bg-bg-panel">
-        <span className="text-sm font-bold text-text-primary">{mod.brand}</span>
+        <span className="text-sm font-bold text-text-primary">{isSA ? 'Antrac Group' : visibleModules[0].brand}</span>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-text-secondary" aria-label="Toggle menu">
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -144,52 +165,66 @@ export function Navbar() {
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue">A</div>
             <div className="min-w-0">
-              <h1 className="text-sm font-bold text-text-primary leading-tight truncate">{mod.brand}</h1>
-              <p className="text-[10px] text-text-muted truncate">{mod.subtitle}</p>
+              <h1 className="text-sm font-bold text-text-primary leading-tight truncate">
+                {isSA ? 'Antrac Holding Group' : visibleModules[0].brand}
+              </h1>
+              <p className="text-[10px] text-text-muted truncate">
+                {isSA ? 'Global Administrator' : visibleModules[0].subtitle}
+              </p>
             </div>
           </div>
         </div>
 
-        <nav className="p-2 pb-24 space-y-2">
-          {mod.sections.map((section, si) => {
-            const sectionActive = section.items.some(isActive);
-            // collapsed unless it holds the active route (never hide where you are)
-            const isCollapsed = !!section.title && collapsed.has(section.title) && !sectionActive;
-            return (
-            <div key={si}>
-              {section.title && (
-                <button
-                  onClick={() => toggleSection(section.title!)}
-                  className="w-full flex items-center justify-between px-3 pt-2 pb-1 group"
-                  aria-expanded={!isCollapsed}
-                >
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
-                  {isCollapsed
-                    ? <ChevronRight size={11} className="text-text-muted group-hover:text-text-secondary" />
-                    : <ChevronDown size={11} className="text-text-muted group-hover:text-text-secondary" />}
-                </button>
+        <nav className="p-2 pb-24 space-y-6">
+          {visibleModules.map((mod) => (
+            <div key={mod.key} className="space-y-2">
+              {isSA && (
+                <div className="px-3 py-1 mb-1">
+                  <span className="text-[10px] font-black text-blue/60 uppercase tracking-[0.2em]">{mod.brand}</span>
+                </div>
               )}
-              {!isCollapsed && (
-              <div className="space-y-0.5">
-                {section.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = isActive(item);
-                  return (
-                    <Link
-                      key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
-                        active ? 'bg-blue/10 text-blue' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
-                      }`}
-                    >
-                      <Icon size={15} /> {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-              )}
+              
+              {mod.sections.map((section, si) => {
+                const sectionActive = section.items.some(isActive);
+                const isCollapsed = !!section.title && collapsed.has(section.title) && !sectionActive;
+                
+                return (
+                  <div key={si}>
+                    {section.title && (
+                      <button
+                        onClick={() => toggleSection(section.title!)}
+                        className="w-full flex items-center justify-between px-3 pt-2 pb-1 group"
+                        aria-expanded={!isCollapsed}
+                      >
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
+                        {isCollapsed
+                          ? <ChevronRight size={11} className="text-text-muted group-hover:text-text-secondary" />
+                          : <ChevronDown size={11} className="text-text-muted group-hover:text-text-secondary" />}
+                      </button>
+                    )}
+                    {!isCollapsed && (
+                      <div className="space-y-0.5">
+                        {section.items.map((item) => {
+                          const Icon = item.icon;
+                          const active = isActive(item);
+                          return (
+                            <Link
+                              key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                                active ? 'bg-blue/10 text-blue' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                              }`}
+                            >
+                              <Icon size={15} /> {item.label}
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            );
-          })}
+          ))}
         </nav>
 
         <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-bg-panel">

@@ -22,7 +22,6 @@ export function AiBrief(props: Props) {
   const signature = JSON.stringify(props);
 
   const run = useCallback(async (force = false) => {
-    if (!isAiConfigured()) return;
     setLoading(true); setErr(null);
     const prompt = [
       'You are the operations advisor for Well Land Investment (WLI), a heavy-equipment',
@@ -40,7 +39,6 @@ export function AiBrief(props: Props) {
     ].join('\n');
 
     try {
-      // force = bypass cache by using a per-call signature
       const sig = force ? `${signature}:${Date.now()}` : signature;
       const text = await cachedGenerate('ops-brief', sig, ONE_HOUR, prompt, { temperature: 0.4, maxTokens: 200 });
       setBrief(text);
@@ -51,54 +49,54 @@ export function AiBrief(props: Props) {
     }
   }, [signature, openTickets, criticalTickets, approvals, landReady, landTotal, vesselReady, vesselTotal, sites]);
 
-  // Fire ONCE after the dashboard data settles. The dashboard's data hooks resolve
-  // at different times, so the signature changes a few times on load — debounce so we
-  // make a single Gemini call (not one per re-render), and never re-fire the same snapshot.
   const firedSig = useRef<string>('');
   useEffect(() => {
-    if (!isAiConfigured()) return;
     const t = setTimeout(() => {
       if (firedSig.current === signature) return;
       firedSig.current = signature;
       run(false);
     }, 1200);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature]);
+  }, [signature, run]);
+
+  const configured = isAiConfigured();
 
   return (
-    <div className="absolute top-3 left-3 z-[1] max-w-[300px] rounded-lg bg-black/70 backdrop-blur px-3 py-2">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5 text-amber">
-          <Sparkles size={13} />
-          <span className="text-[11px] font-semibold">NEXUS AI ADVISOR</span>
+    <div className="absolute top-4 left-4 z-[5] max-w-[320px] rounded-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-2xl p-3 select-none">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <div className="flex items-center gap-2 text-amber">
+          <Sparkles size={14} />
+          <span className="text-[11px] font-bold tracking-wider uppercase">Nexus AI Advisor</span>
+          {!configured && <span className="text-[8px] px-1 py-0.5 rounded bg-amber/20 font-medium">DEMO</span>}
         </div>
-        {isAiConfigured() && (
-          <button
-            onClick={() => run(true)}
-            disabled={loading}
-            className="text-white/50 hover:text-white/90 disabled:opacity-40"
-            title="Regenerate brief"
-            aria-label="Regenerate brief"
-          >
-            <RefreshCw size={11} className={loading ? 'animate-spin' : ''} />
-          </button>
-        )}
+        <button
+          onClick={() => run(true)}
+          disabled={loading}
+          className="text-white/40 hover:text-white/90 disabled:opacity-40 transition-colors"
+          title="Regenerate brief"
+        >
+          <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      {!isAiConfigured() ? (
-        <p className="text-[10px] text-white/60 mt-1">
-          AI advisor not configured — add <code>VITE_GEMINI_API_KEY</code> to <code>.env.local</code>.
-        </p>
-      ) : loading && !brief ? (
-        <p className="text-[10px] text-white/70 mt-1">Generating brief…</p>
+      {loading && !brief ? (
+        <div className="space-y-1.5 mt-2">
+          <div className="h-2 w-full bg-white/10 rounded animate-pulse" />
+          <div className="h-2 w-4/5 bg-white/10 rounded animate-pulse" />
+        </div>
       ) : err ? (
-        <p className="text-[10px] text-amber/90 mt-1">{err}</p>
+        <p className="text-[10px] text-amber/90 mt-1 leading-relaxed italic">{err}</p>
       ) : brief ? (
-        <p className="text-[11px] text-white/85 mt-1 leading-snug">{brief}</p>
+        <p className="text-[11px] text-white/90 leading-relaxed font-medium">{brief}</p>
       ) : (
-        <p className="text-[10px] text-white/60 mt-1">Daily operational brief</p>
+        <p className="text-[10px] text-white/50 italic">Generating operational brief…</p>
+      )}
+
+      {!configured && !loading && (
+        <p className="text-[9px] text-white/30 mt-2 border-t border-white/5 pt-1.5">
+          Live AI requires a Gemini API key.
+        </p>
       )}
     </div>
   );
-}
+  }
