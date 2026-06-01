@@ -12,10 +12,11 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 7 — OpenWeatherMap + AI Integration (all 3 placements) live. Build clean at **88%** (22/25 phases). **Next, in order:**
+Session 7 — OpenWeatherMap + AI Integration live, PO → pay-first, live-test fixes. Build clean at **85%** (22/26 phases). **Next, in order:**
 
-1. **UI Polish** — visual consistency pass across all pages (incl. QA audit M1–M4, L1–L4 + map-label overlap).
-2. **Mobile Responsive** — full responsive redesign (last — needs everything stable; nav shell already fixed).
+1. **Inventory / SCM module** (Module 6, full build) — **plan written: `docs/INVENTORY_SCM_PLAN.md`** (review then build phases A–F). Items=permanent catalog, qty-by-location ledger; procurement populates catalog; received-location logged; transfers (logistics); consumption on use; services=direct expense. **Next major build.**
+2. **UI Polish** — visual consistency pass (incl. QA audit M1–M4, L1–L4, map-label overlap, numeric-input hardening).
+3. **Mobile Responsive** — full responsive redesign (last).
 
 ✅ **OpenWeatherMap** — `weather.ts` + `WeatherPanel.tsx` on Command Center. Wind + visibility, colour-coded, 30-min cache. `VITE_OPENWEATHER_API_KEY`.
 ✅ **AI Integration (Gemini Flash)** — `ai.ts` (REST, no SDK) + 3 surgical placements: Command Center **AI Brief** (`AiBrief.tsx`, replaced the stub), GM **price-comparison recommendation** (PurchaseRequestDetail), mechanic **diagnosis assist** (`AiDiagnosisHint.tsx`). All advisory/read-only, role-gated, graceful no-key fallback. Needs `VITE_GEMINI_API_KEY`.
