@@ -1,6 +1,6 @@
 # Antrac ERP — Master Development Timeline
 
-**Owner:** Nexus (starqOS Coordinator)
+**Owner:** Nexus (Coordinator)
 **Created:** 2026-05-29
 **Updated:** 2026-05-31 (Claude Code build session 3)
 **Status:** ACTIVE — Firebase LIVE · 2 workflows built & live-tested end-to-end (Issue→Closure + Fuel) · CRM & Sales workflow spec received, plan pending · cross-cutting currency + GST 8% pending

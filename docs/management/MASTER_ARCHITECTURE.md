@@ -1,10 +1,10 @@
 # Antrac ERP — Master Architecture Document
 
-**Owner:** Nexus (starqOS Coordinator)
+**Owner:** Nexus (Coordinator)
 **Created:** 2026-05-29
 **Last updated:** 2026-05-29 (Correction: WLI rental business model, CRM Phase 2, dual asset status)
 **Status:** ACTIVE — Phase 1 Pending Mustarq Approval
-**Classification:** Internal — starqOS team only
+**Classification:** Internal — Antrac project team only
 
 **Sources consolidated:**
 - `projects/ANTRAC ERP — MODULE ARCHITECTURE.txt` (Mustarq's definitive module brief)

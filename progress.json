@@ -354,7 +354,7 @@
       "status": "planned",
       "commit": null,
       "completed_date": null,
-      "notes": "Per FollowMe policy STARQ-specific requirement. Data layer ready (cache+hook+map); build presentation pages once API key live + response shape confirmed. Add trip-history/ETA snapshot persistence."
+      "notes": "Per FollowMe policy Antrac-specific requirement. Data layer ready (cache+hook+map); build presentation pages once API key live + response shape confirmed. Add trip-history/ETA snapshot persistence."
     }
   ],
   "backlog": [

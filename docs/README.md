@@ -1,8 +1,8 @@
 # Antrac ERP — Documentation (canonical home)
 
 **This folder is the single source of truth for everything about Antrac ERP.**
-Per the starqOS organising principle: each project is self-contained under
-`projects/<name>/`; the starqOS processor *indexes/visualises* this — it does not
+Per the parent workspace organising principle: each project is self-contained under
+`projects/<name>/`; the parent workspace processor *indexes/visualises* this — it does not
 hold project content.
 
 ## Structure
@@ -21,14 +21,14 @@ docs/
 Plus `../PROGRESS.md` (live tracker), `../CHANGELOG.md`, `../README.md`.
 
 ## Doc policy
-- **Claude Code writes all project docs here** — never into the starqOS
+- **Claude Code writes all project docs here** — never into the parent workspace
   processor area (`starqos/`, `workspaces/`, `02_ANTRAC_NEXUS`, etc.).
 - `MASTER_TIMELINE.md` / `MASTER_ARCHITECTURE.md` here are the **canonical**
   copies. The copies under `starqos/content/nexus/` are the Nexus/Hermes mirror
   (the live agent system still reads those) — keep them in sync until migrated.
 
 ## Deferred consolidation (next session — needs care)
-The following antrac content still lives in the starqOS processor because the
+The following antrac content still lives in the parent workspace processor because the
 **running** system reads those paths; relocating them requires updating
 Hermes/VOID DECK references + testing:
 - `workspaces/{nexus,lens,quill,vector,cipher,grid}/…` — agent work products

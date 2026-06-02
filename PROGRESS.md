@@ -78,7 +78,7 @@ globally, Well Land only inside the WLI module.
 **Knowledge-gap report for Mustarq/Nexus:** `D:\!starq\.claude_code_sync\CLAUDE_KNOWLEDGE_GAP_REPORT.md`.
 
 **Organising principle (Mustarq):** every project is self-contained under
-`projects/<name>/`; starqOS indexes/visualises it but does not hold project
+`projects/<name>/`; the parent workspace indexes/visualises it but does not hold project
 content. All project docs live under `projects/antrac-erp/docs/` (canonical).
 
 **To run:** `npm run dev` → http://localhost:3000 · log in with **Google** as
