@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
@@ -89,17 +90,18 @@ export function AssetRegister() {
         <div className="space-y-1">
           {assets.map((a) => (
             <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
-              <div className="flex items-center gap-3 min-w-0">
+              <Link to={`/wli/assets/${a.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
                 <ClassIcon c={a.assetClass} />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">{a.code} — {a.make} {a.model}</p>
+                  <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{a.code} — {a.make} {a.model}</p>
                   <p className="text-[10px] text-text-muted">{a.type} · {a.operationalStatus}</p>
                 </div>
-              </div>
+              </Link>
               <select
                 className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
                 value={a.currentSiteId}
                 onChange={(e) => reassign(a.id, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
                 title="Assign location"
               >
                 {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}

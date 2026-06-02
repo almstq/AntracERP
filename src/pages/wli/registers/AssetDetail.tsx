@@ -1,0 +1,189 @@
+import { useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
+  Gauge, type LucideIcon,
+} from 'lucide-react';
+import { useAssetList, useSiteList, useTicketList } from '../../../lib/hooks/useWorkflowData';
+import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
+import { ticketWorkflow } from '../../../lib/workflow/definitions';
+import type { TicketStatus } from '../../../types/workflow-entities';
+import type { AssetClass } from '../../../types/asset';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+
+const CLASS_ICON: Record<AssetClass, LucideIcon> = { vessel: Ship, vehicle: Truck, equipment: Wrench };
+
+const OP_BADGE: Record<string, string> = {
+  operational: 'b-pos', idle: 'b-info', maintenance: 'b-warn', down: 'b-danger',
+};
+const COMM_BADGE: Record<string, string> = {
+  available: 'b-muted', soft_reserved: 'b-warn', deployed: 'b-accent',
+};
+const COMM_LABEL: Record<string, string> = {
+  available: 'Available', soft_reserved: 'Soft-reserved', deployed: 'Deployed',
+};
+function ticketBadge(s: string): string {
+  if (s === 'closed') return 'b-muted';
+  if (s === 'rejected') return 'b-danger';
+  if (s === 'gm_approved' || s === 'resolved' || s === 'items_delivered') return 'b-pos';
+  if (s === 'supervisor_checked') return 'b-accent';
+  if (s === 'submitted' || s === 'diagnosed') return 'b-warn';
+  return 'b-info';
+}
+const WO_BADGE: Record<string, string> = {
+  active: 'b-info', in_progress: 'b-accent', completed: 'b-warn',
+  invoiced: 'b-warn', partially_paid: 'b-pos', fully_paid: 'b-pos', closed: 'b-muted',
+};
+
+function fmtDate(d: Date | string | undefined): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+export function AssetDetail() {
+  const { id } = useParams();
+  const { data: assets, loading } = useAssetList();
+  const { data: sites } = useSiteList();
+  const { data: tickets } = useTicketList();
+  const { data: workOrders } = useWorkOrderList();
+
+  const asset = assets.find((a) => a.id === id);
+  const siteName = (sid: string | undefined) => (sid ? sites.find((s) => s.id === sid)?.name ?? sid : '—');
+
+  if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
+  if (!asset) return <div className="page"><p className="empty-note">Asset not found.</p></div>;
+
+  const Icon = CLASS_ICON[asset.assetClass] ?? Wrench;
+
+  // Repair history — every ticket raised against this asset.
+  const repairs = tickets
+    .filter((t) => t.assetId === id || t.assetCode === asset.code)
+    .sort((a, b) => +new Date(b.updatedAt ?? 0) - +new Date(a.updatedAt ?? 0));
+  const openRepairs = repairs.filter((t) => !['closed', 'rejected'].includes(t.status)).length;
+
+  // Deployment history (sales) — work orders this asset was assigned to.
+  const deployments = workOrders
+    .map((wo) => ({ wo, wa: wo.assets?.find((a) => a.assetId === id) }))
+    .filter((d) => !!d.wa)
+    .sort((a, b) => +new Date(b.wa!.startDate ?? 0) - +new Date(a.wa!.startDate ?? 0));
+  const daysDeployed = deployments.reduce((s, d) => s + (d.wa?.actualDays ?? 0), 0);
+
+  return (
+    <div className="page">
+      <Link to="/wli/assets" className="dback"><ArrowLeft /> Asset Register</Link>
+
+      <div className="dhead">
+        <div>
+          <span className="eyebrow">{asset.code}</span>
+          <h1 className="dtitle">{asset.make} {asset.model}</h1>
+          <div className="dhead-badges">
+            <span className="badge b-info"><Icon size={11} /> {asset.type}</span>
+            <span className={`badge ${OP_BADGE[asset.operationalStatus] ?? 'b-muted'}`}>
+              <span className="bdot" />{asset.operationalStatus}
+            </span>
+            <span className={`badge ${COMM_BADGE[(asset.commercialStatus || 'available')] ?? 'b-muted'}`}>
+              <span className="bdot" />{COMM_LABEL[(asset.commercialStatus || 'available')] ?? (asset.commercialStatus || 'available')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="detail">
+        {/* Left — specs + history */}
+        <div className="dcol">
+          <div className="dcard">
+            <div className="dcard-h"><h3><Gauge /> Specifications</h3></div>
+            <div className="dcard-b">
+              <div className="kv">
+                <div><div className="k">Code</div><div className="v"><span className="mono">{asset.code}</span></div></div>
+                <div><div className="k">Class</div><div className="v" style={{ textTransform: 'capitalize' }}>{asset.assetClass}</div></div>
+                <div><div className="k">Make</div><div className="v">{asset.make || '—'}</div></div>
+                <div><div className="k">Model</div><div className="v">{asset.model || '—'}</div></div>
+                <div><div className="k">Type</div><div className="v">{asset.type || '—'}</div></div>
+                <div><div className="k">Current Site</div><div className="v">{siteName(asset.currentSiteId)}</div></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Repair history */}
+          <div className="dcard">
+            <div className="dcard-h">
+              <h3><Wrench /> Repair History</h3>
+              <span className="tc-sub">{repairs.length} ticket{repairs.length !== 1 ? 's' : ''}{openRepairs > 0 ? ` · ${openRepairs} open` : ''}</span>
+            </div>
+            <div className="dcard-b">
+              {repairs.length === 0 ? (
+                <p className="empty-note" style={{ padding: 0 }}>No repair tickets raised for this asset.</p>
+              ) : repairs.map((t) => (
+                <Link className="linkrow" key={t.id} to={`/wli/tickets/${t.id}`}>
+                  <span className="lr-ic tint-danger"><Wrench /></span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="lr-id">{t.displayId}</div>
+                    <div className="lr-sub">{t.description || '—'} · {fmtDate(t.updatedAt)}</div>
+                  </div>
+                  <span className={`badge ${ticketBadge(t.status)}`}><span className="bdot" />{ticketWorkflow.statusLabels[t.status as TicketStatus] ?? t.status}</span>
+                  <ChevronRight className="lr-chev" />
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Deployment history (sales work orders) */}
+          <div className="dcard">
+            <div className="dcard-h">
+              <h3><Briefcase /> Deployment History</h3>
+              <span className="tc-sub">{deployments.length} work order{deployments.length !== 1 ? 's' : ''}{daysDeployed > 0 ? ` · ${daysDeployed} days` : ''}</span>
+            </div>
+            <div className="dcard-b">
+              {deployments.length === 0 ? (
+                <p className="empty-note" style={{ padding: 0 }}>Not deployed on any sales work order yet.</p>
+              ) : deployments.map(({ wo, wa }) => (
+                <Link className="linkrow" key={wo.id} to={`/wli/crm/work-orders/${wo.id}`}>
+                  <span className="lr-ic tint-accent"><Briefcase /></span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="lr-id">{wo.displayId}</div>
+                    <div className="lr-sub">{wo.customerName} · {fmtDate(wa?.startDate)}{wa?.endDate ? ` → ${fmtDate(wa.endDate)}` : ''}</div>
+                  </div>
+                  <span className={`badge ${WO_BADGE[wo.status] ?? 'b-info'}`}><span className="bdot" />{wo.status.replace(/_/g, ' ')}</span>
+                  <ChevronRight className="lr-chev" />
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right — status summary */}
+        <div className="dcol">
+          <div className="dcard">
+            <div className="dcard-h"><h3><Activity /> Status</h3></div>
+            <div className="dcard-b">
+              <div className="kv" style={{ gridTemplateColumns: '1fr' }}>
+                <div>
+                  <div className="k">Current Location</div>
+                  <div className="v"><MapPin size={13} style={{ color: 'var(--accent)' }} /> {siteName(asset.currentSiteId)}</div>
+                </div>
+                <div>
+                  <div className="k">Operational</div>
+                  <div className="v"><span className={`badge ${OP_BADGE[asset.operationalStatus] ?? 'b-muted'}`}><span className="bdot" />{asset.operationalStatus}</span></div>
+                </div>
+                <div>
+                  <div className="k">Commercial</div>
+                  <div className="v"><span className={`badge ${COMM_BADGE[(asset.commercialStatus || 'available')] ?? 'b-muted'}`}><span className="bdot" />{COMM_LABEL[(asset.commercialStatus || 'available')] ?? (asset.commercialStatus || 'available')}</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="dcard">
+            <div className="dcard-h"><h3>Lifetime</h3></div>
+            <div className="dcard-b">
+              <div className="lineitem"><span className="li-t">Repair tickets</span><span className="li-v">{repairs.length}</span></div>
+              <div className="lineitem"><span className="li-t">Open repairs</span><span className="li-v" style={{ color: openRepairs ? 'var(--danger)' : 'var(--text-muted)' }}>{openRepairs}</span></div>
+              <div className="lineitem"><span className="li-t">Sales deployments</span><span className="li-v">{deployments.length}</span></div>
+              <div className="lineitem"><span className="li-t">Days deployed</span><span className="li-v">{daysDeployed}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
