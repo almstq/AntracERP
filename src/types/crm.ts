@@ -2,7 +2,7 @@
  * CRM & Sales module entity types.
  * Revenue engine: Enquiry → Quotation → Work Order → Invoice → Payment.
  */
-import type { BaseEntity } from './common';
+interface BaseEntity { id: string; createdAt: Date; updatedAt: Date; }
 
 // ─── Customer ────────────────────────────────────────────────────────────────
 
