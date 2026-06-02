@@ -517,6 +517,11 @@
 
 .empty-note { font-size: 12.5px; color: var(--text-muted); padding: 18px; text-align: center; }
 
+/* FollowMe mandatory attribution badge */
+.followme-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 600; color: var(--text-muted); letter-spacing: 0.01em; }
+.followme-badge img { border-radius: 3px; flex-shrink: 0; }
+.followme-badge:hover { color: var(--text-secondary); }
+
 /* ---------- COMMAND PALETTE ---------- */
 .cmdk-back {
   position: fixed; inset: 0; z-index: 90;

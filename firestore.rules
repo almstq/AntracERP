@@ -202,6 +202,17 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // FollowMe vessel-tracking cache — written ONLY by the syncFollowMe Cloud
+    // Function (admin SDK bypasses rules). Clients read the cache; never write.
+    match /followmeCache/{vesselId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+    match /followmeMeta/{docId} {
+      allow read: if isAuth();
+      allow write: if false;
+    }
+
     // Fuel/water requests (WLI↔MPL; supervisor, inventory, gm, mpl_manager, director act)
     match /fuelRequests/{requestId} {
       allow read: if isAuth();

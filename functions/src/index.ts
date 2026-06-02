@@ -246,6 +246,102 @@ async function buildSnapshotPdf(week: WeekRange): Promise<Buffer> {
   });
 }
 
+// ─── FollowMe vessel tracking — server-side cache ─────────────────────────────
+//
+// COMPLIANCE (FollowMe API Terms of Use — see docs/FOLLOWME_INTEGRATION.md):
+//   • API key lives SERVER-SIDE only (FOLLOWME_KEY secret/env). Never in browser.
+//   • Browser NEVER calls FollowMe directly — it reads this Firestore cache.
+//   • Max one request per 60s → this runs once a minute against the fleet list.
+//   • Graceful downtime: failures write a meta flag, never throw / crash callers.
+//
+// v5 contract: GET https://followme.mv/api/v5/my/{key}/  (key is a path segment)
+// Response field shape is undocumented — we store raw + best-effort normalized
+// fields; adjust pickNum/pickStr keys once a live sample is available.
+
+interface NormalizedVessel {
+  followmeId: string;
+  name: string | null;
+  lat: number | null;
+  lng: number | null;
+  speed: number | null;
+  heading: number | null;
+  lastUpdate: string | null;
+  online: boolean | null;
+  raw: unknown;
+}
+
+function pickNum(o: Record<string, unknown>, keys: string[]): number | null {
+  for (const k of keys) { const v = o[k]; if (typeof v === 'number') return v; if (typeof v === 'string' && v.trim() !== '' && !isNaN(Number(v))) return Number(v); }
+  return null;
+}
+function pickStr(o: Record<string, unknown>, keys: string[]): string | null {
+  for (const k of keys) { const v = o[k]; if (typeof v === 'string' && v.trim() !== '') return v; if (typeof v === 'number') return String(v); }
+  return null;
+}
+
+function normalizeVessel(v: Record<string, unknown>): NormalizedVessel {
+  return {
+    followmeId: pickStr(v, ['id', 'vessel_id', 'vesselId', 'boat_id']) ?? '',
+    name: pickStr(v, ['name', 'vessel_name', 'vesselName', 'boat_name', 'title']),
+    lat: pickNum(v, ['lat', 'latitude', 'Lat', 'Latitude']),
+    lng: pickNum(v, ['lng', 'lon', 'long', 'longitude', 'Lng', 'Lon', 'Longitude']),
+    speed: pickNum(v, ['speed', 'sog', 'Speed', 'SOG']),
+    heading: pickNum(v, ['heading', 'course', 'cog', 'Heading', 'Course', 'COG']),
+    lastUpdate: pickStr(v, ['last_update', 'lastUpdate', 'timestamp', 'time', 'updated_at', 'last_seen']),
+    online: typeof v.online === 'boolean' ? v.online : (typeof v.status === 'string' ? v.status.toLowerCase() === 'online' : null),
+    raw: v,
+  };
+}
+
+async function writeFollowMeMeta(ok: boolean, extra: Record<string, unknown> = {}): Promise<void> {
+  await getFirestore().collection('followmeMeta').doc('status').set(
+    { ok, lastSync: new Date().toISOString(), ...extra }, { merge: true },
+  );
+}
+
+/** Refreshes the FollowMe fleet cache once a minute (rate-limit compliant). */
+export const syncFollowMe = onSchedule(
+  { schedule: 'every 1 minutes', timeZone: 'UTC', region: 'asia-south1', memory: '256MiB', timeoutSeconds: 30 },
+  async () => {
+    const key = process.env.FOLLOWME_KEY;
+    if (!key) {
+      console.warn('[syncFollowMe] FOLLOWME_KEY not set — skipping. Request a key from info@followme.mv.');
+      await writeFollowMeMeta(false, { error: 'no_key' });
+      return;
+    }
+    try {
+      const res = await fetch(`https://followme.mv/api/v5/my/${encodeURIComponent(key)}/`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) { await writeFollowMeMeta(false, { error: `http_${res.status}` }); return; }
+      const data = await res.json();
+      const list: Record<string, unknown>[] = Array.isArray(data)
+        ? data
+        : Array.isArray((data as Record<string, unknown>)?.vessels)
+          ? ((data as Record<string, unknown>).vessels as Record<string, unknown>[])
+          : Array.isArray((data as Record<string, unknown>)?.data)
+            ? ((data as Record<string, unknown>).data as Record<string, unknown>[])
+            : [];
+
+      const db = getFirestore();
+      const batch = db.batch();
+      let count = 0;
+      for (const v of list) {
+        const n = normalizeVessel(v);
+        if (!n.followmeId) continue;
+        batch.set(db.collection('followmeCache').doc(n.followmeId), { ...n, cachedAt: new Date().toISOString() }, { merge: true });
+        count++;
+      }
+      await batch.commit();
+      await writeFollowMeMeta(true, { count, error: null });
+      console.log(`[syncFollowMe] cached ${count} vessel(s)`);
+    } catch (e) {
+      console.error('[syncFollowMe] error', e);
+      await writeFollowMeMeta(false, { error: e instanceof Error ? e.message : 'unknown' });
+    }
+  },
+);
+
 // ─── Scheduled Function ───────────────────────────────────────────────────────
 
 /**

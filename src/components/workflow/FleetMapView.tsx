@@ -47,14 +47,18 @@ function colorsFor(dark: boolean): ThemeColors {
     : { site: '#0C9E8D', asset: '#2E73D8', staff: '#5E920F', label: '#0C141C', infoBg: '#FFFFFF', infoText: '#0C141C', infoSub: '#788593' };
 }
 
+interface VesselPos { lat: number | null; lng: number | null; name?: string | null; speed?: number | null; heading?: number | null; online?: boolean | null }
+
 interface Props {
   sites: (Site & { id: string })[];
   assets: (Asset & { id: string })[];
   staff: (Staff & { id: string })[];
   height?: string;
+  /** FollowMe cached positions keyed by followme id (== Asset.trackingId). */
+  vesselPositions?: Record<string, VesselPos>;
 }
 
-export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
+export function FleetMapView({ sites, assets, staff, height = '60vh', vesselPositions }: Props) {
   const mapEl = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -89,8 +93,16 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
       backgroundColor: dark ? '#0f151d' : '#E7ECF1',
     });
 
+    // Live vessel position (FollowMe) by trackingId, when lat/lng are present.
+    const livePos = (a: Asset & { id: string }): VesselPos | undefined => {
+      if (a.assetClass !== 'vessel' || !a.trackingId) return undefined;
+      const p = vesselPositions?.[a.trackingId];
+      return p && p.lat != null && p.lng != null ? p : undefined;
+    };
+
     const bounds = new gmaps.LatLngBounds();
     for (const site of withCoords) bounds.extend(site.location!);
+    for (const a of assets) { const p = livePos(a); if (p) bounds.extend({ lat: p.lat!, lng: p.lng! }); }
     map.fitBounds(bounds);
     gmaps.event.addListenerOnce(map, 'idle', () => { if (map.getZoom() > 13) map.setZoom(13); });
 
@@ -108,7 +120,9 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
       (p.assignedAssetId && assetById.get(p.assignedAssetId)?.currentSiteId) || p.siteId;
 
     for (const site of withCoords) {
-      const siteAssets = assets.filter((a) => a.currentSiteId === site.id);
+      // Vessels with a live FollowMe position are plotted at their real coords below,
+      // so exclude them from the site ring to avoid double-plotting.
+      const siteAssets = assets.filter((a) => a.currentSiteId === site.id && !livePos(a));
       const siteStaff = staff.filter((p) => staffSite(p) === site.id);
 
       // Site marker (named).
@@ -151,7 +165,22 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
         }
       });
     }
-  }, [ready, sites, assets, staff, dark]);
+
+    // Live vessels (FollowMe) — plotted at their real GPS coordinates.
+    for (const a of assets) {
+      const p = livePos(a);
+      if (!p) continue;
+      const m = new gmaps.Marker({
+        position: { lat: p.lat!, lng: p.lng! }, map, title: a.code, zIndex: 60,
+        icon: { ...dot(c.site, 7), path: gmaps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, rotation: p.heading ?? 0 },
+      });
+      const track = a.trackingId
+        ? `<div style="margin-top:4px"><a href="${followMeUrl(a.trackingId)}" target="_blank" rel="noreferrer" style="color:${c.site};font-size:10px;font-weight:600">Track live ↗</a></div>` : '';
+      openInfo(m, `<strong>${a.code}</strong> — ${a.make} ${a.model}
+        <div style="color:${c.infoSub};margin-top:2px">${p.online === false ? 'offline' : 'live'} · ${p.speed ?? '—'} kn · hdg ${p.heading ?? '—'}°</div>
+        <div style="color:${c.site};font-size:10px;margin-top:2px">FollowMe live position</div>${track}`);
+    }
+  }, [ready, sites, assets, staff, dark, vesselPositions]);
 
   if (!MAPS_KEY) {
     return (

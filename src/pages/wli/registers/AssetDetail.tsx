@@ -16,6 +16,8 @@ import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
 import { Button } from '../../../components/ui/Button';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+import { FollowMeBadge } from '../../../components/shared/FollowMeBadge';
+import { useFollowMeFleet, followMeStatusText } from '../../../lib/services/followme';
 import { useToast } from '../../../lib/context/ToastContext';
 
 const CLASS_ICON: Record<AssetClass, LucideIcon> = { vessel: Ship, vehicle: Truck, equipment: Wrench };
@@ -55,6 +57,7 @@ export function AssetDetail() {
   const { data: tickets } = useTicketList();
   const { data: workOrders } = useWorkOrderList();
   const { data: allStaff } = useStaffList();
+  const { positions, meta } = useFollowMeFleet();
   const { toast } = useToast();
 
   const asset = assets.find((a) => a.id === id);
@@ -199,24 +202,48 @@ export function AssetDetail() {
                 )}
               </div>
               <div className="dcard-b">
-                {asset.trackingId ? (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-                    <div className="ft-ic tint-info" style={{ width: 44, height: 44 }}><Ship /></div>
-                    <div style={{ flex: 1, minWidth: 160 }}>
-                      <div className="lr-id" style={{ fontFamily: 'var(--font-ui)', fontSize: 13 }}>
-                        Live AIS tracking · ID <span className="mono">{asset.trackingId}</span>
+                {asset.trackingId ? (() => {
+                  const pos = positions[asset.trackingId];
+                  const hasPos = pos && pos.lat != null && pos.lng != null;
+                  const status = followMeStatusText(meta);
+                  return (
+                    <>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                        <div className="ft-ic tint-info" style={{ width: 44, height: 44 }}><Ship /></div>
+                        <div style={{ flex: 1, minWidth: 160 }}>
+                          <div className="lr-id" style={{ fontFamily: 'var(--font-ui)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+                            Live AIS tracking · ID <span className="mono">{asset.trackingId}</span>
+                            {pos?.online != null && (
+                              <span className={`badge ${pos.online ? 'b-pos' : 'b-muted'}`}><span className="bdot" />{pos.online ? 'online' : 'offline'}</span>
+                            )}
+                          </div>
+                          <div className="tc-sub" style={{ marginTop: 2 }}>Real-time vessel position via <b>FollowMe</b>.</div>
+                        </div>
+                        <a className="btn btn-primary" href={followMeUrl(asset.trackingId)} target="_blank" rel="noreferrer">
+                          <Radio /> Open live tracker <ExternalLink />
+                        </a>
                       </div>
-                      <div className="tc-sub" style={{ marginTop: 2 }}>
-                        Real-time vessel position via <b>followme.mv</b>. Opens the live tracker in a new tab.
+
+                      {hasPos && (
+                        <div className="kv" style={{ marginTop: 14, gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                          <div><div className="k">Latitude</div><div className="v"><span className="mono">{pos!.lat!.toFixed(4)}</span></div></div>
+                          <div><div className="k">Longitude</div><div className="v"><span className="mono">{pos!.lng!.toFixed(4)}</span></div></div>
+                          <div><div className="k">Speed</div><div className="v"><span className="mono">{pos!.speed ?? '—'}</span> kn</div></div>
+                          <div><div className="k">Heading</div><div className="v"><span className="mono">{pos!.heading ?? '—'}</span>°</div></div>
+                          {pos!.lastUpdate && <div style={{ gridColumn: '1 / -1' }}><div className="k">Last update</div><div className="v">{pos!.lastUpdate}</div></div>}
+                        </div>
+                      )}
+
+                      {status && <p className="tc-sub" style={{ marginTop: 12, color: 'var(--warning)' }}>{status}</p>}
+
+                      <div style={{ marginTop: 14, paddingTop: 11, borderTop: '1px solid var(--border-soft)' }}>
+                        <FollowMeBadge />
                       </div>
-                    </div>
-                    <a className="btn btn-primary" href={followMeUrl(asset.trackingId)} target="_blank" rel="noreferrer">
-                      <Radio /> Open live tracker <ExternalLink />
-                    </a>
-                  </div>
-                ) : (
+                    </>
+                  );
+                })() : (
                   <p className="empty-note" style={{ padding: 0 }}>
-                    No tracking ID yet. Click <b>Edit</b> and paste the vessel’s followme.mv ID (e.g. 18599) to show its live position.
+                    No tracking ID yet. Click <b>Edit</b> and paste the vessel’s FollowMe ID (e.g. 18599) to show its live position.
                   </p>
                 )}
               </div>
