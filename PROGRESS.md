@@ -28,7 +28,7 @@ Steps (in order, confirm with Mustarq before starting):
 5. Create 6 backdated tickets (14/05/2026) with materials + services
 6. Advance ticket workflows to match actual current state
 
-**Open questions before starting — see plan §6.**
+**All questions resolved — see plan §6 for confirmed answers. Ready to execute.**
 
 ---
 

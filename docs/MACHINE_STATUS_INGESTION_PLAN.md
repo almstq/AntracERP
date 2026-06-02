@@ -99,7 +99,7 @@ Multiple active faults: (1) Battery burst — battery 12v/100A needs replacement
 ---
 
 ### Ticket C — Volvo A40G Dump Truck, Muthaafushi
-**Asset:** WL-HV-???? (confirm: 0001 or 0002) · **Site:** muthaafushi · **Urgency:** routine · **Date:** 14/05/2026
+**Asset:** WL-HV-0002 ✓ · **Site:** muthaafushi · **Urgency:** routine · **Date:** 14/05/2026
 
 **Description:**
 Cab door glass is broken and needs to be replaced.
@@ -212,26 +212,29 @@ These come from the standalone items list at the bottom of the document — a ge
 
 ## 5. Execution Order (next session)
 
-1. **Add suppliers** (5 new: Anam Trade, Leo Trade, Parts Master, WEW, ELM Marine) → via Supplier Register in-app or seed
-2. **Correct asset statuses** (WL-HV-0005 → down; WL-HV-0009 → operational + location bodufinolhu; WL-HV-0023 → operational)
-3. **Confirm Volvo A40G unit** — Mustarq to confirm which code (0001 or 0002) is at Muthaafushi
-4. **Create inventory items at 0 stock** — workshop tools list + spare parts list
-5. **Create 6 tickets** via the ERP (backdated to 14/05/2026), with materials + services attached
+1. **Add 6 suppliers:** Anam Trade, Leo Trade, Parts Master, WEW, ELM Marine, Al Dahr (Dubai)
+2. **Correct asset statuses** per §2 table
+3. **Update WL-HV-0002 location** → muthaafushi (Volvo A40G confirmed)
+4. **Create inventory items at 0 stock** — workshop tools + spare parts (skip grease price, skip welding machine)
+5. **Create 6 tickets** (backdated to 14/05/2026) with materials + services attached
 6. **Advance ticket workflows** to match current actual state:
-   - Ticket A (boom bush): advance to `gm_approved` (payment was done)
-   - Ticket B (Kobelco multi-fault): leave at `submitted` / `diagnosed` — sourcing active
+   - Ticket A (boom bush): advance to `gm_approved` — payment was already done 1 June
+   - Ticket B (Kobelco): leave at `submitted` / `diagnosed` — sourcing active
    - Tickets C, D, E, F: leave at `submitted` — sourcing pending
+7. **Staff note:** Lkamal is WLI staff — do NOT add as external supplier. Full staff list coming from Mustarq next session; add Lkamal then.
 
 ---
 
-## 6. Open Questions for Mustarq
+## 6. Decisions Confirmed (resolved — do not re-ask)
 
-1. **Which Volvo A40G** (WL-HV-0001 or WL-HV-0002) is currently at Muthaafushi?
-2. **Al Dahr as supplier** — add formally to supplier register? They supplied the new equipment batch and are being quoted for hydraulic pumps.
-3. **Lkamal (electrician)** — is he an internal staff member or an external contractor? If external, add as a supplier/service contact.
-4. **Grease/Leo Trade price "1000"** — is that MVR 1,000 per bucket, or a product code?
-5. **Welding machine** — is there already one in the workshop, or does this need to be procured?
+| Question | Answer |
+|----------|--------|
+| Which Volvo A40G at Muthaafushi? | **WL-HV-0002** — update location to muthaafushi |
+| Add Al Dahr to supplier register? | **Yes** — Dubai supplier, heavy equipment + spare parts |
+| Lkamal (CAT 745C electrician)? | **WLI staff** — staff register incomplete, full list next session |
+| "Grease Leo Trade 1000" — price or code? | **MVR 1,000 price** — leave blank until actual quote received |
+| Welding machine — procure or existing? | **Leave for now** — do not add to inventory this pass |
 
 ---
 
-*Plan written by Claude Code — do not execute until Mustarq approves in next session.*
+*All questions resolved. Ready to execute — start at §5 step 1 in next session.*
