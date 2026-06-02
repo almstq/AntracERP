@@ -38,11 +38,39 @@ export interface Site {
   createdAt: Date;
 }
 
+/** Workforce job classification — distinct from the permission `role`. */
+export type StaffType =
+  | 'supervisor'
+  | 'support_staff'
+  | 'terminal_staff'
+  | 'captain'
+  | 'vessel_crew'
+  | 'operator'
+  | 'mechanic'
+  | 'driver';
+
+export const STAFF_TYPES: StaffType[] = [
+  'supervisor', 'support_staff', 'terminal_staff', 'captain',
+  'vessel_crew', 'operator', 'mechanic', 'driver',
+];
+
+export const STAFF_TYPE_LABEL: Record<StaffType, string> = {
+  supervisor: 'Supervisor',
+  support_staff: 'Support Staff',
+  terminal_staff: 'Terminal Staff',
+  captain: 'Captain',
+  vessel_crew: 'Vessel Crew',
+  operator: 'Operator',
+  mechanic: 'Mechanic',
+  driver: 'Driver',
+};
+
 export interface Staff {
   id: string;
   displayId: string;
   name: string;
   role: string;
+  staffType?: StaffType;   // workforce job classification
   designation: string;
   orgId: string;
   sbuId: string;

@@ -67,6 +67,7 @@ export async function assignAssetLocation(assetId: string, siteId: string): Prom
 export type StaffInput = {
   name: string;
   role: string;
+  staffType?: import('../../types/org').StaffType;
   designation: string;
   siteId?: string;
 };

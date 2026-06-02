@@ -8,6 +8,7 @@ import { UserCog, Plus } from 'lucide-react';
 import { useStaffList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createStaff, assignStaffSite } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
+import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { PageContainer } from '../../../components/shared/PageContainer';
 import { useToast } from '../../../lib/context/ToastContext';
 
@@ -24,7 +25,7 @@ export function StaffRegister() {
   const { data: staff, loading, refresh } = useStaffList();
   const { data: sites } = useSiteList();
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ name: '', role: ROLES.OPERATOR as string, designation: '', siteId: '' });
+  const [form, setForm] = useState({ name: '', role: ROLES.OPERATOR as string, staffType: 'operator' as StaffType, designation: '', siteId: '' });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -36,11 +37,11 @@ export function StaffRegister() {
     setBusy(true); setErr(null);
     try {
       await createStaff(
-        { name: form.name, role: form.role, designation: form.designation, siteId: form.siteId || undefined },
+        { name: form.name, role: form.role, staffType: form.staffType, designation: form.designation, siteId: form.siteId || undefined },
         nextStaffId(staff.length),
       );
       toast('success', 'Staff added');
-      setForm({ name: '', role: ROLES.OPERATOR, designation: '', siteId: '' });
+      setForm({ name: '', role: ROLES.OPERATOR, staffType: 'operator', designation: '', siteId: '' });
       setAdding(false); refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed';
@@ -70,7 +71,10 @@ export function StaffRegister() {
         <Card className="mb-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
             <Input placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
-            <InputSelect value={form.role} onChange={(e) => set('role', e.target.value)}>
+            <InputSelect value={form.staffType} onChange={(e) => set('staffType', e.target.value)} title="Staff type">
+              {STAFF_TYPES.map((t) => <option key={t} value={t}>{STAFF_TYPE_LABEL[t]}</option>)}
+            </InputSelect>
+            <InputSelect value={form.role} onChange={(e) => set('role', e.target.value)} title="System role">
               {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
             </InputSelect>
             <Input placeholder="Designation" value={form.designation} onChange={(e) => set('designation', e.target.value)} />
@@ -92,7 +96,7 @@ export function StaffRegister() {
                 <UserCog size={16} className="text-text-muted" />
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{p.name}</p>
-                  <p className="text-[10px] text-text-muted">{p.displayId} · {ROLE_LABELS[p.role] ?? p.role} · {p.designation}</p>
+                  <p className="text-[10px] text-text-muted">{p.displayId} · {p.staffType ? STAFF_TYPE_LABEL[p.staffType] : (ROLE_LABELS[p.role] ?? p.role)}{p.designation ? ` · ${p.designation}` : ''}</p>
                 </div>
               </Link>
               <select

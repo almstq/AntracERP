@@ -4,6 +4,7 @@ import { ArrowLeft, UserCog, Pencil, MapPin, User } from 'lucide-react';
 import { useStaffList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { updateStaff, assignStaffSite } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
+import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
 import { Button } from '../../../components/ui/Button';
@@ -26,19 +27,19 @@ export function StaffDetail() {
 
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', role: '', designation: '', siteId: '' });
+  const [form, setForm] = useState({ name: '', role: '', staffType: 'operator' as StaffType, designation: '', siteId: '' });
   const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   function startEdit() {
     if (!person) return;
-    setForm({ name: person.name, role: person.role, designation: person.designation ?? '', siteId: person.siteId ?? '' });
+    setForm({ name: person.name, role: person.role, staffType: person.staffType ?? 'operator', designation: person.designation ?? '', siteId: person.siteId ?? '' });
     setEditing(true);
   }
   async function save() {
     if (!person) return;
     setBusy(true);
     try {
-      await updateStaff(person.id, { name: form.name, role: form.role, designation: form.designation });
+      await updateStaff(person.id, { name: form.name, role: form.role, staffType: form.staffType, designation: form.designation });
       if (form.siteId !== (person.siteId ?? '')) await assignStaffSite(person.id, form.siteId);
       toast('success', 'Staff updated');
       setEditing(false);
@@ -60,7 +61,8 @@ export function StaffDetail() {
           <span className="eyebrow">{person.displayId}</span>
           <h1 className="dtitle">{person.name}</h1>
           <div className="dhead-badges">
-            <span className="badge b-info"><UserCog size={11} /> {ROLE_LABELS[person.role] ?? person.role}</span>
+            {person.staffType && <span className="badge b-accent"><UserCog size={11} /> {STAFF_TYPE_LABEL[person.staffType]}</span>}
+            <span className="badge b-info">{ROLE_LABELS[person.role] ?? person.role}</span>
             <span className={`badge ${person.status === 'active' ? 'b-pos' : 'b-muted'}`}><span className="bdot" />{person.status}</span>
             <span className="tc-sub"><MapPin size={11} /> {siteName(person.siteId)}</span>
           </div>
@@ -79,8 +81,13 @@ export function StaffDetail() {
                 <div style={{ display: 'grid', gap: 12 }}>
                   <div className="kv">
                     <div><div className="k">Name</div><Input value={form.name} onChange={(e) => setF('name', e.target.value)} placeholder="Full name" /></div>
+                    <div><div className="k">Staff Type</div>
+                      <InputSelect value={form.staffType} onChange={(e) => setF('staffType', e.target.value)}>
+                        {STAFF_TYPES.map((t) => <option key={t} value={t}>{STAFF_TYPE_LABEL[t]}</option>)}
+                      </InputSelect>
+                    </div>
                     <div><div className="k">Designation</div><Input value={form.designation} onChange={(e) => setF('designation', e.target.value)} placeholder="Designation" /></div>
-                    <div><div className="k">Role</div>
+                    <div><div className="k">System Role</div>
                       <InputSelect value={form.role} onChange={(e) => setF('role', e.target.value)}>
                         {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
                       </InputSelect>
@@ -100,7 +107,8 @@ export function StaffDetail() {
               ) : (
                 <div className="kv">
                   <div><div className="k">Staff ID</div><div className="v"><span className="mono">{person.displayId}</span></div></div>
-                  <div><div className="k">Role</div><div className="v">{ROLE_LABELS[person.role] ?? person.role}</div></div>
+                  <div><div className="k">Staff Type</div><div className="v">{person.staffType ? STAFF_TYPE_LABEL[person.staffType] : '—'}</div></div>
+                  <div><div className="k">System Role</div><div className="v">{ROLE_LABELS[person.role] ?? person.role}</div></div>
                   <div><div className="k">Designation</div><div className="v">{person.designation || '—'}</div></div>
                   <div><div className="k">Assigned Site</div><div className="v">{siteName(person.siteId)}</div></div>
                   <div><div className="k">Status</div><div className="v" style={{ textTransform: 'capitalize' }}>{person.status}</div></div>
