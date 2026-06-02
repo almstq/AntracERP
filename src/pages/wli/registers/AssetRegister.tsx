@@ -105,7 +105,10 @@ export function AssetRegister() {
                       <Link to={`/wli/assets/${a.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
                         <ClassIcon c={a.assetClass} />
                         <div className="min-w-0">
-                          <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{a.code} — {a.make} {a.model}</p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{a.code} — {a.make} {a.model}</p>
+                            {a.pendingDelivery && <span className="badge b-warn" style={{ fontSize: 9, padding: '1px 5px' }}>Pending Delivery</span>}
+                          </div>
                           <p className="text-[10px] text-text-muted">{a.type} · {a.operationalStatus}</p>
                         </div>
                       </Link>

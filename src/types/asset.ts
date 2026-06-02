@@ -30,6 +30,8 @@ export interface Asset {
   condition?: string;           // "Good" | "Minor Issue" | "Issue" | "Unknown"
   /** Whether the asset is eligible for external rental. */
   rentalEligible?: boolean;
+  /** Asset is ordered but not yet physically delivered to a WLI site. */
+  pendingDelivery?: boolean;
   /** Current known fault/issue narrative (e.g. grounded-machine notes). */
   knownIssue?: string;
   /** Full issue history narrative (multi-fault log). */

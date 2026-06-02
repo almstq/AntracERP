@@ -54,7 +54,11 @@ export async function createAsset(input: AssetInput): Promise<string> {
 }
 
 export async function updateAsset(id: string, patch: Partial<AssetInput>): Promise<void> {
-  await updateFields('assets', id, patch as Record<string, unknown>);
+  // Firestore rejects undefined values — strip them before writing
+  const clean = Object.fromEntries(
+    Object.entries(patch as Record<string, unknown>).filter(([, v]) => v !== undefined),
+  );
+  await updateFields('assets', id, clean);
 }
 
 /** GM assigns an asset to a location. */

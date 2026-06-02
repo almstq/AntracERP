@@ -131,6 +131,7 @@ async function main() {
     const project = clean(r.assigned_project);
     const rentalRaw = String(r.rental_eligible ?? '').trim();
     const rentalEligible = /yes|✓|true/i.test(rentalRaw) ? true : /no|✗|false/i.test(rentalRaw) ? false : undefined;
+    const pendingDelivery = /ordered|pending delivery/i.test(String(r.status ?? '')) || /pending delivery/i.test(String(r.current_location ?? '')) ? true : undefined;
     assets.push({
       id: slug(code), code, make: clean(r.brand) ?? '', model: clean(r.model) ?? '', type: clean(r.vehicle_type) ?? '',
       assetClass: assetClassFor(r.vehicle_type as string), orgId: ORG, sbuId: SBU,
@@ -138,6 +139,7 @@ async function main() {
       commercialStatus: project ? 'deployed' : 'available',
       condition: clean(r.condition),
       rentalEligible,
+      pendingDelivery,
       regNo: clean(r.reg_no), chassisNo: clean(r.chassis_no), engineNo: clean(r.engine_no),
       knownIssue: clean(r.known_issue),
       issueHistory: clean(r.issue_history),

@@ -133,6 +133,9 @@ export function AssetDetail() {
             <span className={`badge ${COMM_BADGE[(asset.commercialStatus || 'available')] ?? 'b-muted'}`}>
               <span className="bdot" />{COMM_LABEL[(asset.commercialStatus || 'available')] ?? (asset.commercialStatus || 'available')}
             </span>
+            {asset.pendingDelivery && (
+              <span className="badge b-warn" title="Ordered but not yet physically delivered to a WLI site">⏳ Pending Delivery</span>
+            )}
           </div>
         </div>
         <div className="dhead-actions">
