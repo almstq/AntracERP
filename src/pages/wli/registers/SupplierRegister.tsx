@@ -64,7 +64,7 @@ export function SupplierRegister() {
       <Card>
         <div className="space-y-1">
           {suppliers.map((s) => (
-            <Link key={s.id} to={`/wli/suppliers/${s.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface group">
+            <Link key={s.id} to={`/wli/suppliers/${s.id}`} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface group">
               <div className="flex items-center gap-3">
                 <Store size={16} className="text-text-muted" />
                 <div>

@@ -699,3 +699,27 @@
   .tbl-head, .tbl-row { grid-template-columns: 1.8fr 1fr 1.1fr 24px; }
   .col-md { display: none; }
 }
+
+/* Phone — stack table rows as cards, collapse 2-col layouts */
+@media (max-width: 640px) {
+  /* List tables: drop the header, let each row wrap into a card */
+  .tbl-head { display: none; }
+  .tbl-row {
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 7px 10px; padding: 13px 14px; min-height: 0;
+  }
+  .tbl-row > :first-child { flex: 1 1 100%; }   /* primary id/desc on its own line */
+  .tc-chev { margin-left: auto; }
+
+  /* Detail pages: single column, key/value stacks, header stacks */
+  .kv { grid-template-columns: 1fr; }
+  .dhead { flex-direction: column; gap: 14px; }
+  .dhead-actions { width: 100%; flex-wrap: wrap; }
+  .detail { gap: 14px; }
+
+  /* Stat chips two-up instead of one very wide */
+  .sumchip { min-width: calc(50% - 7px); }
+
+  /* Tighter page gutters on small screens */
+  .page { padding: 16px 13px 28px; }
+}

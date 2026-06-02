@@ -105,7 +105,7 @@ export function StaffRegister() {
       <Card>
         <div className="space-y-1">
           {staff.map((p) => (
-            <div key={p.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
+            <div key={p.id} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface gap-3">
               <Link to={`/wli/staff/${p.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
                 <UserCog size={16} className="text-text-muted" />
                 <div className="min-w-0">

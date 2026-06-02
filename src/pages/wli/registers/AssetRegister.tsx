@@ -115,7 +115,7 @@ export function AssetRegister() {
               <Card>
                 <div className="space-y-1">
                   {inClass.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
+                    <div key={a.id} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface gap-3">
                       <Link to={`/wli/assets/${a.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
                         <ClassIcon c={a.assetClass} />
                         <div className="min-w-0">

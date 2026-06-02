@@ -159,7 +159,7 @@ export function ModuleStaffRegister({
                 </div>
               </div>
             ) : (
-              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
+              <div key={p.id} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface gap-3">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <UserCog size={16} className="text-text-muted shrink-0" />
                   <div className="min-w-0">
