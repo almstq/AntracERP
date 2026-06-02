@@ -101,6 +101,26 @@ export function useStaffList(sbuId = 'sbu-wli'): Loadable<(Staff & { id: string 
   return { data, loading, error, refresh: load };
 }
 
+/**
+ * All staff across the org (not just one SBU) — used for the site in-charge
+ * picker, which must include Holding (Antrac) managers like project managers,
+ * not only WLI line crew. Sorted A→Z by name.
+ */
+export function useAllStaff(): Loadable<(Staff & { id: string })[]> {
+  const [data, setData] = useState<(Staff & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    setLoading(true);
+    listAll<Staff>('staff')
+      .then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
+      .catch((e) => setError(e?.message ?? 'Failed to load staff'))
+      .finally(() => setLoading(false));
+  }, []);
+  useEffect(load, [load]);
+  return { data, loading, error, refresh: load };
+}
+
 export function useSupplierList(): Loadable<(Supplier & { id: string })[]> {
   const [data, setData] = useState<(Supplier & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);

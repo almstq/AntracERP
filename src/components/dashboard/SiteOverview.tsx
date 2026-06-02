@@ -71,9 +71,9 @@ function SiteCard({
   const directCrew = allStaff.filter(
     (p) => p.siteId === site.id && !(p.assignedAssetId && assetIdSet.has(p.assignedAssetId)),
   );
-  // Supervisors posted to the site run it — in charge of all assets + staff here.
-  const siteInCharge = directCrew.filter((p) => p.staffType === 'supervisor');
-  const otherCrew = directCrew.filter((p) => p.staffType !== 'supervisor');
+  // Site in-charge is now explicit (site.inChargeStaffId) — may be an Antrac
+  // manager, not WLI crew. Anyone else posted directly is "other crew".
+  const otherCrew = directCrew.filter((p) => p.id !== site.inChargeStaffId);
   // Total people effectively at this site.
   const siteStaff = allStaff.filter(
     (p) => p.siteId === site.id || (p.assignedAssetId && assetIdSet.has(p.assignedAssetId)),
@@ -149,11 +149,11 @@ function SiteCard({
 
       {/* ── Assets ── */}
       <div className="dcard-b" style={{ flex: 1 }}>
-        {/* Site in-charge — supervisor(s) running the whole site */}
-        {siteInCharge.length > 0 && (
-          <div style={{
+        {/* Site in-charge — explicit (Site.inChargeStaffId); flagged when missing */}
+        {site.inChargeStaffId ? (
+          <Link to={`/wli/locations/${site.id}`} style={{
             display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
-            marginBottom: 12, padding: '6px 8px', borderRadius: 6,
+            marginBottom: 12, padding: '6px 8px', borderRadius: 6, textDecoration: 'none',
             background: 'color-mix(in srgb, var(--accent) 8%, transparent)',
             border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
           }}>
@@ -161,19 +161,21 @@ function SiteCard({
             <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', flexShrink: 0 }}>
               In charge
             </span>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
-              {siteInCharge.map((p) => (
-                <Link key={p.id} to={`/wli/staff/${p.id}`} style={{ textDecoration: 'none' }}>
-                  <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>{p.name}</span>
-                  {p.staffType && (
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 3 }}>
-                      ({STAFF_TYPE_LABEL[p.staffType]})
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-          </div>
+            <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>{site.inChargeName}</span>
+            {site.inChargeDesignation && (
+              <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>({site.inChargeDesignation})</span>
+            )}
+          </Link>
+        ) : (
+          <Link to={`/wli/locations/${site.id}`} style={{
+            display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',
+            marginBottom: 12, padding: '6px 8px', borderRadius: 6, textDecoration: 'none',
+            background: 'color-mix(in srgb, var(--warning) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--warning) 22%, transparent)',
+            color: 'var(--warning)', fontSize: 11,
+          }}>
+            <AlertTriangle size={12} /> No in-charge assigned
+          </Link>
         )}
 
         <div style={{ marginBottom: 14 }}>

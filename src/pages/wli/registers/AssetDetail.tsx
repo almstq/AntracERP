@@ -9,7 +9,7 @@ import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../..
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
 import { STAFF_TYPE_LABEL, type Staff } from '../../../types/org';
-import { updateAsset, deleteAsset, assignStaffAsset } from '../../../lib/services/registry';
+import { updateAsset, deleteAsset, assignStaffAsset, unassignAsset } from '../../../lib/services/registry';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
 import type { Asset, AssetClass } from '../../../types/asset';
@@ -164,6 +164,19 @@ export function AssetDetail() {
     } finally { setBusy(false); }
   }
 
+  async function handleUnassign() {
+    if (!asset) return;
+    if (!window.confirm(`Unassign ${asset.code} from its site? Its location becomes blank.`)) return;
+    setBusy(true);
+    try {
+      await unassignAsset(asset.id);
+      toast('success', `${asset.code} unassigned from site.`);
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setBusy(false); }
+  }
+
   async function save() {
     if (!asset) return;
     setBusy(true);
@@ -265,6 +278,11 @@ export function AssetDetail() {
             </button>
           )}
           {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
+          {!editing && canManageAssets && asset.currentSiteId && (
+            <button className="btn btn-ghost" onClick={handleUnassign} disabled={busy} title="Unassign from site">
+              <X size={14} /> Unassign
+            </button>
+          )}
           {!editing && canManageAssets && (
             <button className="btn btn-ghost" onClick={handleDelete} disabled={busy} style={{ color: 'var(--danger)' }}>
               <Trash2 size={14} /> Delete

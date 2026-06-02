@@ -39,6 +39,18 @@ export async function updateLocation(id: string, patch: Partial<LocationInput>):
   await updateFields('sites', id, data);
 }
 
+/** GM/super_admin sets (or clears) the site's in-charge manager. */
+export async function assignSiteInCharge(
+  siteId: string,
+  person: { staffId: string; name: string; designation?: string } | null,
+): Promise<void> {
+  await updateFields('sites', siteId, {
+    inChargeStaffId: person?.staffId ?? '',
+    inChargeName: person?.name ?? '',
+    inChargeDesignation: person?.designation ?? '',
+  });
+}
+
 // ─── Assets ────────────────────────────────────────────────────────────────
 
 export type AssetInput = Omit<Asset, 'id' | 'orgId' | 'sbuId' | 'createdAt' | 'commercialStatus'> & {
@@ -70,6 +82,11 @@ export async function deleteAsset(id: string): Promise<void> {
 /** GM assigns an asset to a location. */
 export async function assignAssetLocation(assetId: string, siteId: string): Promise<void> {
   await updateFields('assets', assetId, { currentSiteId: siteId });
+}
+
+/** Clear an asset's site (unassign from any location). */
+export async function unassignAsset(assetId: string): Promise<void> {
+  await updateFields('assets', assetId, { currentSiteId: '' });
 }
 
 // ─── Staff ─────────────────────────────────────────────────────────────────
@@ -108,6 +125,11 @@ export async function assignStaffSite(staffId: string, siteId: string): Promise<
 /** GM posts staff to an asset (their map location then follows the asset's site). */
 export async function assignStaffAsset(staffId: string, assetId: string | null): Promise<void> {
   await updateFields('staff', staffId, { assignedAssetId: assetId ?? '' });
+}
+
+/** Fully unassign a staff member — clears both asset posting and direct site. */
+export async function unassignStaff(staffId: string): Promise<void> {
+  await updateFields('staff', staffId, { assignedAssetId: '', siteId: '' });
 }
 
 // ─── Suppliers ───────────────────────────────────────────────────────────

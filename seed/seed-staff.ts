@@ -90,21 +90,32 @@ const ROSTER: StaffEntry[] = [
   { displayId: 'WL-EMP-0037', name: 'Ripon Mia',                        designation: 'Heavy Vehicle Driver',            staffType: 'driver',        role: 'operator' },
 ];
 
-async function main() {
-  console.log(`\n=== WLI Staff Register Seed (${commit ? 'COMMIT — upsert' : 'DRY RUN'}) ===`);
-  console.log(`Total: ${ROSTER.length} staff\n`);
+// Antrac Holding staff who oversee WLI sites (e.g. project managers).
+// Kept under the Holding org + a separate SBU so they DON'T appear in the
+// WLI 34-person roster, but are still selectable as a site in-charge.
+const HOLDING_SBU = 'antrac-hq';
+const HOLDING_STAFF: StaffEntry[] = [
+  { displayId: 'ANT-EMP-0001', name: 'Sampath', designation: 'Project Manager', staffType: 'supervisor', role: 'supervisor' },
+];
 
-  const rows = ROSTER.map((s) => ({
+async function main() {
+  console.log(`\n=== Staff Register Seed (${commit ? 'COMMIT — upsert' : 'DRY RUN'}) ===`);
+  console.log(`WLI: ${ROSTER.length} · Holding: ${HOLDING_STAFF.length}\n`);
+
+  const rows = [
+    ...ROSTER.map((s) => ({ ...s, orgId: ORG, sbuId: SBU })),
+    ...HOLDING_STAFF.map((s) => ({ ...s, orgId: ORG, sbuId: HOLDING_SBU })),
+  ].map((s) => ({
     id: slug(s.displayId),
     displayId: s.displayId,
     name: s.name,
     designation: s.designation,
     staffType: s.staffType,
     role: s.role,
-    orgId: ORG,
-    sbuId: SBU,
+    orgId: s.orgId,
+    sbuId: s.sbuId,
     status: 'active',
-    ...(s.employmentType ? { employmentType: s.employmentType } : {}),
+    ...((s as StaffEntry).employmentType ? { employmentType: (s as StaffEntry).employmentType } : {}),
     documents: [],
     sourceId: s.displayId,
   }));

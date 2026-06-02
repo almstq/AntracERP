@@ -4,9 +4,9 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
-import { Truck, Ship, Wrench, Plus } from 'lucide-react';
+import { Truck, Ship, Wrench, Plus, X } from 'lucide-react';
 import { useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
-import { createAsset, assignAssetLocation } from '../../../lib/services/registry';
+import { createAsset, assignAssetLocation, unassignAsset } from '../../../lib/services/registry';
 import type { Asset, AssetClass } from '../../../types/asset';
 import { ASSET_CLASSES, ASSET_CLASS_LABEL, ASSET_CLASS_PLURAL } from '../../../types/asset';
 import { PageContainer } from '../../../components/shared/PageContainer';
@@ -52,6 +52,11 @@ export function AssetRegister() {
     const siteName = sites.find(s => s.id === siteId)?.name ?? siteId;
     if (!window.confirm(`Reassign this asset to "${siteName}"?`)) return;
     await assignAssetLocation(assetId, siteId); refresh();
+  }
+
+  async function unassign(assetId: string, code: string) {
+    if (!window.confirm(`Unassign ${code} from its site? Its location becomes blank.`)) return;
+    await unassignAsset(assetId); refresh();
   }
 
   return (
@@ -124,15 +129,27 @@ export function AssetRegister() {
                       {a.pendingDelivery
                         ? <span className="text-[10px] text-text-muted flex-shrink-0 italic">Not at site</span>
                         : (
-                          <select
-                            className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
-                            value={a.currentSiteId}
-                            onChange={(e) => reassign(a.id, e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
-                            title="Assign location"
-                          >
-                            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                          </select>
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <select
+                              className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary"
+                              value={a.currentSiteId}
+                              onChange={(e) => reassign(a.id, e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              title="Assign location"
+                            >
+                              <option value="">Unassigned</option>
+                              {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                            </select>
+                            {a.currentSiteId && (
+                              <button
+                                className="p-1 rounded text-text-muted hover:text-red"
+                                title="Unassign from site"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); unassign(a.id, a.code); }}
+                              >
+                                <X size={13} />
+                              </button>
+                            )}
+                          </div>
                         )}
                     </div>
                   ))}

@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Pencil, Boxes, Users, Ship, Truck, Wrench, Plus, X,
-  ChevronRight, UserCog, type LucideIcon,
+  ChevronRight, UserCog, AlertTriangle, type LucideIcon,
 } from 'lucide-react';
-import { useSiteList, useAssetList, useStaffList } from '../../../lib/hooks/useWorkflowData';
+import { useSiteList, useAssetList, useStaffList, useAllStaff } from '../../../lib/hooks/useWorkflowData';
 import { useAuth } from '../../../lib/hooks/useAuth';
-import { updateLocation, assignAssetLocation, assignStaffSite, assignStaffAsset } from '../../../lib/services/registry';
+import { updateLocation, assignAssetLocation, assignStaffSite, assignStaffAsset, assignSiteInCharge } from '../../../lib/services/registry';
 import { STAFF_TYPE_LABEL } from '../../../types/org';
 import type { Site } from '../../../types/org';
 import type { AssetClass } from '../../../types/asset';
@@ -30,6 +30,7 @@ export function SiteDetail() {
   const { data: sites, loading, refresh } = useSiteList();
   const { data: assets, refresh: refreshAssets } = useAssetList();
   const { data: staff, refresh: refreshStaff } = useStaffList();
+  const { data: allStaff } = useAllStaff();
   const { toast } = useToast();
   const { effectiveRole } = useAuth();
   const canManage = effectiveRole === 'super_admin' || effectiveRole === 'gm';
@@ -43,6 +44,7 @@ export function SiteDetail() {
 
   const [addAssetId, setAddAssetId] = useState('');
   const [addStaffId, setAddStaffId] = useState('');
+  const [inChargeId, setInChargeId] = useState('');
 
   function startEdit() {
     if (!site) return;
@@ -92,6 +94,39 @@ export function SiteDetail() {
   });
 
   const siteLabelOf = (sid: string | undefined) => (sid ? sites.find((s) => s.id === sid)?.name ?? sid : '—');
+
+  // In-charge candidates: supervisors + any manager (incl. Antrac project managers), org-wide.
+  const inChargeCandidates = allStaff.filter(
+    (p) => p.staffType === 'supervisor' || /manager|in.?charge/i.test(p.designation ?? ''),
+  );
+
+  async function setInCharge(staffId: string) {
+    if (!staffId || !site) return;
+    const p = allStaff.find((x) => x.id === staffId);
+    if (!p) return;
+    setBusy(true);
+    try {
+      await assignSiteInCharge(site.id, { staffId: p.id, name: p.name, designation: p.designation });
+      toast('success', `${p.name} is now in charge of ${site.name}`);
+      setInChargeId('');
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setBusy(false); }
+  }
+
+  async function clearInCharge() {
+    if (!site) return;
+    if (!window.confirm(`Remove ${site.inChargeName || 'the in-charge'} from ${site.name}?`)) return;
+    setBusy(true);
+    try {
+      await assignSiteInCharge(site.id, null);
+      toast('success', 'Site in-charge cleared');
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setBusy(false); }
+  }
 
   async function moveAssetHere(assetId: string) {
     if (!assetId || !site) return;
@@ -262,6 +297,54 @@ export function SiteDetail() {
             </div>
           )}
 
+          {/* Site In-Charge */}
+          <div className="dcard">
+            <div className="dcard-h">
+              <h3><UserCog /> Site In-Charge</h3>
+              {!site.inChargeStaffId && <span className="badge b-warn"><AlertTriangle size={10} /> none</span>}
+            </div>
+            <div className="dcard-b">
+              {site.inChargeStaffId ? (
+                <div className="linkrow" style={{ cursor: 'default' }}>
+                  <span className="lr-ic tint-accent"><UserCog /></span>
+                  <div style={{ minWidth: 0, flex: 1 }}>
+                    <div className="lr-id" style={{ fontFamily: 'var(--font-ui)' }}>{site.inChargeName}</div>
+                    <div className="lr-sub">{site.inChargeDesignation || 'In charge'} · oversees all assets & crew here</div>
+                  </div>
+                  {canManage && (
+                    <button className="btn btn-ghost" style={{ padding: 4 }} title="Unassign in-charge" onClick={clearInCharge}>
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <p className="empty-note" style={{ padding: 0, color: 'var(--warning)' }}>
+                  No in-charge assigned — nobody is accountable for this site yet.
+                </p>
+              )}
+
+              {canManage && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border-soft)' }}>
+                  <InputSelect value={inChargeId} onChange={(e) => setInChargeId(e.target.value)}>
+                    <option value="">{site.inChargeStaffId ? 'Change in-charge…' : 'Assign in-charge…'}</option>
+                    {inChargeCandidates.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}{p.designation ? ` — ${p.designation}` : ''}{p.sbuId !== 'sbu-wli' ? ' (Antrac)' : ''}
+                      </option>
+                    ))}
+                  </InputSelect>
+                  <Button variant="primary" size="sm" disabled={!inChargeId || busy} onClick={() => setInCharge(inChargeId)}>
+                    <Plus size={14} /> Set
+                  </Button>
+                </div>
+              )}
+              <p className="tc-sub" style={{ marginTop: 10, lineHeight: 1.5 }}>
+                One manager can be in charge of several sites — e.g. an Antrac project
+                manager overseeing multiple project sites.
+              </p>
+            </div>
+          </div>
+
           <div className="dcard">
             <div className="dcard-h">
               <h3><Users /> Crew at Site</h3>
@@ -274,7 +357,7 @@ export function SiteDetail() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {crewHere.map((p) => {
                       const onAsset = p.assignedAssetId ? assetById.get(p.assignedAssetId) : undefined;
-                      const inCharge = !onAsset && p.staffType === 'supervisor';
+                      const inCharge = p.id === site.inChargeStaffId;
                       return (
                         <div key={p.id} className="linkrow" style={{ cursor: 'default' }}>
                           <Link to={`/wli/staff/${p.id}`} style={{ minWidth: 0, flex: 1, textDecoration: 'none' }}>
@@ -310,8 +393,8 @@ export function SiteDetail() {
                 </div>
               )}
               <p className="tc-sub" style={{ marginTop: 10, lineHeight: 1.5 }}>
-                A <b>supervisor</b> posted here is in charge of the whole site — no asset needed.
-                To put other crew <i>on a specific asset</i>, open the asset and assign them there — they'll appear here automatically.
+                Set who runs the site in the <b>Site In-Charge</b> card above.
+                To put crew <i>on a specific asset</i>, open the asset and assign them there — they'll appear here automatically.
               </p>
             </div>
           </div>

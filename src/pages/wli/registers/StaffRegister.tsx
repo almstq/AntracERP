@@ -4,9 +4,9 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
-import { UserCog, Plus } from 'lucide-react';
+import { UserCog, Plus, X } from 'lucide-react';
 import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
-import { createStaff, assignStaffSite, assignStaffAsset } from '../../../lib/services/registry';
+import { createStaff, assignStaffSite, assignStaffAsset, unassignStaff } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { PageContainer } from '../../../components/shared/PageContainer';
@@ -64,6 +64,11 @@ export function StaffRegister() {
   async function reassignAsset(staffId: string, assetId: string) {
     await assignStaffAsset(staffId, assetId || null);
     refresh();
+  }
+
+  async function unassign(staffId: string, name: string) {
+    if (!window.confirm(`Unassign ${name} from their site and asset?`)) return;
+    await unassignStaff(staffId); refresh();
   }
 
   return (
@@ -137,6 +142,15 @@ export function StaffRegister() {
                   ))}
                 </optgroup>
               </select>
+              {(p.siteId || p.assignedAssetId) && (
+                <button
+                  className="p-1 rounded text-text-muted hover:text-red flex-shrink-0"
+                  title="Unassign from site and asset"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); unassign(p.id, p.name); }}
+                >
+                  <X size={13} />
+                </button>
+              )}
             </div>
           ))}
         </div>

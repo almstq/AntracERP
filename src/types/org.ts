@@ -36,6 +36,15 @@ export interface Site {
   location?: { lat: number; lng: number };
   status: 'active' | 'inactive';
   createdAt: Date;
+
+  // ── Site in-charge (explicit, not derived) ──
+  // The manager responsible for the whole site + everything deployed there.
+  // May be a Holding (Antrac) manager, not just a WLI supervisor, and one
+  // person can be in charge of several sites. Name/designation denormalised
+  // for display (same pattern as supplierName / assetCode elsewhere).
+  inChargeStaffId?: string;
+  inChargeName?: string;
+  inChargeDesignation?: string;
 }
 
 /** Workforce job classification — distinct from the permission `role`. */

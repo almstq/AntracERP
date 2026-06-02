@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { ArrowLeft, UserCog, Pencil, MapPin, User, Briefcase, AlertTriangle, Trash2 } from 'lucide-react';
+import { ArrowLeft, UserCog, Pencil, MapPin, User, Briefcase, AlertTriangle, Trash2, X } from 'lucide-react';
 import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { useAuth } from '../../../lib/hooks/useAuth';
-import { updateStaff, assignStaffSite, assignStaffAsset, deleteStaff } from '../../../lib/services/registry';
+import { updateStaff, assignStaffSite, assignStaffAsset, deleteStaff, unassignStaff } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { Input } from '../../../components/shared/Input';
@@ -52,6 +52,18 @@ export function StaffDetail() {
     }
   }
 
+  async function handleUnassign() {
+    if (!person) return;
+    if (!window.confirm(`Unassign ${person.name} from their site and asset?`)) return;
+    try {
+      await unassignStaff(person.id);
+      toast('success', `${person.name} unassigned.`);
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    }
+  }
+
   function startEdit() {
     if (!person) return;
     setForm({ name: person.name, role: person.role, staffType: person.staffType ?? 'operator', designation: person.designation ?? '', siteId: person.siteId ?? '', assignedAssetId: person.assignedAssetId ?? '' });
@@ -92,6 +104,11 @@ export function StaffDetail() {
         </div>
         <div className="dhead-actions">
           {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
+          {!editing && canManageStaff && (person.siteId || person.assignedAssetId) && (
+            <button className="btn btn-ghost" onClick={handleUnassign} title="Unassign from site and asset">
+              <X size={14} /> Unassign
+            </button>
+          )}
           {!editing && canManageStaff && (
             <button className="btn btn-ghost" onClick={handleDelete} style={{ color: 'var(--danger)' }}>
               <Trash2 size={14} /> Delete
