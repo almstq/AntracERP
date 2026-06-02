@@ -8,6 +8,7 @@ import {
   listWorkOrders, listInvoices, listPaymentsByInvoice,
 } from '../services/crm';
 import { listAll } from '../firebase/db';
+import { byName } from '../utils/sort';
 import type { Customer, Enquiry, Quotation, WorkOrder, Invoice, Payment } from '../../types/crm';
 
 interface Loadable<T> {
@@ -26,7 +27,7 @@ export function useCustomerList(): Loadable<Customer[]> {
   const load = useCallback(() => {
     setLoading(true);
     listCustomers(SBU)
-      .then((rows) => { setData(rows); setError(null); })
+      .then((rows) => { setData(rows.sort(byName((c) => c.name))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load customers'))
       .finally(() => setLoading(false));
   }, []);

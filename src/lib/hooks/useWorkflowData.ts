@@ -4,6 +4,7 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { listAll, listWhere, getById, listSub } from '../firebase/db';
+import { byName, byCode } from '../utils/sort';
 import { ticketWorkflow, purchaseRequestWorkflow, purchaseOrderWorkflow } from '../workflow/definitions';
 import { getAvailableTransitions } from '../workflow/engine';
 import type { Ticket, PurchaseRequest, PurchaseOrder, Supplier } from '../../types/workflow-entities';
@@ -61,7 +62,7 @@ export function useAssetList(sbuId = 'sbu-wli'): Loadable<(Asset & { id: string 
   const load = useCallback(() => {
     setLoading(true);
     listWhere<Asset>('assets', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows); setError(null); })
+      .then((rows) => { setData(rows.sort(byCode((a) => a.code))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load assets'))
       .finally(() => setLoading(false));
   }, [sbuId]);
@@ -77,7 +78,7 @@ export function useSiteList(sbuId = 'sbu-wli'): Loadable<(Site & { id: string })
   const load = useCallback(() => {
     setLoading(true);
     listWhere<Site>('sites', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows); setError(null); })
+      .then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load sites'))
       .finally(() => setLoading(false));
   }, [sbuId]);
@@ -92,7 +93,7 @@ export function useStaffList(sbuId = 'sbu-wli'): Loadable<(Staff & { id: string 
   const load = useCallback(() => {
     setLoading(true);
     listWhere<Staff>('staff', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows); setError(null); })
+      .then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load staff'))
       .finally(() => setLoading(false));
   }, [sbuId]);
@@ -107,7 +108,7 @@ export function useSupplierList(): Loadable<(Supplier & { id: string })[]> {
   const load = useCallback(() => {
     setLoading(true);
     listAll<Supplier>('suppliers')
-      .then((rows) => { setData(rows); setError(null); })
+      .then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load suppliers'))
       .finally(() => setLoading(false));
   }, []);
