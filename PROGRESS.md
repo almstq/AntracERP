@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.18.0
-**Updated:** 2026-06-01 (session 10 — PROOF CHAIN: upload attribution, SHA-256, weekly snapshot Cloud Function)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.19.0
+**Updated:** 2026-06-02 (session 11 — Helix Shell redesign + Command Center, from Claude Design handoff)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,14 +12,30 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 10 — PROOF CHAIN complete. Build clean at **v0.18.0**, HEAD `6b98e0e`.
+Session 11 — **Helix Shell redesign + Command Center** complete & browser-verified
+on live data. Build clean at **v0.19.0**, HEAD `42e42f6`.
+
+The whole app now runs inside the new **floating-card shell** (icon rail · sidebar ·
+main panel, all inset off a base bg). This structurally resolves the long-running
+edge-to-edge spacing complaints. Spec + design system: `docs/HELIX_SHELL.md`.
+Design source: `D:\!starq\.claude_code_sync\Antrac ERP-handoff\` (Claude Design).
 
 **Next priorities:**
-1. **Deploy Cloud Function:** `cd functions && npm install && npm run build && firebase deploy --only functions` (requires Firebase CLI + billing enabled for scheduled functions)
-2. **UI Polish** — QA audit M1–M4 (spacing, state, cards, forms). See `docs/QA_AUDIT_2026-06-01.md`.
-3. **Mobile Responsive** — sidebar → bottom nav, tables → cards. (Last.)
-4. **Seed stores** — add at least one Store doc per site in Firestore so Warehouse module works on first load.
-5. **Email-to-Vault** — awaiting Mustarq decision on domain. See `docs/EMAIL_VAULT_PLAN.md`.
+1. **Tickets list + Ticket detail** — redesign per the handoff (table + timeline/action
+   panel views already specced in the design bundle). Next shell pass.
+2. **Restyle remaining pages** to the Helix system — Procurement, CRM, Warehouse,
+   Registers currently render in the new shell with their *old* Tailwind styling.
+3. **Fix Gemini model** — `ai.ts` calls `gemini-1.5-flash` which now 404s; the AI
+   Brief shows the error. Update to a current model id (e.g. `gemini-2.0-flash`).
+4. **Deploy Cloud Function** (PROOF CHAIN weekly snapshot) — `cd functions && npm install
+   && npm run build && firebase deploy --only functions` (needs billing).
+5. **Mobile** — shell has a responsive collapse (rail hides, sidebar → overlay) but
+   inner pages still need the tables → cards pass.
+6. **Email-to-Vault** — awaiting Mustarq decision on domain. See `docs/EMAIL_VAULT_PLAN.md`.
+
+**Design decision pending:** Helix (cool teal/console — shipped) vs Atlas (warm
+copper/editorial). Atlas is fully specced in the same bundle; can be wired as a
+runtime toggle if Mustarq wants to compare live.
 
 **Two-agent state:** Gemini CLI is now also building in this repo. Coordination doc
 (I maintain it): `D:\!starq\.GeminiCLI\CLAUDE_CODE_SYNC.md`. Protocol: never edit
@@ -123,8 +139,11 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **AI Integration** | `ai.ts` (Gemini Flash REST) + AI Brief, GM price-comparison recommendation, mechanic diagnosis assist — advisory, role-gated, no-key fallback | ✅ Done | `67e34d5` |
 | **Inventory/Warehouse** | Module 6: Store register, Item Catalog, Stock-by-Store, Movements ledger, Transfers (A–F), CollectItemsPanel, RECEIVE_INTO_INVENTORY, TRIGGER_DELIVERY | ✅ Done | `827b651` |
 | **PROOF CHAIN** | Upload attribution (name+timestamp), SHA-256 (SubtleCrypto), weekly snapshot Cloud Function (pdfkit), Email-to-Vault plan, UI_SPACING_CONTRACT | ✅ Done | `6b98e0e` |
-| **UI Polish** | Visual consistency pass — spacing, states, cards, forms | 🔲 Next | — |
-| **Mobile Responsive** | Full responsive redesign — sidebar → bottom nav, tables → cards | 🔲 Planned | — |
+| **Spacing contract pass** | Retroactive UI_SPACING_CONTRACT compliance — page edges, card gaps, card inner padding, sidebar chrome | ✅ Done | `b97161b`, `aded6fd` |
+| **Helix Shell + Command Center** | Floating-card shell (icon rail · sidebar · topbar · ⌘K) + Command Center rebuilt on real data (metric strip, map+AI hero, fleet readiness, weather). From Claude Design handoff, Helix direction. `docs/HELIX_SHELL.md` | ✅ Done & verified | `42e42f6` |
+| **Tickets list + detail (Helix)** | Redesign table + timeline/action views per handoff | 🔲 Next | — |
+| **Restyle remaining pages** | Procurement / CRM / Warehouse / Registers → Helix system | 🔲 Planned | — |
+| **Mobile Responsive** | Inner pages tables → cards (shell already responsive) | 🔲 Planned | — |
 
 ### Cross-cutting backlog
 - **Currency selector** + **Maldives GST 8%** — missing on all finance forms (PO, future quotes/invoices). Money model + shared totals calc. **Do before CRM.**
