@@ -46,7 +46,7 @@ type StaffEntry = {
   displayId: string;
   name: string;
   designation: string;
-  staffType: string;
+  staffType?: string;   // operational classification; office roles have none
   role: string;
   employmentType?: 'local' | 'expat';
 };
@@ -95,7 +95,12 @@ const ROSTER: StaffEntry[] = [
 // WLI 34-person roster, but are still selectable as a site in-charge.
 const HOLDING_SBU = 'antrac-hq';
 const HOLDING_STAFF: StaffEntry[] = [
-  { displayId: 'ANT-EMP-0001', name: 'Sampath', designation: 'Project Manager', staffType: 'supervisor', role: 'supervisor' },
+  { displayId: 'ANT-EMP-0001', name: 'Sampath',              designation: 'Project Manager',         staffType: 'supervisor', role: 'supervisor' },
+  // Editable placeholders — rename each in HQ → Holding Staff (the role is set).
+  { displayId: 'ANT-EMP-0002', name: 'Group Director (TBD)', designation: 'Director',                 role: 'director' },
+  { displayId: 'ANT-EMP-0003', name: 'CFO (TBD)',            designation: 'Chief Financial Officer', role: 'cfo' },
+  { displayId: 'ANT-EMP-0004', name: 'Antrac Finance (TBD)', designation: 'Group Finance Officer',    role: 'antrac_finance' },
+  { displayId: 'ANT-EMP-0005', name: 'HR Manager (TBD)',     designation: 'HR Manager',               role: 'holding_hr' },
 ];
 
 // MPL (Maldives Petroleum Link) staff. The Terminal Manager is the approval
@@ -118,7 +123,7 @@ async function main() {
     displayId: s.displayId,
     name: s.name,
     designation: s.designation,
-    staffType: s.staffType,
+    ...(s.staffType ? { staffType: s.staffType } : {}),
     role: s.role,
     orgId: s.orgId,
     sbuId: s.sbuId,
