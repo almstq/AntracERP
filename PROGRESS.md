@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.19.0
-**Updated:** 2026-06-02 (session 11 — Helix Shell redesign + Command Center, from Claude Design handoff)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.23.0
+**Updated:** 2026-06-02 (session 12 — Helix everywhere, register detail/edit forms, staff↔asset + theme-aware Map)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -12,13 +12,23 @@
 
 ## ⏯ RESUME HERE (next session)
 
-Session 11 — **Helix Shell redesign + Command Center** complete & browser-verified
-on live data. Build clean at **v0.19.0**, HEAD `42e42f6`.
+Session 12 — **Helix everywhere + register detail/edit forms + Map overhaul**,
+browser-verified on live data. Build clean at **v0.23.0**, HEAD `ff4d0f2`.
 
-The whole app now runs inside the new **floating-card shell** (icon rail · sidebar ·
-main panel, all inset off a base bg). This structurally resolves the long-running
-edge-to-edge spacing complaints. Spec + design system: `docs/HELIX_SHELL.md`.
-Design source: `D:\!starq\.claude_code_sync\Antrac ERP-handoff\` (Claude Design).
+Since the shell (v0.19.0) shipped, this session, in order:
+- **Operations Helix** (v0.19.1–3): Tickets/PR/PO list + detail rebuilt as Helix forms.
+- **Helix everywhere** (v0.20.0): token bridge (old `--color-*` → Helix palette) **+
+  removed an unlayered `*{padding:0;margin:0}` reset that was beating Tailwind's
+  layered utilities and silently zeroing all spacing app-wide** — the true root cause
+  of every recurring "cramped/touches-wall" complaint. ~40 pages fixed at once.
+- **Asset detail** (v0.21.0): specs + repair history + deployment history.
+- **Register forms** (v0.22.x): assets in 3 categories (Vessels/Vehicles/Support
+  Equipment); inline Edit on Asset/Staff/Supplier/Customer; **new Staff Type** field.
+- **Map overhaul** (v0.23.0): staff↔asset assignment, sites+assets+staff on a
+  **theme-aware** Google Map (dark/light, live re-style), "Fleet Map" → "Map".
+
+**Known pre-existing (not from this work):** AI Brief shows `gemini-1.5-flash 404` —
+`src/lib/services/ai.ts` model id is stale; one-line fix pending.
 
 **Next priorities:**
 1. **Tickets list + Ticket detail** — redesign per the handoff (table + timeline/action
@@ -143,7 +153,11 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **Helix Shell + Command Center** | Floating-card shell (icon rail · sidebar · topbar · ⌘K) + Command Center rebuilt on real data. From Claude Design handoff, Helix direction. `docs/HELIX_SHELL.md` | ✅ Done & verified | `42e42f6` |
 | **Operations Helix (lists + detail)** | Tickets/PR/PO list pages (summary chips + filter tables) + detail forms (dhead, dcards, timeline, payment chain). Browser-verified | ✅ Done | `1677cc9`, `v0.19.2`, `v0.19.3` |
 | **Helix everywhere (token bridge + reset fix)** | Remapped old `--color-*` tokens → Helix palette; **removed unlayered `*{padding:0;margin:0}` reset that was nuking all Tailwind spacing** (root cause of recurring 'cramped' bugs). All ~40 legacy pages now Helix colours + correct spacing, dark+light | ✅ Done & verified | `v0.20.0` |
+| **Asset Detail** | `/wli/assets/:id` — specs + repair history (tickets) + deployment history (sales WOs) + lifetime summary | ✅ Done & verified | `ff9ba0a` |
+| **Register detail/edit forms** | Assets in 3 categories (Vessels/Vehicles/Support Equipment); inline Edit on Asset/Staff/Supplier/Customer (+`updateSupplier`); Supplier order history; **new Staff Type field** (8 workforce types, distinct from role) | ✅ Done & verified | `ff1a0ce`, `e140bea`, `3bb4613` |
+| **Map overhaul** | Staff↔asset assignment (`assignedAssetId`); map plots sites+assets+staff (staff at their asset's site); **theme-aware Google Map** (dark/light, live re-style); Asset 'Assigned Crew'; 'Fleet Map' → 'Map' + legend | ✅ Done & verified | `f457edb` |
 | **Bespoke redesigns (remaining)** | Richer Helix tables/metric-strips for CRM/Warehouse/Registers list pages; restyle shared workflow component internals | 🔲 Optional next | — |
+| **Fix Gemini model id** | `ai.ts` `gemini-1.5-flash` → current model (AI Brief 404) | 🔲 Quick | — |
 | **Mobile Responsive** | Inner pages tables → cards (shell already responsive) | 🔲 Planned | — |
 
 ### Cross-cutting backlog
