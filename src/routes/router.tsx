@@ -5,6 +5,7 @@ import { PendingApproval } from '../pages/PendingApproval';
 import { Unauthorized } from '../pages/Unauthorized';
 import { Dashboard } from '../pages/Dashboard';
 import { HoldingDashboard } from '../pages/holding/HoldingDashboard';
+import { HoldingStaffRegister } from '../pages/holding/HoldingStaffRegister';
 import { WLIDashboard } from '../pages/wli/WLIDashboard';
 import { TicketList } from '../pages/wli/tickets/TicketList';
 import { TicketDetail } from '../pages/wli/tickets/TicketDetail';
@@ -70,6 +71,7 @@ export const router = createBrowserRouter([
         element: <RoleRoute allowedRoles={HOLDING_ROLES} />,
         children: [
           { index: true, element: <HoldingDashboard /> },
+          { path: 'staff', element: <HoldingStaffRegister /> },
         ],
       },
       {

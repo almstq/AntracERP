@@ -67,6 +67,7 @@ export const HQ_NAV: ModuleNav = {
   key: 'holding', brand: 'Antrac Holding Group', sub: 'Operations · Finance · Directors', root: '/holding', icon: Building2,
   groups: [
     { items: [{ to: '/holding', label: 'Group Overview', icon: Building2, end: true }] },
+    { title: 'Registers', items: [{ to: '/holding/staff', label: 'Holding Staff', icon: UserCog }] },
     { title: 'Admin', items: [{ to: '/admin/users', label: 'Users', icon: Users }] },
   ],
 };

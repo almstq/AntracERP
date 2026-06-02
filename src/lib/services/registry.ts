@@ -100,10 +100,16 @@ export type StaffInput = {
   assignedAssetId?: string;
 };
 
-export async function createStaff(input: StaffInput, displayId: string): Promise<string> {
+export async function createStaff(
+  input: StaffInput,
+  displayId: string,
+  opts?: { orgId?: string; sbuId?: string },
+): Promise<string> {
   const id = slug(displayId);
   await createWithId('staff', id, {
-    ...input, displayId, orgId: 'antrac-holding', sbuId: 'sbu-wli',
+    ...input, displayId,
+    orgId: opts?.orgId ?? 'antrac-holding',
+    sbuId: opts?.sbuId ?? 'sbu-wli',
     status: 'active', documents: [],
   });
   return id;
