@@ -2,8 +2,8 @@
 
 **Repo:** `D:\!starq\projects\antrac-erp\` (local git only — bare remote at `D:\!starq\_git-remotes\antrac-erp.git`)
 **Stack:** React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase
-**Firebase project:** `antrac-erp` (live) · **Version:** 0.23.0
-**Updated:** 2026-06-02 (session 12 — Helix everywhere, register detail/edit forms, staff↔asset + theme-aware Map)
+**Firebase project:** `antrac-erp` (live) · **Version:** 0.24.0
+**Updated:** 2026-06-02 (session 12 — Helix everywhere, register detail/edit forms, staff↔asset + theme-aware Map, Site Overview)
 
 > Maintained by Claude Code. The strategic/master timeline lives at
 > `D:\!starq\starqos\content\nexus\antrac-erp-master-timeline.md` (Nexus).
@@ -156,6 +156,7 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **Asset Detail** | `/wli/assets/:id` — specs + repair history (tickets) + deployment history (sales WOs) + lifetime summary | ✅ Done & verified | `ff9ba0a` |
 | **Register detail/edit forms** | Assets in 3 categories (Vessels/Vehicles/Support Equipment); inline Edit on Asset/Staff/Supplier/Customer (+`updateSupplier`); Supplier order history; **new Staff Type field** (8 workforce types, distinct from role) | ✅ Done & verified | `ff1a0ce`, `e140bea`, `3bb4613` |
 | **Map overhaul** | Staff↔asset assignment (`assignedAssetId`); map plots sites+assets+staff (staff at their asset's site); **theme-aware Google Map** (dark/light, live re-style); Asset 'Assigned Crew'; 'Fleet Map' → 'Map' + legend | ✅ Done & verified | `f457edb` |
+| **Site Overview** | Command Center 'Site Weather' → 'Site Overview' (weather kept); each site card adds deployed assets by class (Vsl/Veh/SE chips) + crew + open issues | ✅ Done & verified | `v0.24.0` |
 | **Bespoke redesigns (remaining)** | Richer Helix tables/metric-strips for CRM/Warehouse/Registers list pages; restyle shared workflow component internals | 🔲 Optional next | — |
 | **Fix Gemini model id** | `ai.ts` `gemini-1.5-flash` → current model (AI Brief 404) | 🔲 Quick | — |
 | **Mobile Responsive** | Inner pages tables → cards (shell already responsive) | 🔲 Planned | — |
