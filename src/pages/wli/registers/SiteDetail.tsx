@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, MapPin, Pencil, Boxes, Users, Ship, Truck, Wrench, Plus, X,
-  ChevronRight, type LucideIcon,
+  ChevronRight, UserCog, type LucideIcon,
 } from 'lucide-react';
 import { useSiteList, useAssetList, useStaffList } from '../../../lib/hooks/useWorkflowData';
 import { useAuth } from '../../../lib/hooks/useAuth';
@@ -274,15 +274,17 @@ export function SiteDetail() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     {crewHere.map((p) => {
                       const onAsset = p.assignedAssetId ? assetById.get(p.assignedAssetId) : undefined;
+                      const inCharge = !onAsset && p.staffType === 'supervisor';
                       return (
                         <div key={p.id} className="linkrow" style={{ cursor: 'default' }}>
                           <Link to={`/wli/staff/${p.id}`} style={{ minWidth: 0, flex: 1, textDecoration: 'none' }}>
                             <div className="lr-id" style={{ fontFamily: 'var(--font-ui)' }}>{p.name}</div>
                             <div className="lr-sub">
                               {p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role}
-                              {onAsset ? ` · on ${onAsset.code}` : ' · site posting'}
+                              {onAsset ? ` · on ${onAsset.code}` : inCharge ? '' : ' · site posting'}
                             </div>
                           </Link>
+                          {inCharge && <span className="badge b-accent" style={{ flexShrink: 0 }}><UserCog size={10} /> In charge</span>}
                           {canManage && (
                             <button className="btn btn-ghost" style={{ padding: 4 }} title="Remove from site" onClick={() => removeStaff(p.id)}>
                               <X size={14} />
@@ -308,7 +310,8 @@ export function SiteDetail() {
                 </div>
               )}
               <p className="tc-sub" style={{ marginTop: 10, lineHeight: 1.5 }}>
-                Tip: to put crew <i>on a specific asset</i>, open the asset and assign them there — they'll appear here automatically.
+                A <b>supervisor</b> posted here is in charge of the whole site — no asset needed.
+                To put other crew <i>on a specific asset</i>, open the asset and assign them there — they'll appear here automatically.
               </p>
             </div>
           </div>

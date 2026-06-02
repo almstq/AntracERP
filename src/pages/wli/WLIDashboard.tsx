@@ -26,6 +26,8 @@ export function WLIDashboard() {
   const role = effectiveRole;
 
   const projectSiteIds = new Set(sites.filter((s) => s.type === 'project').map((s) => s.id));
+  // Deployment sites exclude Malé HQ (corporate office, not a field site).
+  const deploymentSites = sites.filter((s) => s.type !== 'hq');
   const openTickets = tickets.filter((t) => !['closed', 'rejected'].includes(t.status));
   const criticalTickets = openTickets.filter((t) => t.urgency === 'critical');
   const approvals = tickets.filter((t) => t.status === 'supervisor_checked');
@@ -57,7 +59,7 @@ export function WLIDashboard() {
   );
 
   const metrics: { label: string; value: number; tint: string; icon: LucideIcon }[] = [
-    { label: 'Active Sites', value: sites.length, tint: 'tint-accent', icon: MapPin },
+    { label: 'Active Sites', value: deploymentSites.length, tint: 'tint-accent', icon: MapPin },
     { label: 'Deployments', value: deployed.length, tint: 'tint-pos', icon: Truck },
     { label: 'Open Tickets', value: openTickets.length, tint: 'tint-danger', icon: Ticket },
     { label: 'Approvals', value: approvals.length, tint: 'tint-warn', icon: ClipboardCheck },

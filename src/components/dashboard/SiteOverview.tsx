@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  MapPin, Ship, Truck, Wrench, AlertTriangle, Wind, Eye, TrendingDown, Users,
+  MapPin, Ship, Truck, Wrench, AlertTriangle, Wind, Eye, TrendingDown, Users, UserCog,
   type LucideIcon,
 } from 'lucide-react';
 import type { Site, Staff } from '../../types/org';
@@ -71,6 +71,9 @@ function SiteCard({
   const directCrew = allStaff.filter(
     (p) => p.siteId === site.id && !(p.assignedAssetId && assetIdSet.has(p.assignedAssetId)),
   );
+  // Supervisors posted to the site run it — in charge of all assets + staff here.
+  const siteInCharge = directCrew.filter((p) => p.staffType === 'supervisor');
+  const otherCrew = directCrew.filter((p) => p.staffType !== 'supervisor');
   // Total people effectively at this site.
   const siteStaff = allStaff.filter(
     (p) => p.siteId === site.id || (p.assignedAssetId && assetIdSet.has(p.assignedAssetId)),
@@ -146,6 +149,33 @@ function SiteCard({
 
       {/* ── Assets ── */}
       <div className="dcard-b" style={{ flex: 1 }}>
+        {/* Site in-charge — supervisor(s) running the whole site */}
+        {siteInCharge.length > 0 && (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+            marginBottom: 12, padding: '6px 8px', borderRadius: 6,
+            background: 'color-mix(in srgb, var(--accent) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent) 20%, transparent)',
+          }}>
+            <UserCog size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+            <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', flexShrink: 0 }}>
+              In charge
+            </span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2px 10px' }}>
+              {siteInCharge.map((p) => (
+                <Link key={p.id} to={`/wli/staff/${p.id}`} style={{ textDecoration: 'none' }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 500 }}>{p.name}</span>
+                  {p.staffType && (
+                    <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 3 }}>
+                      ({STAFF_TYPE_LABEL[p.staffType]})
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ marginBottom: 14 }}>
           <span style={{
             fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
@@ -222,8 +252,8 @@ function SiteCard({
           )}
         </div>
 
-        {/* ── Other crew on site (not posted to a specific asset) ── */}
-        {directCrew.length > 0 && (
+        {/* ── Other crew on site (not posted to a specific asset, excl. supervisors) ── */}
+        {otherCrew.length > 0 && (
           <div style={{
             paddingTop: 12,
             borderTop: '1px solid var(--border-soft)',
@@ -233,10 +263,10 @@ function SiteCard({
               fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
               letterSpacing: '0.06em', color: 'var(--text-muted)',
             }}>
-              Other crew on site · {directCrew.length}
+              Other crew on site · {otherCrew.length}
             </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px 12px', marginTop: 6 }}>
-              {directCrew.map((p) => (
+              {otherCrew.map((p) => (
                 <Link key={p.id} to={`/wli/staff/${p.id}`} style={{ textDecoration: 'none' }}>
                   <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.name}</span>
                   {p.staffType && (
@@ -280,7 +310,9 @@ function SiteCard({
 }
 
 export function SiteOverview({ sites, assets, staff, tickets }: Props) {
-  if (sites.length === 0) return null;
+  // Malé HQ is the corporate office, not a deployment site — exclude it here.
+  const deploymentSites = sites.filter((s) => s.type !== 'hq');
+  if (deploymentSites.length === 0) return null;
 
   return (
     <div style={{
@@ -288,7 +320,7 @@ export function SiteOverview({ sites, assets, staff, tickets }: Props) {
       gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
       gap: 16,
     }}>
-      {sites.map((site) => (
+      {deploymentSites.map((site) => (
         <SiteCard
           key={site.id}
           site={site}
