@@ -185,6 +185,11 @@ export function AssetDetail() {
                   <div><div className="k">Model</div><div className="v">{asset.model || '—'}</div></div>
                   <div><div className="k">Type</div><div className="v">{asset.type || '—'}</div></div>
                   <div><div className="k">Current Site</div><div className="v">{siteName(asset.currentSiteId)}</div></div>
+                  {asset.regNo && <div><div className="k">Reg No</div><div className="v"><span className="mono">{asset.regNo}</span></div></div>}
+                  {asset.chassisNo && <div><div className="k">Chassis No</div><div className="v"><span className="mono">{asset.chassisNo}</span></div></div>}
+                  {asset.engineNo && <div><div className="k">Engine No</div><div className="v"><span className="mono">{asset.engineNo}</span></div></div>}
+                  {asset.assignedProject && <div style={{ gridColumn: '1 / -1' }}><div className="k">Assigned Project</div><div className="v">{asset.assignedProject}</div></div>}
+                  {asset.knownIssue && <div style={{ gridColumn: '1 / -1' }}><div className="k">Known Issue</div><div className="v" style={{ display: 'block', color: 'var(--warning)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>{asset.knownIssue}</div></div>}
                 </div>
               )}
             </div>

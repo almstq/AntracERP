@@ -21,6 +21,19 @@ export interface Asset {
   /** followme.mv vessel tracking ID (sea vessels only) — live AIS position. */
   trackingId?: string;
   createdAt?: Date;
+
+  // ── Extended registry fields (optional; from the WL Ops registry ingestion) ──
+  regNo?: string;
+  chassisNo?: string;
+  engineNo?: string;
+  /** Current known fault/issue narrative (e.g. grounded-machine notes). */
+  knownIssue?: string;
+  /** Project the asset is deployed to, if any (free text from the registry). */
+  assignedProject?: string;
+  /** Last-maintenance date as raw text (source formats are mixed). */
+  lastMaintenanceText?: string;
+  /** Original source ID (e.g. WL-HV-0007) for provenance / dedupe. */
+  sourceId?: string;
 }
 
 /** Live tracking page URL for a followme.mv vessel ID. */

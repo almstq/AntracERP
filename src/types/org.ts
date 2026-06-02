@@ -81,4 +81,12 @@ export interface Staff {
   documents: { name: string; url: string; uploadedAt?: Date }[];
   createdAt: Date;
   updatedAt: Date;
+
+  // ── Extended HR fields (optional; from the WL Ops registry ingestion) ──
+  nationality?: string;
+  grade?: string;
+  joinedDateText?: string;     // raw, mixed source formats
+  employmentStatus?: string;   // "Full Time" / "Probation" (distinct from active/inactive)
+  contactNo?: string;
+  sourceId?: string;           // original WL-EMP-#### for provenance
 }
