@@ -3,6 +3,7 @@ import type { Site } from '../../types/org';
 import type { Asset } from '../../types/asset';
 import type { Staff } from '../../types/org';
 import { STAFF_TYPE_LABEL } from '../../types/org';
+import { followMeUrl } from '../../types/asset';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
@@ -131,9 +132,11 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
         const pos = { lat: site.location!.lat + R * Math.cos(ang), lng: site.location!.lng + R * Math.sin(ang) };
         if (item.kind === 'asset') {
           const m = new gmaps.Marker({ position: pos, map, title: item.a.code, icon: dot(c.asset, 6), zIndex: 20 });
+          const track = item.a.assetClass === 'vessel' && item.a.trackingId
+            ? `<div style="margin-top:4px"><a href="${followMeUrl(item.a.trackingId)}" target="_blank" rel="noreferrer" style="color:${c.asset};font-size:10px;font-weight:600">Track live ↗</a></div>` : '';
           openInfo(m, `<strong>${item.a.code}</strong> — ${item.a.make} ${item.a.model}
             <div style="color:${c.infoSub};margin-top:2px">${item.a.type} · ${item.a.operationalStatus}</div>
-            <div style="color:${c.asset};font-size:10px;margin-top:2px">${site.name}</div>`);
+            <div style="color:${c.asset};font-size:10px;margin-top:2px">${site.name}</div>${track}`);
         } else {
           const p = item.p;
           const onAsset = p.assignedAssetId ? assetById.get(p.assignedAssetId) : undefined;

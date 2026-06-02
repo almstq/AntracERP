@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
-  Gauge, Pencil, type LucideIcon,
+  Gauge, Pencil, Radio, ExternalLink, type LucideIcon,
 } from 'lucide-react';
 import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../../lib/hooks/useWorkflowData';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
@@ -11,7 +11,7 @@ import { updateAsset } from '../../../lib/services/registry';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
 import type { Asset, AssetClass } from '../../../types/asset';
-import { ASSET_CLASSES, ASSET_CLASS_LABEL } from '../../../types/asset';
+import { ASSET_CLASSES, ASSET_CLASS_LABEL, followMeUrl } from '../../../types/asset';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
 import { Button } from '../../../components/ui/Button';
@@ -64,7 +64,7 @@ export function AssetDetail() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
     make: '', model: '', type: '', assetClass: 'equipment' as AssetClass,
-    operationalStatus: 'operational' as Asset['operationalStatus'], currentSiteId: '',
+    operationalStatus: 'operational' as Asset['operationalStatus'], currentSiteId: '', trackingId: '',
   });
   const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -73,7 +73,7 @@ export function AssetDetail() {
     setForm({
       make: asset.make ?? '', model: asset.model ?? '', type: asset.type ?? '',
       assetClass: asset.assetClass, operationalStatus: asset.operationalStatus,
-      currentSiteId: asset.currentSiteId ?? '',
+      currentSiteId: asset.currentSiteId ?? '', trackingId: asset.trackingId ?? '',
     });
     setEditing(true);
   }
@@ -81,7 +81,7 @@ export function AssetDetail() {
     if (!asset) return;
     setBusy(true);
     try {
-      await updateAsset(asset.id, { ...form });
+      await updateAsset(asset.id, { ...form, trackingId: form.trackingId.trim() });
       toast('success', 'Asset updated');
       setEditing(false);
       refresh();
@@ -162,6 +162,12 @@ export function AssetDetail() {
                         {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </InputSelect>
                     </div>
+                    {form.assetClass === 'vessel' && (
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <div className="k">followme.mv Tracking ID (live AIS position)</div>
+                        <Input value={form.trackingId} onChange={(e) => setF('trackingId', e.target.value)} placeholder="e.g. 18599" />
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button variant="primary" size="sm" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
@@ -180,6 +186,42 @@ export function AssetDetail() {
               )}
             </div>
           </div>
+
+          {/* Live vessel tracking (followme.mv) */}
+          {asset.assetClass === 'vessel' && (
+            <div className="dcard">
+              <div className="dcard-h">
+                <h3><Radio /> Live Tracking</h3>
+                {asset.trackingId && (
+                  <a className="h-link" href={followMeUrl(asset.trackingId)} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    Open tracker <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
+              <div className="dcard-b">
+                {asset.trackingId ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                    <div className="ft-ic tint-info" style={{ width: 44, height: 44 }}><Ship /></div>
+                    <div style={{ flex: 1, minWidth: 160 }}>
+                      <div className="lr-id" style={{ fontFamily: 'var(--font-ui)', fontSize: 13 }}>
+                        Live AIS tracking · ID <span className="mono">{asset.trackingId}</span>
+                      </div>
+                      <div className="tc-sub" style={{ marginTop: 2 }}>
+                        Real-time vessel position via <b>followme.mv</b>. Opens the live tracker in a new tab.
+                      </div>
+                    </div>
+                    <a className="btn btn-primary" href={followMeUrl(asset.trackingId)} target="_blank" rel="noreferrer">
+                      <Radio /> Open live tracker <ExternalLink />
+                    </a>
+                  </div>
+                ) : (
+                  <p className="empty-note" style={{ padding: 0 }}>
+                    No tracking ID yet. Click <b>Edit</b> and paste the vessel’s followme.mv ID (e.g. 18599) to show its live position.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Repair history */}
           <div className="dcard">

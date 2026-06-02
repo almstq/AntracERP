@@ -18,7 +18,14 @@ export interface Asset {
   currentSiteId: string; // current deployment location
   operationalStatus: AssetOperationalStatus;
   commercialStatus: AssetCommercialStatus;  // defaults to 'available' on create
+  /** followme.mv vessel tracking ID (sea vessels only) — live AIS position. */
+  trackingId?: string;
   createdAt?: Date;
+}
+
+/** Live tracking page URL for a followme.mv vessel ID. */
+export function followMeUrl(trackingId: string): string {
+  return `https://m.followme.mv/public/?id=${encodeURIComponent(trackingId.trim())}`;
 }
 
 /** The three main asset categories, in display order. */
