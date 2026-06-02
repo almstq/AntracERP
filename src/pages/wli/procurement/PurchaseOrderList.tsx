@@ -1,56 +1,89 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card } from '../../../components/ui/Card';
-import { Search, Package } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, ChevronRight } from 'lucide-react';
 import { usePOList } from '../../../lib/hooks/useWorkflowData';
 import { purchaseOrderWorkflow } from '../../../lib/workflow/definitions';
 import type { POStatus } from '../../../types/workflow-entities';
-import { PageContainer } from '../../../components/shared/PageContainer';
+
+const COLS = '1.5fr 1fr 0.9fr 1.4fr 24px';
+
+function poBadge(status: string): string {
+  if (status === 'po_closed') return 'b-pos';
+  if (status === 'items_collected' || status === 'wli_finance_confirmed') return 'b-pos';
+  if (status === 'payment_completed' || status === 'director_approved') return 'b-accent';
+  if (status.includes('payment') || status === 'antrac_finance_accepted' || status === 'cfo_verified') return 'b-warn';
+  if (status === 'raised' || status === 'supplier_confirmed') return 'b-info';
+  return 'b-info';
+}
 
 export function PurchaseOrderList() {
   const { data: pos, loading } = usePOList();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
 
-  const filtered = !search
-    ? pos
-    : pos.filter(po => po.displayId.toLowerCase().includes(search.toLowerCase()) || po.supplierName.toLowerCase().includes(search.toLowerCase()));
+  const open = pos.filter((po) => po.status !== 'po_closed');
+  const inPayment = pos.filter((po) => po.status.includes('payment') || ['antrac_finance_accepted', 'cfo_verified', 'director_approved'].includes(po.status)).length;
+  const totalValue = pos.reduce((s, po) => s + (po.total ?? 0), 0);
+  const closed = pos.filter((po) => po.status === 'po_closed').length;
+
+  const filtered = pos.filter((po) => {
+    const q = search.trim().toLowerCase();
+    return !q || po.displayId.toLowerCase().includes(q) || po.supplierName.toLowerCase().includes(q);
+  });
 
   return (
-    <PageContainer>
-      <div className="mb-4">
-        <h1 className="text-lg font-bold text-text-primary">Purchase Orders</h1>
-        <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${pos.length} orders`}</p>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Purchase Orders</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${open.length} open · ${pos.length} total`}</span>
+          </p>
+        </div>
       </div>
-      <div className="relative mb-3">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
-          placeholder="Search…"
-          value={search} onChange={e => setSearch(e.target.value)}
-        />
+
+      <div className="sumbar">
+        <div className="sumchip"><div className="sc-l">Open</div><div className="sc-v num">{open.length}<span className="sc-sub">of {pos.length}</span></div></div>
+        <div className="sumchip"><div className="sc-l">In Payment</div><div className="sc-v num" style={{ color: 'var(--warning)' }}>{inPayment}<span className="sc-sub">chain running</span></div></div>
+        <div className="sumchip"><div className="sc-l">Total Value</div><div className="sc-v num" style={{ color: 'var(--accent)' }}>{totalValue.toLocaleString()}<span className="sc-sub">MVR</span></div></div>
+        <div className="sumchip"><div className="sc-l">Closed</div><div className="sc-v num" style={{ color: 'var(--positive)' }}>{closed}<span className="sc-sub">settled</span></div></div>
       </div>
-      <Card>
-        {!loading && filtered.length === 0 ? (
-          <p className="text-xs text-text-muted p-2">{search ? 'No results match your search.' : 'No purchase orders yet. POs are raised from an approved PR.'}</p>
+
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search orders, suppliers…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Order</span><span>Value</span><span>Items</span><span>Status</span><span />
+        </div>
+        {loading ? (
+          <div className="tbl-empty">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="tbl-empty">{search ? 'No results.' : 'No purchase orders yet. POs are raised from an approved PR.'}</div>
         ) : (
-          <div className="space-y-1">
-            {filtered.map((po) => (
-              <Link key={po.id} to={`/wli/procurement/orders/${po.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface">
-                <div className="flex items-center gap-3 min-w-0">
-                  <Package size={16} className="text-text-muted flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-text-primary truncate">{po.displayId} · {po.supplierName}</p>
-                    <p className="text-[10px] text-text-muted">{po.currency} {po.total?.toLocaleString()} · {po.lineItems?.length ?? 0} item(s)</p>
-                  </div>
-                </div>
-                <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary flex-shrink-0 ml-2">
-                  {purchaseOrderWorkflow.statusLabels[po.status as POStatus] ?? po.status}
+          filtered.map((po) => (
+            <button key={po.id} className="tbl-row" style={{ gridTemplateColumns: COLS }} onClick={() => navigate(`/wli/procurement/orders/${po.id}`)}>
+              <div style={{ minWidth: 0 }}>
+                <div className="tc-id">{po.displayId}</div>
+                <div className="tc-desc">{po.supplierName}</div>
+              </div>
+              <div className="tc-txt mono">{po.currency} {po.total?.toLocaleString() ?? '0'}</div>
+              <div className="tc-txt">{po.lineItems?.length ?? 0}</div>
+              <div>
+                <span className={`badge ${poBadge(po.status)}`}>
+                  <span className="bdot" />{purchaseOrderWorkflow.statusLabels[po.status as POStatus] ?? po.status}
                 </span>
-              </Link>
-            ))}
-          </div>
+              </div>
+              <ChevronRight className="tc-chev" />
+            </button>
+          ))
         )}
-      </Card>
-    </PageContainer>
+      </div>
+    </div>
   );
 }

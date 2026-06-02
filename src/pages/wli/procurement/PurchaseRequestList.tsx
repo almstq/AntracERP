@@ -1,57 +1,90 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Card } from '../../../components/ui/Card';
-import { Search, ShoppingCart } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, ChevronRight } from 'lucide-react';
 import { usePRList } from '../../../lib/hooks/useWorkflowData';
 import { purchaseRequestWorkflow } from '../../../lib/workflow/definitions';
 import type { PRStatus } from '../../../types/workflow-entities';
-import { PageContainer } from '../../../components/shared/PageContainer';
+
+const COLS = '1.6fr 1fr 1fr 1.3fr 24px';
+const URGENCY_COLOR: Record<string, string> = {
+  critical: 'var(--danger)', high: 'var(--warning)', medium: 'var(--info)', low: 'var(--text-muted)',
+};
+
+function prBadge(status: string): string {
+  if (status === 'closed') return 'b-pos';
+  if (status === 'gm_quote_approved' || status === 'po_raised') return 'b-accent';
+  if (status === 'rfq_sent' || status === 'quotes_under_review') return 'b-warn';
+  if (status === 'on_hold') return 'b-muted';
+  return 'b-info';
+}
 
 export function PurchaseRequestList() {
   const { data: prs, loading } = usePRList();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  // Hide on_hold PRs — not yet activated, invisible to procurement per spec.
+
   const visible = prs.filter((p) => p.status !== 'on_hold');
-  const filtered = !search
-    ? visible
-    : visible.filter(p => p.displayId.toLowerCase().includes(search.toLowerCase()));
+  const awaiting = visible.filter((p) => ['quotes_under_review', 'gm_quote_approved'].includes(p.status)).length;
+  const sourcing = visible.filter((p) => ['rfq_sent', 'quotes_under_review'].includes(p.status)).length;
+  const closed = visible.filter((p) => p.status === 'closed').length;
+
+  const filtered = visible.filter((p) => {
+    const q = search.trim().toLowerCase();
+    return !q || p.displayId.toLowerCase().includes(q);
+  });
 
   return (
-    <PageContainer>
-      <div className="mb-4">
-        <h1 className="text-lg font-bold text-text-primary">Purchase Requests</h1>
-        <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${visible.length} active`}</p>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Purchase Requests</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${visible.length} active`}</span>
+          </p>
+        </div>
       </div>
-      <div className="relative mb-3">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
-          placeholder="Search…"
-          value={search} onChange={e => setSearch(e.target.value)}
-        />
+
+      <div className="sumbar">
+        <div className="sumchip"><div className="sc-l">Active</div><div className="sc-v num">{visible.length}<span className="sc-sub">on desk</span></div></div>
+        <div className="sumchip"><div className="sc-l">Sourcing</div><div className="sc-v num" style={{ color: 'var(--warning)' }}>{sourcing}<span className="sc-sub">RFQ / quotes</span></div></div>
+        <div className="sumchip"><div className="sc-l">Awaiting GM</div><div className="sc-v num" style={{ color: 'var(--accent)' }}>{awaiting}<span className="sc-sub">award decision</span></div></div>
+        <div className="sumchip"><div className="sc-l">Closed</div><div className="sc-v num" style={{ color: 'var(--positive)' }}>{closed}<span className="sc-sub">PO raised</span></div></div>
       </div>
-      <Card>
-        {!loading && filtered.length === 0 ? (
-          <p className="text-xs text-text-muted p-2">{search ? 'No results match your search.' : 'No active purchase requests. PRs appear here once a GM approves the issue ticket.'}</p>
+
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search purchase requests…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+      </div>
+
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Request</span><span>Items</span><span>Urgency</span><span>Status</span><span />
+        </div>
+        {loading ? (
+          <div className="tbl-empty">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="tbl-empty">{search ? 'No results.' : 'No active purchase requests. PRs appear here once a GM approves the issue ticket.'}</div>
         ) : (
-          <div className="space-y-1">
-            {filtered.map((p) => (
-              <Link key={p.id} to={`/wli/procurement/requests/${p.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface">
-                <div className="flex items-center gap-3 min-w-0">
-                  <ShoppingCart size={16} className="text-text-muted flex-shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-text-primary truncate">{p.displayId}</p>
-                    <p className="text-[10px] text-text-muted">{p.lineItems?.length ?? 0} item(s) · {p.urgency}</p>
-                  </div>
-                </div>
-                <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary flex-shrink-0 ml-2">
-                  {purchaseRequestWorkflow.statusLabels[p.status as PRStatus] ?? p.status}
+          filtered.map((p) => (
+            <button key={p.id} className="tbl-row" style={{ gridTemplateColumns: COLS }} onClick={() => navigate(`/wli/procurement/requests/${p.id}`)}>
+              <div className="tc-id">{p.displayId}</div>
+              <div className="tc-txt">{p.lineItems?.length ?? 0} item(s)</div>
+              <div className="urg" style={{ color: URGENCY_COLOR[p.urgency] ?? 'var(--text-muted)' }}>
+                <i style={{ background: 'currentColor' }} />{p.urgency}
+              </div>
+              <div>
+                <span className={`badge ${prBadge(p.status)}`}>
+                  <span className="bdot" />{purchaseRequestWorkflow.statusLabels[p.status as PRStatus] ?? p.status}
                 </span>
-              </Link>
-            ))}
-          </div>
+              </div>
+              <ChevronRight className="tc-chev" />
+            </button>
+          ))
         )}
-      </Card>
-    </PageContainer>
+      </div>
+    </div>
   );
 }
