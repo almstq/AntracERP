@@ -26,14 +26,34 @@ export interface Asset {
   regNo?: string;
   chassisNo?: string;
   engineNo?: string;
+  /** Physical condition grading from source data. */
+  condition?: string;           // "Good" | "Minor Issue" | "Issue" | "Unknown"
+  /** Whether the asset is eligible for external rental. */
+  rentalEligible?: boolean;
   /** Current known fault/issue narrative (e.g. grounded-machine notes). */
   knownIssue?: string;
+  /** Full issue history narrative (multi-fault log). */
+  issueHistory?: string;
   /** Project the asset is deployed to, if any (free text from the registry). */
   assignedProject?: string;
   /** Last-maintenance date as raw text (source formats are mixed). */
   lastMaintenanceText?: string;
+  /** Next maintenance due (raw text). */
+  nextMaintDue?: string;
   /** Original source ID (e.g. WL-HV-0007) for provenance / dedupe. */
   sourceId?: string;
+
+  // ── Marine-vessel–specific fields ──
+  hullImo?: string;
+  engine1Serial?: string;
+  engine2Serial?: string;
+  capacityNotes?: string;
+  vesselPermitNo?: string;
+  vesselPermitExpiry?: string;  // raw text
+  insuranceExpiry?: string;     // raw text
+  lastInspection?: string;      // raw text
+  drydockStart?: string;        // raw text
+  drydockEstEnd?: string;       // raw text
 }
 
 /** Live tracking page URL for a followme.mv vessel ID. */

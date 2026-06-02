@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, UserCog, Pencil, MapPin, User } from 'lucide-react';
+import { ArrowLeft, UserCog, Pencil, MapPin, User, Briefcase, AlertTriangle } from 'lucide-react';
 import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { updateStaff, assignStaffSite, assignStaffAsset } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
@@ -122,9 +122,11 @@ export function StaffDetail() {
                   <div><div className="k">Staff Type</div><div className="v">{person.staffType ? STAFF_TYPE_LABEL[person.staffType] : '—'}</div></div>
                   <div><div className="k">System Role</div><div className="v">{ROLE_LABELS[person.role] ?? person.role}</div></div>
                   <div><div className="k">Designation</div><div className="v">{person.designation || '—'}</div></div>
+                  {person.category && <div><div className="k">Category</div><div className="v">{person.category}</div></div>}
                   <div><div className="k">Assigned Site</div><div className="v">{siteName(person.assignedAssetId ? assets.find((a) => a.id === person.assignedAssetId)?.currentSiteId : person.siteId)}</div></div>
                   <div><div className="k">Assigned Asset</div><div className="v">{assetLabelOf(person.assignedAssetId)}</div></div>
                   <div><div className="k">Status</div><div className="v" style={{ textTransform: 'capitalize' }}>{person.status}</div></div>
+                  {person.employmentStatus && <div><div className="k">Employment Type</div><div className="v">{person.employmentStatus}</div></div>}
                 </div>
               )}
             </div>
@@ -132,6 +134,44 @@ export function StaffDetail() {
         </div>
 
         <div className="dcol">
+          {/* HR details */}
+          {(person.nationality || person.grade || person.joinedDateText || person.contactNo || person.licenceNoClass) && (
+            <div className="dcard">
+              <div className="dcard-h"><h3><Briefcase /> HR Details</h3></div>
+              <div className="dcard-b">
+                <div className="kv" style={{ gridTemplateColumns: '1fr' }}>
+                  {person.nationality && <div><div className="k">Nationality</div><div className="v">{person.nationality}</div></div>}
+                  {person.grade && <div><div className="k">Grade</div><div className="v"><span className="mono">{person.grade}</span></div></div>}
+                  {person.joinedDateText && <div><div className="k">Joined</div><div className="v">{person.joinedDateText}</div></div>}
+                  {person.contactNo && <div><div className="k">Contact No</div><div className="v"><span className="mono">{person.contactNo}</span></div></div>}
+                  {person.licenceNoClass && <div><div className="k">Licence / Class</div><div className="v">{person.licenceNoClass}</div></div>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Compliance & work permit */}
+          {(person.workPermitStatus || person.permitNo || person.permitExpiry || person.notes) && (
+            <div className="dcard">
+              <div className="dcard-h"><h3><AlertTriangle size={15} /> Compliance</h3></div>
+              <div className="dcard-b">
+                <div className="kv" style={{ gridTemplateColumns: '1fr' }}>
+                  {person.workPermitStatus && (
+                    <div>
+                      <div className="k">Work Permit Status</div>
+                      <div className="v">
+                        <span className="badge b-warn"><span className="bdot" />{person.workPermitStatus}</span>
+                      </div>
+                    </div>
+                  )}
+                  {person.permitNo && <div><div className="k">Permit No</div><div className="v"><span className="mono">{person.permitNo}</span></div></div>}
+                  {person.permitExpiry && <div><div className="k">Permit Expiry</div><div className="v">{person.permitExpiry}</div></div>}
+                  {person.notes && <div><div className="k">Notes</div><div className="v" style={{ lineHeight: 1.5 }}>{person.notes}</div></div>}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="dcard">
             <div className="dcard-h"><h3>Documents</h3></div>
             <div className="dcard-b">

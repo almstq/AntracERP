@@ -89,4 +89,10 @@ export interface Staff {
   employmentStatus?: string;   // "Full Time" / "Probation" (distinct from active/inactive)
   contactNo?: string;
   sourceId?: string;           // original WL-EMP-#### for provenance
+  category?: string;           // "Marine" | "Land/Terminal" | "Management"
+  workPermitStatus?: string;   // e.g. "Work Permit Processing"
+  permitNo?: string;
+  permitExpiry?: string;       // raw text
+  notes?: string;
+  licenceNoClass?: string;     // operator licence info
 }

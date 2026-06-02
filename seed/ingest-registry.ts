@@ -9,9 +9,11 @@
  *
  * Usage:
  *   Dry run (writes nothing, prints the full plan + flags):
- *     npx ts-node --esm seed/ingest-registry.ts "<service-account.json>"
+ *     npx tsx seed/ingest-registry.ts "<service-account.json>"
  *   Commit (REPLACE assets + staff, then import):
- *     npx ts-node --esm seed/ingest-registry.ts "<service-account.json>" --commit
+ *     npx tsx seed/ingest-registry.ts "<service-account.json>" --commit
+ *   Commit + wipe demo transactions (tickets/PRs/POs/workOrders):
+ *     npx tsx seed/ingest-registry.ts "<service-account.json>" --commit --wipe-demo
  *   Custom MD path:
  *     ... --md "D:\\!starq\\.claude_code_sync\\WL_Ops_Command_Center_Claude_DB_Ingestion.md"
  */
@@ -23,6 +25,7 @@ import { resolve } from 'path';
 const args = process.argv.slice(2);
 const serviceAccountPath = args.find((a) => !a.startsWith('--'));
 const commit = args.includes('--commit');
+const wipeDemo = args.includes('--wipe-demo');
 const mdArg = args[args.indexOf('--md') + 1];
 const MD_PATH = (args.includes('--md') && mdArg)
   ? mdArg
@@ -126,13 +129,21 @@ async function main() {
     const site = siteIdFor(loc);
     if (loc && !site) flags.push(`Asset ${code}: location "${loc}" → unmapped, currentSiteId left blank.`);
     const project = clean(r.assigned_project);
+    const rentalRaw = String(r.rental_eligible ?? '').trim();
+    const rentalEligible = /yes|✓|true/i.test(rentalRaw) ? true : /no|✗|false/i.test(rentalRaw) ? false : undefined;
     assets.push({
       id: slug(code), code, make: clean(r.brand) ?? '', model: clean(r.model) ?? '', type: clean(r.vehicle_type) ?? '',
       assetClass: assetClassFor(r.vehicle_type as string), orgId: ORG, sbuId: SBU,
       currentSiteId: site, operationalStatus: opStatusFor(r.status as string),
       commercialStatus: project ? 'deployed' : 'available',
+      condition: clean(r.condition),
+      rentalEligible,
       regNo: clean(r.reg_no), chassisNo: clean(r.chassis_no), engineNo: clean(r.engine_no),
-      knownIssue: clean(r.known_issue), assignedProject: project, lastMaintenanceText: clean(r.last_maintenance),
+      knownIssue: clean(r.known_issue),
+      issueHistory: clean(r.issue_history),
+      assignedProject: project,
+      lastMaintenanceText: clean(r.last_maintenance),
+      nextMaintDue: clean(r.next_maint_due),
       sourceId: code,
     });
   }
@@ -143,8 +154,20 @@ async function main() {
       id: slug(code), code, make: '', model: clean(v.name_ref) ?? '', type: clean(v.type) ?? 'Vessel',
       assetClass: 'vessel', orgId: ORG, sbuId: SBU,
       currentSiteId: '', operationalStatus: opStatusFor(v.status as string), commercialStatus: 'available',
-      trackingId: code === 'WL-MV-0001' ? '18599' : undefined, // LCT 1 (Mustarq's example)
-      knownIssue: clean(v.known_issues_notes), sourceId: code,
+      trackingId: code === 'WL-MV-0001' ? '18599' : undefined, // LCT 1 — FollowMe ID
+      knownIssue: clean(v.known_issues_notes),
+      regNo: clean(v.reg_no),
+      hullImo: clean(v.hull_imo),
+      engine1Serial: clean(v.engine_1_serial),
+      engine2Serial: clean(v.engine_2_serial),
+      capacityNotes: clean(v.capacity_notes),
+      vesselPermitNo: clean(v.permit_no),
+      vesselPermitExpiry: clean(v.permit_expiry),
+      insuranceExpiry: clean(v.insurance_expiry),
+      lastInspection: clean(v.last_inspection),
+      drydockStart: clean(v.drydock_start),
+      drydockEstEnd: clean(v.drydock_est_end),
+      sourceId: code,
     });
   }
 
@@ -154,6 +177,8 @@ async function main() {
     const did = clean(s.staff_id);
     if (!did) continue;
     const assignedCode = assignment[did];
+    // merge operator-table data for this staff member
+    const opRow = operators.find((o) => clean(o.staff_id) === did);
     staff.push({
       id: slug(did), displayId: did, name: clean(s.full_name) ?? did,
       role: roleFor(s.designation as string), staffType: staffTypeFor(s.designation as string),
@@ -163,6 +188,12 @@ async function main() {
       status: 'active', employmentStatus: clean(s.status),
       nationality: clean(s.nationality), grade: clean(s.grade),
       joinedDateText: clean(s.joined_date), contactNo: clean(s.contact_no),
+      category: clean(s.category),
+      workPermitStatus: clean(s.work_permit_status),
+      permitNo: clean(s.permit_no),
+      permitExpiry: clean(s.permit_expiry),
+      notes: clean(s.notes),
+      licenceNoClass: opRow ? clean(opRow.licence_no_class) : undefined,
       documents: [], sourceId: did,
     });
   }
@@ -181,7 +212,8 @@ async function main() {
   console.log('Sample staff:', JSON.stringify(strip(staff[0]), null, 2));
 
   if (!commit) {
-    console.log('\nDRY RUN — nothing written. Re-run with --commit to REPLACE assets+staff and import.');
+    console.log(`\nDRY RUN — nothing written. Re-run with --commit to REPLACE assets+staff and import.`);
+    if (wipeDemo) console.log('  (--wipe-demo present: tickets/PRs/POs/workOrders/enquiries would also be wiped)');
     return;
   }
 
@@ -213,6 +245,15 @@ async function main() {
   }
 
   console.log('\nCOMMIT — REPLACE mode:');
+  if (wipeDemo) {
+    console.log('  --wipe-demo: clearing demo transactions…');
+    await wipe('tickets');
+    await wipe('purchaseRequests');
+    await wipe('purchaseOrders');
+    await wipe('workOrders');
+    await wipe('enquiries');
+    console.log('  demo transactions wiped.');
+  }
   await wipe('assets');
   await wipe('staff');
   await writeAll('assets', assets);

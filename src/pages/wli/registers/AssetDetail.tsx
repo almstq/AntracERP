@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
-  Gauge, Pencil, Radio, ExternalLink, type LucideIcon,
+  Gauge, Pencil, Radio, ExternalLink, FileText, type LucideIcon,
 } from 'lucide-react';
 import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../../lib/hooks/useWorkflowData';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
@@ -22,6 +22,7 @@ import { useToast } from '../../../lib/context/ToastContext';
 
 const CLASS_ICON: Record<AssetClass, LucideIcon> = { vessel: Ship, vehicle: Truck, equipment: Wrench };
 const OP_STATUSES: Asset['operationalStatus'][] = ['operational', 'idle', 'maintenance', 'down'];
+const CONDITIONS = ['Good', 'Minor Issue', 'Issue', 'Unknown'];
 
 const OP_BADGE: Record<string, string> = {
   operational: 'b-pos', idle: 'b-info', maintenance: 'b-warn', down: 'b-danger',
@@ -68,6 +69,7 @@ export function AssetDetail() {
   const [form, setForm] = useState({
     make: '', model: '', type: '', assetClass: 'equipment' as AssetClass,
     operationalStatus: 'operational' as Asset['operationalStatus'], currentSiteId: '', trackingId: '',
+    condition: '', knownIssue: '',
   });
   const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -77,6 +79,7 @@ export function AssetDetail() {
       make: asset.make ?? '', model: asset.model ?? '', type: asset.type ?? '',
       assetClass: asset.assetClass, operationalStatus: asset.operationalStatus,
       currentSiteId: asset.currentSiteId ?? '', trackingId: asset.trackingId ?? '',
+      condition: asset.condition ?? '', knownIssue: asset.knownIssue ?? '',
     });
     setEditing(true);
   }
@@ -84,7 +87,7 @@ export function AssetDetail() {
     if (!asset) return;
     setBusy(true);
     try {
-      await updateAsset(asset.id, { ...form, trackingId: form.trackingId.trim() });
+      await updateAsset(asset.id, { ...form, trackingId: form.trackingId.trim(), condition: form.condition || undefined, knownIssue: form.knownIssue || undefined });
       toast('success', 'Asset updated');
       setEditing(false);
       refresh();
@@ -165,12 +168,28 @@ export function AssetDetail() {
                         {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </InputSelect>
                     </div>
+                    <div><div className="k">Condition</div>
+                      <InputSelect value={form.condition} onChange={(e) => setF('condition', e.target.value)}>
+                        <option value="">— Unknown —</option>
+                        {CONDITIONS.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </InputSelect>
+                    </div>
                     {form.assetClass === 'vessel' && (
                       <div style={{ gridColumn: '1 / -1' }}>
                         <div className="k">followme.mv Tracking ID (live AIS position)</div>
                         <Input value={form.trackingId} onChange={(e) => setF('trackingId', e.target.value)} placeholder="e.g. 18599" />
                       </div>
                     )}
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div className="k">Known Issue / Fault Notes</div>
+                      <textarea
+                        value={form.knownIssue}
+                        onChange={(e) => setF('knownIssue', e.target.value)}
+                        placeholder="Describe any known fault or issue…"
+                        rows={3}
+                        style={{ width: '100%', padding: '6px 10px', background: 'var(--surface-1)', border: '1px solid var(--border-soft)', borderRadius: 6, color: 'var(--text-primary)', fontFamily: 'var(--font-ui)', fontSize: 13, resize: 'vertical' }}
+                      />
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button variant="primary" size="sm" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
@@ -185,11 +204,16 @@ export function AssetDetail() {
                   <div><div className="k">Model</div><div className="v">{asset.model || '—'}</div></div>
                   <div><div className="k">Type</div><div className="v">{asset.type || '—'}</div></div>
                   <div><div className="k">Current Site</div><div className="v">{siteName(asset.currentSiteId)}</div></div>
+                  {asset.condition && <div><div className="k">Condition</div><div className="v">{asset.condition}</div></div>}
                   {asset.regNo && <div><div className="k">Reg No</div><div className="v"><span className="mono">{asset.regNo}</span></div></div>}
                   {asset.chassisNo && <div><div className="k">Chassis No</div><div className="v"><span className="mono">{asset.chassisNo}</span></div></div>}
                   {asset.engineNo && <div><div className="k">Engine No</div><div className="v"><span className="mono">{asset.engineNo}</span></div></div>}
+                  {asset.lastMaintenanceText && <div><div className="k">Last Maintenance</div><div className="v">{asset.lastMaintenanceText}</div></div>}
+                  {asset.nextMaintDue && <div><div className="k">Next Maint Due</div><div className="v">{asset.nextMaintDue}</div></div>}
+                  {asset.rentalEligible != null && <div><div className="k">Rental Eligible</div><div className="v">{asset.rentalEligible ? 'Yes' : 'No'}</div></div>}
                   {asset.assignedProject && <div style={{ gridColumn: '1 / -1' }}><div className="k">Assigned Project</div><div className="v">{asset.assignedProject}</div></div>}
-                  {asset.knownIssue && <div style={{ gridColumn: '1 / -1' }}><div className="k">Known Issue</div><div className="v" style={{ display: 'block', color: 'var(--warning)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>{asset.knownIssue}</div></div>}
+                  {asset.knownIssue && <div style={{ gridColumn: '1 / -1' }}><div className="k">Known Issue / Fault Notes</div><div className="v" style={{ display: 'block', color: 'var(--warning)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>{asset.knownIssue}</div></div>}
+                  {asset.issueHistory && <div style={{ gridColumn: '1 / -1' }}><div className="k">Issue History</div><div className="v" style={{ display: 'block', lineHeight: 1.5, whiteSpace: 'pre-line', color: 'var(--text-secondary)' }}>{asset.issueHistory}</div></div>}
                 </div>
               )}
             </div>
@@ -251,6 +275,27 @@ export function AssetDetail() {
                     No tracking ID yet. Click <b>Edit</b> and paste the vessel’s FollowMe ID (e.g. 18599) to show its live position.
                   </p>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Marine vessel documents & compliance */}
+          {asset.assetClass === 'vessel' && (asset.hullImo || asset.engine1Serial || asset.engine2Serial || asset.capacityNotes || asset.vesselPermitNo || asset.vesselPermitExpiry || asset.insuranceExpiry || asset.lastInspection || asset.drydockStart) && (
+            <div className="dcard">
+              <div className="dcard-h"><h3><FileText /> Vessel Documents & Compliance</h3></div>
+              <div className="dcard-b">
+                <div className="kv">
+                  {asset.hullImo && <div><div className="k">Hull / IMO No</div><div className="v"><span className="mono">{asset.hullImo}</span></div></div>}
+                  {asset.engine1Serial && <div><div className="k">Engine 1 Serial</div><div className="v"><span className="mono">{asset.engine1Serial}</span></div></div>}
+                  {asset.engine2Serial && <div><div className="k">Engine 2 Serial</div><div className="v"><span className="mono">{asset.engine2Serial}</span></div></div>}
+                  {asset.capacityNotes && <div style={{ gridColumn: '1 / -1' }}><div className="k">Capacity Notes</div><div className="v">{asset.capacityNotes}</div></div>}
+                  {asset.vesselPermitNo && <div><div className="k">Permit No</div><div className="v"><span className="mono">{asset.vesselPermitNo}</span></div></div>}
+                  {asset.vesselPermitExpiry && <div><div className="k">Permit Expiry</div><div className="v">{asset.vesselPermitExpiry}</div></div>}
+                  {asset.insuranceExpiry && <div><div className="k">Insurance Expiry</div><div className="v">{asset.insuranceExpiry}</div></div>}
+                  {asset.lastInspection && <div><div className="k">Last Inspection</div><div className="v">{asset.lastInspection}</div></div>}
+                  {asset.drydockStart && <div><div className="k">Drydock Start</div><div className="v">{asset.drydockStart}</div></div>}
+                  {asset.drydockEstEnd && <div><div className="k">Drydock Est. End</div><div className="v">{asset.drydockEstEnd}</div></div>}
+                </div>
               </div>
             </div>
           )}

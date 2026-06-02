@@ -16,11 +16,15 @@
 ## ⏯ RESUME HERE (next session)
 
 ### ⏸ AWAITING MUSTARQ (two items, nothing auto-runs)
-1. **Registry mass-ingestion — built, NOT executed.** `seed/ingest-registry.ts` is ready
-   (Replace mode; dup WL-HV-0007 import-one-flag-other; assets+staff only). Plan:
-   `docs/REGISTRY_INGESTION_PLAN.md`. **Run when approved:** dry-run first, then `--commit`
-   with the service-account key (kept outside the repo). ~35 assets + 31 staff. Replace
-   wipes the mock assets/staff (a couple demo tickets on `WL-GN-0003` would orphan).
+1. **Registry mass-ingestion — DRY RUN PASSED ✅** (session 13, 2026-06-02). All 9 flags expected.
+   Schema updated globally: `condition`, `rentalEligible`, `nextMaintDue`, `issueHistory` +
+   10 marine-specific fields added to Asset type; `category`, `workPermitStatus`, `permitNo`,
+   `permitExpiry`, `notes`, `licenceNoClass` added to Staff type. UI (AssetDetail/StaffDetail)
+   updated to display all new fields. `--wipe-demo` flag added (clears tickets/PRs/POs/WOs/enquiries
+   for a truly clean slate). Build: 0 errors.
+   **Run when ready:**
+   - Without demo wipe: `npx tsx seed/ingest-registry.ts "<service-account.json>" --commit`
+   - Full clean slate: `npx tsx seed/ingest-registry.ts "<service-account.json>" --commit --wipe-demo`
 2. **FollowMe API key.** Request from info@followme.mv → set `FOLLOWME_KEY` server-side →
    `firebase deploy --only functions,firestore:rules`. Then live AIS lights up.
    See `docs/FOLLOWME_INTEGRATION.md`.
