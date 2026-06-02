@@ -5,8 +5,8 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
 import { UserCog, Plus } from 'lucide-react';
-import { useStaffList, useSiteList } from '../../../lib/hooks/useWorkflowData';
-import { createStaff, assignStaffSite } from '../../../lib/services/registry';
+import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
+import { createStaff, assignStaffSite, assignStaffAsset } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { PageContainer } from '../../../components/shared/PageContainer';
@@ -24,11 +24,15 @@ function nextStaffId(count: number): string {
 export function StaffRegister() {
   const { data: staff, loading, refresh } = useStaffList();
   const { data: sites } = useSiteList();
+  const { data: assets } = useAssetList();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', role: ROLES.OPERATOR as string, staffType: 'operator' as StaffType, designation: '', siteId: '' });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Only vessels and vehicles are assignable to staff (not excavators/support equipment)
+  const assignableAssets = assets.filter((a) => a.assetClass === 'vessel' || a.assetClass === 'vehicle');
 
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -55,6 +59,11 @@ export function StaffRegister() {
     const siteName = sites.find(s => s.id === siteId)?.name ?? siteId;
     if (!window.confirm(`Reassign this staff member to "${siteName}"?`)) return;
     await assignStaffSite(staffId, siteId); refresh();
+  }
+
+  async function reassignAsset(staffId: string, assetId: string) {
+    await assignStaffAsset(staffId, assetId || null);
+    refresh();
   }
 
   return (
@@ -106,8 +115,27 @@ export function StaffRegister() {
                 onClick={(e) => e.stopPropagation()}
                 title="Assign site"
               >
-                <option value="">Unassigned</option>
+                <option value="">Unassigned site</option>
                 {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <select
+                className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
+                value={p.assignedAssetId ?? ''}
+                onChange={(e) => reassignAsset(p.id, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
+                title="Assign vessel or vehicle"
+              >
+                <option value="">No vessel / vehicle</option>
+                <optgroup label="Vessels">
+                  {assignableAssets.filter((a) => a.assetClass === 'vessel').map((a) => (
+                    <option key={a.id} value={a.id}>{a.code} — {a.model || a.make}</option>
+                  ))}
+                </optgroup>
+                <optgroup label="Vehicles">
+                  {assignableAssets.filter((a) => a.assetClass === 'vehicle').map((a) => (
+                    <option key={a.id} value={a.id}>{a.code} — {a.make} {a.model}</option>
+                  ))}
+                </optgroup>
               </select>
             </div>
           ))}

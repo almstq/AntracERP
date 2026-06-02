@@ -126,10 +126,19 @@ export function StaffDetail() {
                         {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </InputSelect>
                     </div>
-                    <div style={{ gridColumn: '1 / -1' }}><div className="k">Assigned Asset (location follows the asset’s site)</div>
+                    <div style={{ gridColumn: '1 / -1' }}><div className="k">Assigned Vessel / Vehicle</div>
                       <InputSelect value={form.assignedAssetId} onChange={(e) => setF('assignedAssetId', e.target.value)}>
                         <option value="">— None —</option>
-                        {assets.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.make} {a.model}</option>)}
+                        <optgroup label="Vessels">
+                          {assets.filter((a) => a.assetClass === 'vessel').map((a) => (
+                            <option key={a.id} value={a.id}>{a.code} — {a.model || a.make}</option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="Vehicles">
+                          {assets.filter((a) => a.assetClass === 'vehicle').map((a) => (
+                            <option key={a.id} value={a.id}>{a.code} — {a.make} {a.model}</option>
+                          ))}
+                        </optgroup>
                       </InputSelect>
                     </div>
                   </div>

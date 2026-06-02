@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import {
   MapPin, Truck, Ticket, ClipboardCheck, CheckCircle2, Ship, ChevronRight,
-  SlidersHorizontal, Plus, Radio, Navigation, ShoppingCart, Package,
+  SlidersHorizontal, Plus, Radio, Navigation, ShoppingCart, Package, AlertTriangle,
   type LucideIcon,
 } from 'lucide-react';
 import { FleetMapView } from '../../components/workflow/FleetMapView';
@@ -46,6 +46,15 @@ export function WLIDashboard() {
   };
   const landF = fleet(land);
   const vesselF = fleet(vessels);
+
+  // Crewing gaps — vessels and vehicles with no staff assigned (excludes down assets)
+  const assignedAssetIds = new Set(staff.map((s) => s.assignedAssetId).filter(Boolean));
+  const crewingGaps = assets.filter(
+    (a) =>
+      (a.assetClass === 'vessel' || a.assetClass === 'vehicle') &&
+      a.operationalStatus !== 'down' &&
+      !assignedAssetIds.has(a.id),
+  );
 
   const metrics: { label: string; value: number; tint: string; icon: LucideIcon }[] = [
     { label: 'Active Sites', value: sites.length, tint: 'tint-accent', icon: MapPin },
@@ -159,6 +168,45 @@ export function WLIDashboard() {
           <FleetCard title="Vessel Fleet" icon={Ship} tint="tint-info" color="var(--info)" f={vesselF} />
         </div>
       </div>
+
+      {/* Crewing Gaps — vessels/vehicles with no assigned staff */}
+      {crewingGaps.length > 0 && (
+        <div className="section">
+          <div className="section-head">
+            <h2>
+              <AlertTriangle size={15} style={{ color: 'var(--warning)', marginRight: 6, verticalAlign: 'middle' }} />
+              Crewing Gaps
+              <span className="hint" style={{ color: 'var(--warning)' }}>{crewingGaps.length} uncrewed</span>
+            </h2>
+            <Link className="section-link" to="/wli/staff">Manage assignments <ChevronRight /></Link>
+          </div>
+          <div className="card">
+            <div className="list">
+              {crewingGaps.map((a) => {
+                const Icon = a.assetClass === 'vessel' ? Ship : Truck;
+                const site = sites.find((s) => s.id === a.currentSiteId);
+                return (
+                  <Link className="row" key={a.id} to={`/wli/assets/${a.id}`}>
+                    <span className="row-ic tint-warn"><Icon /></span>
+                    <div className="row-main">
+                      <div className="row-t">
+                        <span className="row-id">{a.code}</span>
+                        <span className="badge b-muted">{a.assetClass}</span>
+                        <span className={`badge ${a.operationalStatus === 'operational' ? 'b-pos' : 'b-info'}`}>
+                          <span className="bdot" />{a.operationalStatus}
+                        </span>
+                      </div>
+                      <div className="row-sub">{a.make} {a.model}{site ? ` · ${site.name}` : ''}</div>
+                    </div>
+                    <span className="badge b-warn"><AlertTriangle size={10} /> No crew assigned</span>
+                    <ChevronRight className="row-chev" />
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Site Overview — weather + deployed fleet + crew + issues per site */}
       <div className="section">
