@@ -2,23 +2,23 @@
   "_note": "Canonical progress file for Antrac ERP. Updated by Claude Code at the end of every build phase. Read by VOID DECK dashboard and Hermes. DO NOT hand-edit â€” update via Claude Code session.",
   "project": "antrac-erp",
   "name": "Antrac ERP",
-  "version": "0.25.0",
+  "version": "0.26.0",
   "updated_at": "2026-06-02",
-  "last_commit": "v0.25.0",
+  "last_commit": "v0.26.0",
   "owner": "cipher",
-  "phase_current": "Vessel live tracking (v0.25): followme.mv tracking ID per sea vessel + Live Tracking card/links. Site Overview cards (weather+fleet+crew+issues) in v0.24.",
-  "phase_next": "Optional: bespoke Helix tables/metric-strips for remaining CRM/Warehouse list pages; site-deployment history log (append-only) for assets",
+  "phase_current": "FollowMe vessel tracking (v0.26): policy-compliant server-side cache + live GPS on Map + mandatory branding. INERT until API key provisioned (info@followme.mv → FOLLOWME_KEY → deploy).",
+  "phase_next": "Provision FollowMe API key; then build dedicated Fleet Operations module (Live Fleet/Tracking/History/ETA/Registry).",
   "notes": "Helix Shell shipped (v0.19.0, commit 42e42f6): floating-card layout (icon rail + sidebar + main panel inset off a base bg) structurally resolves the recurring edge-to-edge spacing complaints. New token system in src/styles/shell.css (data-dir=helix + data-theme), fonts Albert Sans/Space Grotesk/JetBrains Mono, teal accent, dark+light. Shell components in src/components/shell/ (HelixShell, IconRail, ShellSidebar, Topbar, CommandPalette, navConfig). Command Center (WLIDashboard) rebuilt on real hooks. Design system + scope: docs/HELIX_SHELL.md. Source: .claude_code_sync/Antrac ERP-handoff/. KNOWN pre-existing: ai.ts uses gemini-1.5-flash which now 404s (AI Brief shows the error) â€” one-line model-id fix pending.",
   "stack": "React 19 + TypeScript + Vite 8 + Tailwind 4 + Firebase",
   "repo_local": "D:\\!starq\\projects\\antrac-erp",
   "dev_url": "http://localhost:3000",
   "summary": {
-    "phases_total": 35,
-    "phases_done": 33,
+    "phases_total": 37,
+    "phases_done": 34,
     "phases_in_progress": 0,
     "phases_next": 0,
-    "phases_planned": 2,
-    "progress_pct": 94,
+    "phases_planned": 3,
+    "progress_pct": 92,
     "build_status": "clean",
     "status": "Active"
   },
@@ -318,7 +318,16 @@
       "status": "done",
       "commit": "v0.25.0",
       "completed_date": "2026-06-02",
-      "notes": "Asset gains optional trackingId (followme.mv vessel ID) + followMeUrl() helper. Asset detail (vessels only): editable Tracking ID field + Live Tracking card with 'Open live tracker' button to the live AIS page; Map vessel markers get a 'Track live' link. LCT (WL-VS-0001) set to id=18599. LIMITS: followme.mv blocks iframe embedding (opens new tab); plotting real GPS on our own Google map needs followme's coordinate API (not public) - deferred. v0.25.0."
+      "notes": "Asset gains optional trackingId (followme.mv vessel ID) + followMeUrl() helper. Asset detail (vessels only): editable Tracking ID field + Live Tracking card with 'Open live tracker' button to the live AIS page; Map vessel markers get a 'Track live' link. LCT (WL-VS-0001) set to id=18599. LIMITS: followme.mv blocks iframe embedding (opens new tab); plotting real GPS on our own Google map needs followme's coordinate API (not public) - deferred. v0.25.0. SUPERSEDED by policy-compliant FollowMe API integration (see 'followme' phase, v0.26.0)."
+    },
+    {
+      "id": "followme",
+      "label": "FollowMe Vessel Tracking",
+      "title": "Policy-compliant FollowMe API v5 integration (server-side cache)",
+      "status": "done",
+      "commit": "v0.26.0",
+      "completed_date": "2026-06-02",
+      "notes": "Reworked vessel tracking to the MANDATORY FollowMe API Integration Policy. Server-side cache (functions/syncFollowMe, every 1 min, FOLLOWME_KEY server-side, GET v5 /my/{key}/, normalize + cache to Firestore followmeCache/followmeMeta; graceful). Browser NEVER calls FollowMe directly - useFollowMeFleet() reads the cache. FollowMeBadge ('Powered by FollowMe' + logo) on Map + vessel cards. FleetMapView plots real GPS vessel markers (heading-rotated). firestore.rules added. docs/FOLLOWME_INTEGRATION.md. INERT until API key provisioned (request from info@followme.mv, set FOLLOWME_KEY, deploy functions). Response field shape undocumented - verify vs live sample. v0.26.0."
     },
     {
       "id": "mobile-responsive",
@@ -337,6 +346,15 @@
       "commit": null,
       "completed_date": null,
       "notes": "Side-effects currently run client-side under actor auth (coarse rules). Hardening: move to Cloud Functions for proper authority isolation. Not MVP-blocking â€” app-level gating is solid."
+    },
+    {
+      "id": "fleet-ops",
+      "label": "Fleet Operations module",
+      "title": "Dedicated Fleet Ops section (Live Fleet/Tracking/History/ETA/Registry) + role gating",
+      "status": "planned",
+      "commit": null,
+      "completed_date": null,
+      "notes": "Per FollowMe policy STARQ-specific requirement. Data layer ready (cache+hook+map); build presentation pages once API key live + response shape confirmed. Add trip-history/ETA snapshot persistence."
     }
   ],
   "backlog": [
