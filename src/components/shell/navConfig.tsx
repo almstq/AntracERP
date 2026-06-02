@@ -77,6 +77,7 @@ export const MPL_NAV: ModuleNav = {
   groups: [{ items: [
     { to: '/mpl', label: 'Dashboard', icon: LayoutDashboard, end: true },
     { to: '/mpl/dispatches', label: 'Fuel Requests', icon: Fuel },
+    { to: '/mpl/staff', label: 'MPL Staff', icon: UserCog },
   ] }],
 };
 

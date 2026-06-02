@@ -98,13 +98,21 @@ const HOLDING_STAFF: StaffEntry[] = [
   { displayId: 'ANT-EMP-0001', name: 'Sampath', designation: 'Project Manager', staffType: 'supervisor', role: 'supervisor' },
 ];
 
+// MPL (Maldives Petroleum Link) staff. The Terminal Manager is the approval
+// node for WLI's fuel & water requests.
+const MPL_SBU = 'sbu-mpl';
+const MPL_STAFF: StaffEntry[] = [
+  { displayId: 'MPL-EMP-0001', name: 'Shifan', designation: 'Terminal Manager', staffType: 'terminal_staff', role: 'mpl_manager' },
+];
+
 async function main() {
   console.log(`\n=== Staff Register Seed (${commit ? 'COMMIT — upsert' : 'DRY RUN'}) ===`);
-  console.log(`WLI: ${ROSTER.length} · Holding: ${HOLDING_STAFF.length}\n`);
+  console.log(`WLI: ${ROSTER.length} · Holding: ${HOLDING_STAFF.length} · MPL: ${MPL_STAFF.length}\n`);
 
   const rows = [
     ...ROSTER.map((s) => ({ ...s, orgId: ORG, sbuId: SBU })),
     ...HOLDING_STAFF.map((s) => ({ ...s, orgId: ORG, sbuId: HOLDING_SBU })),
+    ...MPL_STAFF.map((s) => ({ ...s, orgId: ORG, sbuId: MPL_SBU })),
   ].map((s) => ({
     id: slug(s.displayId),
     displayId: s.displayId,

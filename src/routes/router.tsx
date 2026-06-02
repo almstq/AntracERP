@@ -50,6 +50,7 @@ import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
 import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
 import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
 import { MPLDashboard } from '../pages/mpl/MPLDashboard';
+import { MplStaffRegister } from '../pages/mpl/MplStaffRegister';
 import { EMSDashboard } from '../pages/ems/EMSDashboard';
 import { UserList } from '../pages/admin/UserList';
 import { HOLDING_ROLES, WLI_ROLES, MPL_ROLES, EMS_ROLES } from '../lib/permissions/roles';
@@ -129,6 +130,7 @@ export const router = createBrowserRouter([
         element: <RoleRoute allowedRoles={MPL_ROLES} />,
         children: [
           { index: true, element: <MPLDashboard /> },
+          { path: 'staff', element: <MplStaffRegister /> },
           { path: 'dispatches', element: <FuelDispatchList /> },
           { path: 'dispatches/:id', element: <FuelDispatchDetail /> },
           { path: 'transfers', element: <InterSBUTransferList /> },
