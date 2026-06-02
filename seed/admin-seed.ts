@@ -5,7 +5,7 @@
  *   npx ts-node --esm seed/admin-seed.ts <uid> <path-to-service-account.json>
  *
  * Example:
- *   npx ts-node --esm seed/admin-seed.ts jD7xvbVpSTONcYRZM4EiXyQjjPx2 "C:\Users\Ali Musthaq\Downloads\antracerpjsonsecret"
+ *   npx ts-node --esm seed/admin-seed.ts <super-admin-uid> "<path-to-service-account.json>"
  *
  * What this seeds:
  *   - orgs collection: antrac-holding + 3 SBUs

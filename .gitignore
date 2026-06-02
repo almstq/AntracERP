@@ -22,3 +22,15 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets — never commit real env or service-account files
+.env
+*service-account*.json
+*serviceaccount*.json
+*-adminsdk-*.json
+
+# Internal starqOS working files — kept on disk for VOID DECK / Hermes / agents,
+# never published to GitHub
+PROGRESS.md
+GEMINI.md
+progress.json

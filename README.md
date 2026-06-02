@@ -271,7 +271,7 @@ kept outside the repo) live under `seed/` and default to dry-run; pass `--commit
 ## Repository Structure
 
 ```
-projects/antrac-erp/
+.
 ├── src/
 │   ├── components/      Helix shell, dashboard, workflow & register UI
 │   ├── pages/           Module screens — wli/ holding/ mpl/ ems/
@@ -285,7 +285,8 @@ projects/antrac-erp/
 ├── seed/               Admin seed + registry/staff ingestion scripts (dry-run default)
 ├── docs/               Architecture, plans, workflows, UI spacing contract
 │   └── legacy-nexus/   Archived Flutter-era README & docs (provenance)
-└── PROGRESS.md         Live development tracker
+├── firestore.rules     Security rules
+└── README.md
 ```
 
 ---
