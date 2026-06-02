@@ -29,6 +29,7 @@ export function NewTicket() {
   const [description, setDescription] = useState('');
   const [urgency, setUrgency] = useState<Urgency>('routine');
   const [recommendation, setRecommendation] = useState('');
+  const [reportedDate, setReportedDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -48,11 +49,13 @@ export function NewTicket() {
     if (!description.trim()) { setErr('Describe the issue.'); return; }
     setBusy(true); setErr(null);
     try {
+      const reportedAt = new Date(reportedDate);
       const id = await createTicket(
         {
           description, siteId: effectiveSite, assetId: selectedAsset.id,
           assetCode: selectedAsset.code, assetLabel: assetLabel(selectedAsset),
           urgency, operatorRecommendation: recommendation || undefined,
+          reportedAt,
         },
         { id: user.uid, role: effectiveRole, name: user.displayName },
       );
@@ -90,7 +93,7 @@ export function NewTicket() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="text-xs text-text-muted">Location {selectedAsset && !siteTouched ? '(auto)' : ''}</label>
               <InputSelect
@@ -106,6 +109,10 @@ export function NewTicket() {
               <InputSelect value={urgency} onChange={(e) => setUrgency(e.target.value as Urgency)}>
                 {URGENCIES.map((u) => <option key={u} value={u}>{u}</option>)}
               </InputSelect>
+            </div>
+            <div>
+              <label className="text-xs text-text-muted">Date Reported</label>
+              <Input type="date" value={reportedDate} onChange={(e) => setReportedDate(e.target.value)} />
             </div>
           </div>
 

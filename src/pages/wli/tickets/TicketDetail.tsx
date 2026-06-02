@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Package, AlertCircle, Truck, Boxes } from 'lucide-react';
+import { ArrowLeft, Package, AlertCircle, Truck, Boxes, CalendarDays, Pencil, Check, X } from 'lucide-react';
 import { FileUpload } from '../../../components/shared/FileUpload';
 import { AiDiagnosisHint } from '../../../components/workflow/AiDiagnosisHint';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -7,6 +8,9 @@ import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { ticketWorkflow, purchaseRequestWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus, PRStatus, PurchaseRequest } from '../../../types/workflow-entities';
 import { useTicket, useEntity } from '../../../lib/hooks/useWorkflowData';
+import { useAuth } from '../../../lib/hooks/useAuth';
+import { updateTicketReportedAt } from '../../../lib/services/tickets';
+import { useToast } from '../../../lib/context/ToastContext';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const URGENCY_COLOR: Record<string, string> = {
@@ -21,16 +25,45 @@ function statusBadge(s: string): string {
   return 'b-info';
 }
 
+function fmtDate(d: Date | string | undefined): string {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function toInputDate(d: Date | string | undefined): string {
+  if (!d) return new Date().toISOString().slice(0, 10);
+  return new Date(d).toISOString().slice(0, 10);
+}
+
 export function TicketDetail() {
   const { id } = useParams();
   const { data: ticket, loading, error, refresh } = useTicket(id);
   const { data: pr, refresh: refreshPR } = useEntity<PurchaseRequest>('purchaseRequests', ticket?.purchaseRequestId);
+  const { effectiveRole } = useAuth();
+  const { toast } = useToast();
+  const canEdit = effectiveRole === 'super_admin' || effectiveRole === 'gm';
+
+  const [editingDate, setEditingDate] = useState(false);
+  const [dateVal, setDateVal] = useState('');
+  const [dateBusy, setDateBusy] = useState(false);
 
   if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
   if (error) return <div className="page"><p className="empty-note" style={{ color: 'var(--danger)' }}>{error}</p></div>;
   if (!ticket) return <div className="page"><p className="empty-note">Ticket not found.</p></div>;
 
   const onDone = () => { refresh(); refreshPR(); };
+
+  async function saveDate() {
+    if (!id) return;
+    setDateBusy(true);
+    try {
+      await updateTicketReportedAt(id, new Date(dateVal));
+      toast('success', 'Date reported updated');
+      setEditingDate(false);
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setDateBusy(false); }
+  }
   const hasItems = (ticket.materials?.length ?? 0) > 0 || (ticket.services?.length ?? 0) > 0;
 
   return (
@@ -78,6 +111,32 @@ export function TicketDetail() {
                 <div><div className="k">Site</div><div className="v">{ticket.siteId || '—'}</div></div>
                 <div><div className="k">Urgency</div><div className="v">{ticket.urgency}</div></div>
                 <div><div className="k">Raised by</div><div className="v">{ticket.raisedById || '—'}</div></div>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="k" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <CalendarDays size={11} /> Date Reported
+                    {canEdit && !editingDate && (
+                      <button
+                        onClick={() => { setDateVal(toInputDate(ticket.reportedAt ?? ticket.createdAt)); setEditingDate(true); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}
+                        title="Edit date reported"
+                      ><Pencil size={10} /></button>
+                    )}
+                  </div>
+                  {editingDate ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                      <input
+                        type="date"
+                        value={dateVal}
+                        onChange={(e) => setDateVal(e.target.value)}
+                        style={{ padding: '4px 8px', background: 'var(--surface-1)', border: '1px solid var(--border-soft)', borderRadius: 6, color: 'var(--text-primary)', fontSize: 12 }}
+                      />
+                      <button onClick={saveDate} disabled={dateBusy} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--success)' }}><Check size={14} /></button>
+                      <button onClick={() => setEditingDate(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}><X size={14} /></button>
+                    </div>
+                  ) : (
+                    <div className="v">{fmtDate(ticket.reportedAt ?? ticket.createdAt)}</div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

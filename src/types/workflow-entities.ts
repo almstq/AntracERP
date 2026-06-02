@@ -62,6 +62,8 @@ export interface Ticket {
   siteId: string;
   location?: string;
   raisedById: string;
+  /** Actual date the issue was reported — may be backdated. Distinct from createdAt (system write time). */
+  reportedAt?: Date;
   status: TicketStatus;
   urgency: Urgency;
   // denormalized asset display (resolved at creation)
