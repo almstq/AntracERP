@@ -1,21 +1,41 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../ui/Card';
-import { Wind, Eye, CloudSun } from 'lucide-react';
-import type { Site } from '../../types/org';
+import { Wind, Eye, CloudSun, Boxes, Users, AlertCircle, Ship, Truck, Wrench } from 'lucide-react';
+import type { Site, Staff } from '../../types/org';
+import type { Asset, AssetClass } from '../../types/asset';
+import { ASSET_CLASS_LABEL } from '../../types/asset';
 import {
   fetchSiteWeather, isWeatherConfigured, windCategory, type SiteWeather,
 } from '../../lib/services/weather';
 
+interface TicketLite { id: string; siteId?: string; status: string }
+
 interface Props {
   sites: (Site & { id: string })[];
   variant?: 'card' | 'helix';
+  // Optional ops layers — when provided (helix variant), each tile gains a
+  // deployed-assets-by-class / crew / open-issues readout for its site.
+  assets?: (Asset & { id: string })[];
+  staff?: (Staff & { id: string })[];
+  tickets?: TicketLite[];
 }
 
 const HELIX_TONE: Record<'teal' | 'amber' | 'red', string> = {
   teal: 'var(--positive)', amber: 'var(--warning)', red: 'var(--danger)',
 };
 
-function HelixWeatherTile({ w }: { w: SiteWeather }) {
+const CLASS_SHORT: Record<AssetClass, string> = { vessel: 'Vsl', vehicle: 'Veh', equipment: 'SE' };
+const CLASS_ICON: Record<AssetClass, typeof Ship> = { vessel: Ship, vehicle: Truck, equipment: Wrench };
+
+interface SiteOps {
+  assetCount: number;
+  byClass: { cls: AssetClass; n: number }[];
+  staffCount: number;
+  openIssues: number;
+}
+
+function HelixWeatherTile({ w, ops }: { w: SiteWeather; ops?: SiteOps }) {
   const wind = windCategory(w.windMs);
   const visKm = w.visibilityM / 1000;
   return (
@@ -40,6 +60,27 @@ function HelixWeatherTile({ w }: { w: SiteWeather }) {
           <span style={{ color: 'var(--text-muted)' }}>vis</span>
         </span>
       </div>
+
+      {ops && (
+        <div className="wx-ops">
+          <div className="wx-ops-row">
+            <span className="wx-op"><Boxes /> <b>{ops.assetCount}</b> assets</span>
+            <div className="wx-classes">
+              {ops.byClass.map(({ cls, n }) => {
+                const I = CLASS_ICON[cls];
+                return <span key={cls} className="wx-chip" title={ASSET_CLASS_LABEL[cls]}><I /> {n} {CLASS_SHORT[cls]}</span>;
+              })}
+              {ops.byClass.length === 0 && <span className="wx-chip muted">none deployed</span>}
+            </div>
+          </div>
+          <div className="wx-ops-row">
+            <span className="wx-op"><Users /> <b>{ops.staffCount}</b> crew</span>
+            <Link to="/wli/tickets" className="wx-op" style={{ color: ops.openIssues ? 'var(--danger)' : 'var(--text-muted)' }}>
+              <AlertCircle /> <b>{ops.openIssues}</b> open issue{ops.openIssues !== 1 ? 's' : ''}
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -89,8 +130,24 @@ function WeatherTile({ w }: { w: SiteWeather }) {
   );
 }
 
-export function WeatherPanel({ sites, variant = 'card' }: Props) {
+export function WeatherPanel({ sites, variant = 'card', assets, staff, tickets }: Props) {
   const located = sites.filter((s) => s.location);
+
+  // Per-site ops rollup (deployed assets by class, crew, open issues).
+  function opsFor(siteId: string): SiteOps | undefined {
+    if (!assets && !staff && !tickets) return undefined;
+    const siteAssets = (assets ?? []).filter((a) => a.currentSiteId === siteId);
+    const byClass = (['vessel', 'vehicle', 'equipment'] as AssetClass[])
+      .map((cls) => ({ cls, n: siteAssets.filter((a) => a.assetClass === cls).length }))
+      .filter((x) => x.n > 0);
+    const assetById = new Map((assets ?? []).map((a) => [a.id, a]));
+    const staffCount = (staff ?? []).filter((p) => {
+      const eff = (p.assignedAssetId && assetById.get(p.assignedAssetId)?.currentSiteId) || p.siteId;
+      return eff === siteId;
+    }).length;
+    const openIssues = (tickets ?? []).filter((t) => t.siteId === siteId && !['closed', 'rejected'].includes(t.status)).length;
+    return { assetCount: siteAssets.length, byClass, staffCount, openIssues };
+  }
   const [weather, setWeather] = useState<SiteWeather[]>([]);
   const [loading, setLoading] = useState(true);
   const [errCount, setErrCount] = useState(0);
@@ -121,7 +178,7 @@ export function WeatherPanel({ sites, variant = 'card' }: Props) {
     if (!isWeatherConfigured()) return <div className="empty-note">Weather not configured — add VITE_OPENWEATHER_API_KEY.</div>;
     if (loading) return <div className="empty-note">Loading weather…</div>;
     if (weather.length === 0) return <div className="empty-note">Weather unavailable. A new key can take ~2h to activate.</div>;
-    return <div className="wx-grid">{weather.map((w) => <HelixWeatherTile key={w.siteId} w={w} />)}</div>;
+    return <div className="wx-grid">{weather.map((w) => <HelixWeatherTile key={w.siteId} w={w} ops={opsFor(w.siteId)} />)}</div>;
   }
 
   // Key missing — graceful setup fallback

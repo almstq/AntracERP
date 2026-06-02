@@ -160,13 +160,13 @@ export function WLIDashboard() {
         </div>
       </div>
 
-      {/* Weather */}
+      {/* Site Overview — weather + deployed fleet + crew + issues per site */}
       <div className="section">
         <div className="section-head">
-          <h2>Site Weather <span className="hint">Vessel safety</span></h2>
+          <h2>Site Overview <span className="hint">Weather · fleet · crew · issues</span></h2>
           <Link className="section-link" to="/wli/map">All sites <ChevronRight /></Link>
         </div>
-        <WeatherPanel sites={sites} variant="helix" />
+        <WeatherPanel sites={sites} variant="helix" assets={assets} staff={staff} tickets={tickets} />
       </div>
     </div>
   );

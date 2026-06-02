@@ -503,6 +503,18 @@
 .wx-m svg { width: 13px; height: 13px; }
 .wx-m .v { font-weight: 600; }
 
+/* Site card ops rollup (assets-by-class / crew / issues) */
+.wx-ops { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding-top: 11px; border-top: var(--hair) solid var(--border-soft); }
+.wx-ops-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.wx-op { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.wx-op svg { width: 13px; height: 13px; color: var(--text-muted); }
+.wx-op b { color: var(--text-primary); font-family: var(--font-num); font-feature-settings: var(--num-feat); }
+.wx-classes { display: flex; gap: 5px; flex-wrap: wrap; }
+.wx-chip { display: inline-flex; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 600; padding: 2px 7px; border-radius: var(--r-pill); background: var(--bg-surface); border: var(--hair) solid var(--border-soft); color: var(--text-secondary); }
+.wx-chip svg { width: 10px; height: 10px; color: var(--accent); }
+.wx-chip.muted { color: var(--text-muted); }
+.wx-chip.muted svg { color: var(--text-muted); }
+
 .empty-note { font-size: 12.5px; color: var(--text-muted); padding: 18px; text-align: center; }
 
 /* ---------- COMMAND PALETTE ---------- */
