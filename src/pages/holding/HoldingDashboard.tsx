@@ -1,6 +1,7 @@
 import { Card } from '../../components/ui/Card';
 import { Factory, Fuel, Settings } from 'lucide-react';
 import { PageContainer } from '../../components/shared/PageContainer';
+import { PageHeader } from '../../components/shared/PageHeader';
 
 const sbuCards = [
   { name: 'WLI', desc: 'Well Land Investment', icon: Factory, bgClass: 'bg-blue/10', iconClass: 'text-blue', stats: { tickets: 12, pending: 5 } },
@@ -11,10 +12,7 @@ const sbuCards = [
 export function HoldingDashboard() {
   return (
     <PageContainer>
-      <div>
-        <h1 className="text-lg font-bold text-text-primary">Antrac Holding</h1>
-        <p className="text-xs text-text-muted">Group overview</p>
-      </div>
+      <PageHeader title="Antrac Holding" subtitle="Group overview" />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {sbuCards.map(sbu => {
           const Icon = sbu.icon;

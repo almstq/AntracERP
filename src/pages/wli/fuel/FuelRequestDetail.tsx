@@ -10,6 +10,7 @@ import { fuelRequestWorkflow } from '../../../lib/workflow/definitions';
 import { formatDate } from '../../../lib/utils/format';
 import type { FuelRequest, InventoryBalance, FuelRequestStatus } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const STATUS_STYLE: Record<string, string> = {
   draft:                'bg-border text-text-muted',
@@ -50,7 +51,7 @@ export function FuelRequestDetail() {
 
   useEffect(load, [load]);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (error)   return <div className="p-6 text-xs text-red">{error}</div>;
   if (!request) return <div className="p-6 text-xs text-text-muted">Request not found.</div>;
 
@@ -63,9 +64,14 @@ export function FuelRequestDetail() {
 
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link to="/wli/fuel/requests" className="text-text-muted hover:text-text-primary">
+        <Link to="/wli/fuel/requests" aria-label="Back to fuel requests" className="text-text-muted hover:text-text-primary">
           <ArrowLeft size={18} />
         </Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/fuel/requests" className="hover:text-text-primary">Fuel Requests</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{request.displayId}</span>
+        </nav>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <TypeIcon size={16} className={typeColor} />

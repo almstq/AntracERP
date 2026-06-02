@@ -11,6 +11,7 @@ import { computeTotals, formatMoney, type Currency } from '../../../lib/utils/mo
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
 import type { PurchaseOrder, POStatus } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 // Pay-first order: full payment chain settles before goods are collected.
 const PAYMENT_CHAIN: POStatus[] = [
@@ -23,7 +24,7 @@ export function PurchaseOrderDetail() {
   const { id } = useParams();
   const { data: po, loading, refresh } = useEntity<PurchaseOrder>('purchaseOrders', id);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (!po) return <div className="p-6 text-xs text-text-muted">PO not found.</div>;
 
   const idx = PAYMENT_CHAIN.indexOf(po.status as POStatus);
@@ -33,7 +34,12 @@ export function PurchaseOrderDetail() {
   return (
     <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/procurement/orders" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <Link to="/wli/procurement/orders" aria-label="Back to purchase orders" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/procurement/orders" className="hover:text-text-primary">Purchase Orders</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{po.displayId}</span>
+        </nav>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-text-primary">{po.displayId}</h1>

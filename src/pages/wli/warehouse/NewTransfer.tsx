@@ -3,13 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useStores, useInventoryItems } from '../../../lib/hooks/useInventory';
 import { createTransfer } from '../../../lib/services/inventory';
 import type { StockTransferLine } from '../../../types/inventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
-
-const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary w-full';
+import { useToast } from '../../../lib/context/ToastContext';
 
 export function NewTransfer() {
   const navigate = useNavigate();
@@ -23,6 +24,7 @@ export function NewTransfer() {
   const [lines, setLines] = useState<Array<{ itemId: string; qty: number; uom: string }>>([
     { itemId: '', qty: 1, uom: '' },
   ]);
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -33,7 +35,10 @@ export function NewTransfer() {
   }
 
   function addLine() { setLines((ls) => [...ls, { itemId: '', qty: 1, uom: '' }]); }
-  function removeLine(i: number) { setLines((ls) => ls.filter((_, j) => j !== i)); }
+  function removeLine(i: number) {
+    if (!window.confirm('Remove this line item?')) return;
+    setLines((ls) => ls.filter((_, j) => j !== i));
+  }
 
   async function submit() {
     if (!user) return;
@@ -59,9 +64,12 @@ export function NewTransfer() {
         lineItems, raisedById: user.uid,
         notes: notes || undefined,
       });
+      toast('success', 'Transfer created');
       navigate(`/wli/warehouse/transfers/${transferId}`);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Failed');
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
     } finally {
       setBusy(false);
     }
@@ -69,7 +77,7 @@ export function NewTransfer() {
 
   return (
     <PageContainer className="max-w-3xl space-y-4">
-      <Link to="/wli/warehouse/transfers" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
+      <Link to="/wli/warehouse/transfers" aria-label="Back to transfers" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
         <ArrowLeft size={14} /> Transfers
       </Link>
       <h1 className="text-lg font-bold text-text-primary">New Transfer</h1>
@@ -79,25 +87,25 @@ export function NewTransfer() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-[10px] text-text-muted mb-1 block">From Store</label>
-              <select className={FIELD} value={fromStoreId} onChange={(e) => setFromStoreId(e.target.value)}>
+              <InputSelect value={fromStoreId} onChange={(e) => setFromStoreId(e.target.value)}>
                 <option value="">— select —</option>
                 {activeStores.map((s) => <option key={s.id} value={s.id}>{s.name} ({s.siteName})</option>)}
-              </select>
+              </InputSelect>
             </div>
             <div>
               <label className="text-[10px] text-text-muted mb-1 block">To Store</label>
-              <select className={FIELD} value={toStoreId} onChange={(e) => setToStoreId(e.target.value)}>
+              <InputSelect value={toStoreId} onChange={(e) => setToStoreId(e.target.value)}>
                 <option value="">— select —</option>
                 {activeStores.filter((s) => s.id !== fromStoreId).map((s) => (
                   <option key={s.id} value={s.id}>{s.name} ({s.siteName})</option>
                 ))}
-              </select>
+              </InputSelect>
             </div>
           </div>
 
           <div>
             <label className="text-[10px] text-text-muted mb-1 block">Notes (optional)</label>
-            <input className={FIELD} placeholder="Reason, reference…" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <Input placeholder="Reason, reference…" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
         </div>
       </Card>
@@ -106,8 +114,8 @@ export function NewTransfer() {
         <div className="space-y-2">
           {lines.map((line, i) => (
             <div key={i} className="flex gap-2 items-center">
-              <select
-                className="flex-1 text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary"
+              <InputSelect
+                className="flex-1"
                 value={line.itemId}
                 onChange={(e) => {
                   const item = items.find((it) => it.id === e.target.value);
@@ -117,16 +125,16 @@ export function NewTransfer() {
               >
                 <option value="">— item —</option>
                 {items.map((it) => <option key={it.id} value={it.id}>{it.code} · {it.name}</option>)}
-              </select>
-              <input
+              </InputSelect>
+              <Input
                 type="number" min={1} step={1}
                 value={line.qty}
                 onChange={(e) => setLine(i, 'qty', Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-20 text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary text-right"
+                className="w-20 text-right"
               />
               <span className="text-[10px] text-text-muted w-10">{line.uom || (items.find((it) => it.id === line.itemId)?.uom ?? 'uom')}</span>
               {lines.length > 1 && (
-                <button onClick={() => removeLine(i)} className="text-text-muted hover:text-red">
+                <button onClick={() => removeLine(i)} aria-label="Remove line" className="text-text-muted hover:text-red">
                   <Trash2 size={14} />
                 </button>
               )}

@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { Truck, Ship, Wrench, Plus } from 'lucide-react';
 import { useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createAsset, assignAssetLocation } from '../../../lib/services/registry';
 import type { Asset, AssetClass } from '../../../types/asset';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const CLASSES: AssetClass[] = ['vehicle', 'vessel', 'equipment'];
 const STATUSES: Asset['operationalStatus'][] = ['operational', 'down', 'maintenance', 'idle'];
@@ -21,10 +24,10 @@ export function AssetRegister() {
   const { data: sites } = useSiteList();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ code: '', make: '', model: '', type: '', assetClass: 'equipment' as AssetClass, currentSiteId: '', operationalStatus: 'operational' as Asset['operationalStatus'] });
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const field = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function add() {
@@ -32,13 +35,20 @@ export function AssetRegister() {
     setBusy(true); setErr(null);
     try {
       await createAsset(form);
+      toast('success', 'Asset added');
       setForm({ code: '', make: '', model: '', type: '', assetClass: 'equipment', currentSiteId: '', operationalStatus: 'operational' });
       setAdding(false); refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
   async function reassign(assetId: string, siteId: string) {
+    const siteName = sites.find(s => s.id === siteId)?.name ?? siteId;
+    if (!window.confirm(`Reassign this asset to "${siteName}"?`)) return;
     await assignAssetLocation(assetId, siteId); refresh();
   }
 
@@ -55,20 +65,20 @@ export function AssetRegister() {
       {adding && (
         <Card className="mb-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <input className={field} placeholder="Code (WL-HV-0020)" value={form.code} onChange={(e) => set('code', e.target.value)} />
-            <input className={field} placeholder="Make" value={form.make} onChange={(e) => set('make', e.target.value)} />
-            <input className={field} placeholder="Model" value={form.model} onChange={(e) => set('model', e.target.value)} />
-            <input className={field} placeholder="Type" value={form.type} onChange={(e) => set('type', e.target.value)} />
-            <select className={field} value={form.assetClass} onChange={(e) => set('assetClass', e.target.value)}>
+            <Input placeholder="Code (WL-HV-0020)" value={form.code} onChange={(e) => set('code', e.target.value)} />
+            <Input placeholder="Make" value={form.make} onChange={(e) => set('make', e.target.value)} />
+            <Input placeholder="Model" value={form.model} onChange={(e) => set('model', e.target.value)} />
+            <Input placeholder="Type" value={form.type} onChange={(e) => set('type', e.target.value)} />
+            <InputSelect value={form.assetClass} onChange={(e) => set('assetClass', e.target.value)}>
               {CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select className={field} value={form.currentSiteId} onChange={(e) => set('currentSiteId', e.target.value)}>
+            </InputSelect>
+            <InputSelect value={form.currentSiteId} onChange={(e) => set('currentSiteId', e.target.value)}>
               <option value="">Location…</option>
               {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <select className={field} value={form.operationalStatus} onChange={(e) => set('operationalStatus', e.target.value)}>
+            </InputSelect>
+            <InputSelect value={form.operationalStatus} onChange={(e) => set('operationalStatus', e.target.value)}>
               {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-            </select>
+            </InputSelect>
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}

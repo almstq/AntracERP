@@ -6,6 +6,7 @@ import { getCustomer } from '../../../lib/services/crm';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Customer } from '../../../types/crm';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const CREDIT_TERMS_LABELS: Record<string, string> = {
   cod: 'Cash on Delivery', net_15: 'Net 15 Days', net_30: 'Net 30 Days', net_60: 'Net 60 Days',
@@ -36,7 +37,7 @@ export function CustomerDetail() {
     getCustomer(id).then(c => { setCustomer(c); setLoading(false); });
   }, [id]);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (!customer) return <div className="p-6 text-xs text-text-muted">Customer not found.</div>;
 
   const cur = customer.currency as 'MVR' | 'USD';
@@ -46,7 +47,12 @@ export function CustomerDetail() {
   return (
     <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/crm/customers" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <Link to="/wli/crm/customers" aria-label="Back to customers" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/crm/customers" className="hover:text-text-primary">Customers</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{customer.displayId}</span>
+        </nav>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-text-primary">{customer.name}</h1>

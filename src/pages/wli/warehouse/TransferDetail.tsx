@@ -8,6 +8,8 @@ import { dispatchTransfer, receiveTransfer } from '../../../lib/services/invento
 import type { TransferStatus } from '../../../types/inventory';
 import { useState } from 'react';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const STATUS_STYLE: Record<TransferStatus, string> = {
   requested:  'bg-amber/10 text-amber',
@@ -30,26 +32,35 @@ export function TransferDetail() {
   const { id } = useParams<{ id: string }>();
   const { user, effectiveRole } = useAuth();
   const { data: transfer, loading, refresh } = useStockTransfer(id);
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function dispatch() {
     if (!transfer || !user) return;
     setBusy(true); setErr(null);
-    try { await dispatchTransfer(transfer.id, user.uid); refresh(); }
-    catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    try { await dispatchTransfer(transfer.id, user.uid); refresh(); toast('success', 'Transfer dispatched'); }
+    catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
   async function receive() {
     if (!transfer || !user) return;
     setBusy(true); setErr(null);
-    try { await receiveTransfer(transfer, user.uid); refresh(); }
-    catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    try { await receiveTransfer(transfer, user.uid); refresh(); toast('success', 'Transfer received, stock updated'); }
+    catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (!transfer) return <div className="p-6 text-xs text-red">Transfer not found.</div>;
 
   const canDispatch = transfer.status === 'requested' &&
@@ -59,7 +70,7 @@ export function TransferDetail() {
 
   return (
     <PageContainer className="max-w-3xl space-y-4">
-      <Link to="/wli/warehouse/transfers" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
+      <Link to="/wli/warehouse/transfers" aria-label="Back to transfers" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
         <ArrowLeft size={14} /> Transfers
       </Link>
 

@@ -4,12 +4,18 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './lib/context/AuthContext';
 import { OrgProvider } from './lib/context/OrgContext';
+import { ToastProvider } from './lib/context/ToastContext';
 import { router } from './routes/router';
 import './index.css';
+import './styles/shell.css';
 
 // Apply saved theme before first paint (no flash). Default = dark.
+// Tailwind pages key off `html.light`; the Helix shell keys off `data-theme`.
 try {
-  if (localStorage.getItem('theme') === 'light') document.documentElement.classList.add('light');
+  if (localStorage.getItem('theme') === 'light') {
+    document.documentElement.classList.add('light');
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
 } catch { /* ignore */ }
 
 const queryClient = new QueryClient({
@@ -27,7 +33,9 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <OrgProvider>
-          <RouterProvider router={router} />
+          <ToastProvider>
+            <RouterProvider router={router} />
+          </ToastProvider>
         </OrgProvider>
       </AuthProvider>
     </QueryClientProvider>

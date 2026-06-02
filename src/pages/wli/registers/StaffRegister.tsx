@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { UserCog, Plus } from 'lucide-react';
 import { useStaffList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createStaff, assignStaffSite } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const ASSIGNABLE_ROLES = [
   ROLES.OPERATOR, ROLES.MECHANIC, ROLES.SUPERVISOR, ROLES.PROC_STAFF,
@@ -21,10 +24,10 @@ export function StaffRegister() {
   const { data: sites } = useSiteList();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', role: ROLES.OPERATOR as string, designation: '', siteId: '' });
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const field = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function add() {
@@ -35,13 +38,20 @@ export function StaffRegister() {
         { name: form.name, role: form.role, designation: form.designation, siteId: form.siteId || undefined },
         nextStaffId(staff.length),
       );
+      toast('success', 'Staff added');
       setForm({ name: '', role: ROLES.OPERATOR, designation: '', siteId: '' });
       setAdding(false); refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
   async function reassign(staffId: string, siteId: string) {
+    const siteName = sites.find(s => s.id === siteId)?.name ?? siteId;
+    if (!window.confirm(`Reassign this staff member to "${siteName}"?`)) return;
     await assignStaffSite(staffId, siteId); refresh();
   }
 
@@ -58,15 +68,15 @@ export function StaffRegister() {
       {adding && (
         <Card className="mb-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <input className={field} placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
-            <select className={field} value={form.role} onChange={(e) => set('role', e.target.value)}>
+            <Input placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
+            <InputSelect value={form.role} onChange={(e) => set('role', e.target.value)}>
               {ASSIGNABLE_ROLES.map((r) => <option key={r} value={r}>{ROLE_LABELS[r]}</option>)}
-            </select>
-            <input className={field} placeholder="Designation" value={form.designation} onChange={(e) => set('designation', e.target.value)} />
-            <select className={field} value={form.siteId} onChange={(e) => set('siteId', e.target.value)}>
+            </InputSelect>
+            <Input placeholder="Designation" value={form.designation} onChange={(e) => set('designation', e.target.value)} />
+            <InputSelect value={form.siteId} onChange={(e) => set('siteId', e.target.value)}>
               <option value="">Site…</option>
               {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
+            </InputSelect>
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}

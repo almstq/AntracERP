@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import { Ticket, Plus } from 'lucide-react';
+import { Search, Ticket, Plus } from 'lucide-react';
 import { useTicketList } from '../../../lib/hooks/useWorkflowData';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
@@ -9,6 +10,11 @@ import { PageContainer } from '../../../components/shared/PageContainer';
 
 export function TicketList() {
   const { data: tickets, loading, error } = useTicketList();
+  const [search, setSearch] = useState('');
+
+  const filtered = !search
+    ? tickets
+    : tickets.filter(t => t.description.toLowerCase().includes(search.toLowerCase()) || t.displayId.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <PageContainer>
@@ -24,12 +30,21 @@ export function TicketList() {
 
       {error && <p className="text-xs text-red mb-3">{error}</p>}
 
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
+          placeholder="Search…"
+          value={search} onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       <Card>
-        {!loading && tickets.length === 0 ? (
-          <p className="text-xs text-text-muted p-2">No tickets yet. Raise the first one.</p>
+        {!loading && filtered.length === 0 ? (
+          <p className="text-xs text-text-muted p-2">{search ? 'No results match your search.' : 'No tickets yet. Raise the first one.'}</p>
         ) : (
           <div className="space-y-1">
-            {tickets.map((t) => (
+            {filtered.map((t) => (
               <Link
                 key={t.id}
                 to={`/wli/tickets/${t.id}`}

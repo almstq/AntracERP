@@ -3,13 +3,15 @@ import { Link } from 'react-router-dom';
 import { Package, ChevronRight } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { useInventoryItems, useAllStockBalances } from '../../../lib/hooks/useInventory';
 import { createItem } from '../../../lib/services/inventory';
 import type { InventoryItem } from '../../../types/inventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const CATS: InventoryItem['category'][] = ['parts', 'consumables', 'tools', 'other'];
-const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
 
 export function ItemCatalog() {
   const { data: items, loading, refresh } = useInventoryItems();
@@ -17,6 +19,7 @@ export function ItemCatalog() {
 
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', category: 'parts' as InventoryItem['category'], uom: '', description: '' });
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -30,9 +33,14 @@ export function ItemCatalog() {
     setBusy(true); setErr(null);
     try {
       await createItem({ name: form.name, category: form.category, uom: form.uom, description: form.description || undefined });
+      toast('success', 'Item created');
       setForm({ name: '', category: 'parts', uom: '', description: '' });
       setAdding(false); refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -55,8 +63,8 @@ export function ItemCatalog() {
         <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}>+ Add Item</Button>
       </div>
 
-      <input
-        className="text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary w-full mb-4"
+      <Input
+        className="mb-4"
         placeholder="Search by name or code…"
         value={search} onChange={(e) => setSearch(e.target.value)}
       />
@@ -65,12 +73,12 @@ export function ItemCatalog() {
         <Card className="mb-4">
           <p className="text-xs font-medium text-text-primary mb-3">New Catalog Item</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-            <input className={FIELD} placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
-            <select className={FIELD} value={form.category} onChange={(e) => set('category', e.target.value as InventoryItem['category'])}>
+            <Input placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
+            <InputSelect value={form.category} onChange={(e) => set('category', e.target.value as InventoryItem['category'])}>
               {CATS.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <input className={FIELD} placeholder="UoM (pcs, m, kg…)" value={form.uom} onChange={(e) => set('uom', e.target.value)} />
-            <input className={FIELD} placeholder="Description (optional)" value={form.description} onChange={(e) => set('description', e.target.value)} />
+            </InputSelect>
+            <Input placeholder="UoM (pcs, m, kg…)" value={form.uom} onChange={(e) => set('uom', e.target.value)} />
+            <Input placeholder="Description (optional)" value={form.description} onChange={(e) => set('description', e.target.value)} />
           </div>
           <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           {err && <p className="text-xs text-red mt-2">{err}</p>}

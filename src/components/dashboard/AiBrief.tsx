@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { Sparkles, RefreshCw } from 'lucide-react';
+import { Sparkles, RefreshCw, AlertTriangle, Wind, CheckCircle2 } from 'lucide-react';
 import { isAiConfigured, cachedGenerate } from '../../lib/services/ai';
 
 interface Props {
@@ -9,12 +9,13 @@ interface Props {
   landReady: number; landTotal: number;
   vesselReady: number; vesselTotal: number;
   sites: number;
+  variant?: 'overlay' | 'card';
 }
 
 const ONE_HOUR = 60 * 60 * 1000;
 
 export function AiBrief(props: Props) {
-  const { openTickets, criticalTickets, approvals, landReady, landTotal, vesselReady, vesselTotal, sites } = props;
+  const { openTickets, criticalTickets, approvals, landReady, landTotal, vesselReady, vesselTotal, sites, variant = 'overlay' } = props;
   const [brief, setBrief] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -60,6 +61,37 @@ export function AiBrief(props: Props) {
   }, [signature, run]);
 
   const configured = isAiConfigured();
+
+  if (variant === 'card') {
+    const ready = landReady + vesselReady;
+    const total = landTotal + vesselTotal;
+    return (
+      <div className="ai-card">
+        <div className="ai-top">
+          <div className="ai-badge"><Sparkles /></div>
+          <div style={{ flex: 1 }}>
+            <h3>Morning Brief</h3>
+            <div className="ai-meta">{configured ? 'Antrac Copilot' : 'Demo · add Gemini key for live'}</div>
+          </div>
+          <button className="icon-btn" onClick={() => run(true)} disabled={loading} title="Regenerate" style={{ width: 30, height: 30 }}>
+            <RefreshCw className={loading ? 'animate-spin' : ''} />
+          </button>
+        </div>
+        <div className="ai-body">
+          {loading && !brief
+            ? 'Generating operational brief…'
+            : err
+              ? <span style={{ color: 'var(--warning)' }}>{err}</span>
+              : brief || `Fleet is operational — ${ready} of ${total} assets ready across ${sites} sites.`}
+        </div>
+        <div className="ai-foot">
+          {criticalTickets > 0 && <span className="ai-pill crit"><AlertTriangle /> {criticalTickets} critical</span>}
+          {approvals > 0 && <span className="ai-pill warn"><Wind /> {approvals} awaiting GM</span>}
+          <span className="ai-pill"><CheckCircle2 /> {ready}/{total} operational</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute top-4 left-4 z-[5] max-w-[320px] rounded-xl bg-black/80 backdrop-blur-md border border-white/10 shadow-2xl p-5 select-none">

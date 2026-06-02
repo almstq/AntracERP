@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { useStores, useInventoryItems, useAllStockBalances } from '../../../lib/hooks/useInventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 export function StockByStore() {
   const { data: stores, loading: storesLoading } = useStores();
@@ -43,7 +44,7 @@ export function StockByStore() {
 
       <Card>
         {storesLoading ? (
-          <p className="text-xs text-text-muted py-4 text-center">Loading…</p>
+          <LoadingSpinner text="Loading…" />
         ) : rows.length === 0 ? (
           <p className="text-xs text-text-muted py-4 text-center">
             {activeStores.length === 0

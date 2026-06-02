@@ -8,6 +8,8 @@ import {
   Briefcase, TrendingUp, Send, RotateCcw, BarChart2, ChevronRight,
 } from 'lucide-react';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { PageHeader } from '../../../components/shared/PageHeader';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const WO_STATUS_STYLE: Record<string, string> = {
   active:          'bg-blue/10 text-blue',
@@ -100,10 +102,7 @@ export function SalesDashboard() {
 
   return (
     <div className="pb-8">
-      <div className="flex items-center justify-between px-8 md:px-14 lg:px-16 py-5 border-b border-border bg-bg-panel sticky top-0 z-10">
-        <h1 className="text-lg font-bold text-text-primary">Sales Dashboard</h1>
-        <span className="text-xs text-text-muted">CRM & Revenue</span>
-      </div>
+      <PageHeader title="Sales Dashboard" subtitle="CRM & Revenue" sticky />
 
       <PageContainer>
 
@@ -154,7 +153,7 @@ export function SalesDashboard() {
           </div>
           <Card>
             {loading ? (
-              <p className="text-xs text-text-muted p-2">Loading…</p>
+              <LoadingSpinner text="Loading…" />
             ) : activeWOs.length === 0 ? (
               <p className="text-xs text-text-muted p-2">No active work orders.</p>
             ) : (
@@ -203,7 +202,7 @@ export function SalesDashboard() {
           </div>
           <Card>
             {loading ? (
-              <p className="text-xs text-text-muted p-2">Loading…</p>
+              <LoadingSpinner text="Loading…" />
             ) : openEnquiries.length === 0 ? (
               <p className="text-xs text-text-muted p-2">No open enquiries.</p>
             ) : (

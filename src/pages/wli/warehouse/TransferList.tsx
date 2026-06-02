@@ -5,6 +5,7 @@ import { Button } from '../../../components/ui/Button';
 import { useStockTransfers } from '../../../lib/hooks/useInventory';
 import type { TransferStatus } from '../../../types/inventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const STATUS_STYLE: Record<TransferStatus, string> = {
   requested:  'bg-amber/10 text-amber',
@@ -43,7 +44,7 @@ export function TransferList() {
 
       <Card>
         {loading ? (
-          <p className="text-xs text-text-muted py-4 text-center">Loading…</p>
+          <LoadingSpinner text="Loading…" />
         ) : transfers.length === 0 ? (
           <p className="text-xs text-text-muted py-4 text-center">No transfers yet.</p>
         ) : (

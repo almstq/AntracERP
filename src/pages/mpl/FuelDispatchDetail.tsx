@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Fuel } from 'lucide-react';
 import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/shared/StatusBadge';
@@ -15,23 +15,22 @@ const STATUS_MAP: Record<string, string> = {
 
 export function FuelDispatchDetail() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const dispatch = MOCK_FUEL_DISPATCHES.find(d => d.id === id);
 
   if (!dispatch) {
     return (
       <div className="p-6 text-center">
         <p className="text-text-muted text-sm">Dispatch not found.</p>
-        <Button variant="secondary" size="sm" className="mt-4" onClick={() => navigate(-1)}>Back</Button>
+        <Link to="/mpl/dispatches"><Button variant="secondary" size="sm" className="mt-4">Back</Button></Link>
       </div>
     );
   }
 
   return (
     <PageContainer>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-text-muted text-xs mb-4 hover:text-text-primary">
+      <Link to="/mpl/dispatches" className="flex items-center gap-1 text-text-muted text-xs mb-4 hover:text-text-primary">
         <ArrowLeft size={14} /> Back to Dispatches
-      </button>
+      </Link>
 
       <div className="flex items-start justify-between mb-4">
         <div>

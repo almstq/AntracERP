@@ -1,19 +1,21 @@
 import { useState } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
 import { Store, Plus } from 'lucide-react';
 import { useSupplierList } from '../../../lib/hooks/useWorkflowData';
 import { createSupplier } from '../../../lib/services/registry';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 export function SupplierRegister() {
   const { data: suppliers, loading, refresh } = useSupplierList();
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', country: '', contactEmail: '', categories: '' });
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const field = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function add() {
@@ -24,9 +26,14 @@ export function SupplierRegister() {
         name: form.name, country: form.country || undefined, contactEmail: form.contactEmail || undefined,
         categories: form.categories.split(',').map((c) => c.trim()).filter(Boolean),
       });
+      toast('success', 'Supplier added');
       setForm({ name: '', country: '', contactEmail: '', categories: '' });
       setAdding(false); refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -43,10 +50,10 @@ export function SupplierRegister() {
       {adding && (
         <Card className="mb-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <input className={field} placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
-            <input className={field} placeholder="Country" value={form.country} onChange={(e) => set('country', e.target.value)} />
-            <input className={field} placeholder="Email" value={form.contactEmail} onChange={(e) => set('contactEmail', e.target.value)} />
-            <input className={field} placeholder="Categories (comma)" value={form.categories} onChange={(e) => set('categories', e.target.value)} />
+            <Input placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
+            <Input placeholder="Country" value={form.country} onChange={(e) => set('country', e.target.value)} />
+            <Input placeholder="Email" value={form.contactEmail} onChange={(e) => set('contactEmail', e.target.value)} />
+            <Input placeholder="Categories (comma)" value={form.categories} onChange={(e) => set('categories', e.target.value)} />
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}

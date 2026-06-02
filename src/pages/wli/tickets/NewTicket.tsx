@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
+import { InputTextarea } from '../../../components/shared/InputTextarea';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useAssetList } from '../../../lib/hooks/useWorkflowData';
@@ -9,6 +12,7 @@ import { createTicket } from '../../../lib/services/tickets';
 import { assetLabel } from '../../../types/asset';
 import type { Urgency } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
@@ -17,6 +21,7 @@ export function NewTicket() {
   const { user, effectiveRole } = useAuth();
   const navigate = useNavigate();
   const { data: assets, loading: assetsLoading } = useAssetList();
+  const { toast } = useToast();
 
   const [assetId, setAssetId] = useState('');
   const [siteId, setSiteId] = useState('');
@@ -51,19 +56,20 @@ export function NewTicket() {
         },
         { id: user.uid, role: effectiveRole, name: user.displayName },
       );
+      toast('success', 'Issue ticket created');
       navigate(`/wli/tickets/${id}`);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Failed to create ticket');
+      const msg = e instanceof Error ? e.message : 'Failed to create ticket';
+      setErr(msg);
+      toast('error', msg);
       setBusy(false);
     }
   }
 
-  const field = 'w-full text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
-
   return (
     <PageContainer className="max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/tickets" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <Link to="/wli/tickets" aria-label="Back to tickets" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
         <h1 className="text-lg font-bold text-text-primary">Raise Issue</h1>
       </div>
 
@@ -71,12 +77,12 @@ export function NewTicket() {
         <div className="space-y-3">
           <div>
             <label className="text-xs text-text-muted">Machine / Asset *</label>
-            <select className={field} value={assetId} onChange={(e) => onAssetChange(e.target.value)}>
+            <InputSelect value={assetId} onChange={(e) => onAssetChange(e.target.value)}>
               <option value="">{assetsLoading ? 'Loading fleet…' : 'Select the machine…'}</option>
               {assets.map((a) => (
                 <option key={a.id} value={a.id}>{assetLabel(a)} · {a.currentSiteId}</option>
               ))}
-            </select>
+            </InputSelect>
             {selectedAsset && (
               <p className="text-[10px] text-text-muted mt-1">
                 Status: {selectedAsset.operationalStatus} · Deployed at {selectedAsset.currentSiteId}
@@ -87,30 +93,29 @@ export function NewTicket() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-text-muted">Location {selectedAsset && !siteTouched ? '(auto)' : ''}</label>
-              <select
-                className={field}
+              <InputSelect
                 value={effectiveSite}
                 onChange={(e) => { setSiteTouched(true); setSiteId(e.target.value); }}
               >
                 <option value="">Select…</option>
                 {SITES.map((s) => <option key={s} value={s}>{s}</option>)}
-              </select>
+              </InputSelect>
             </div>
             <div>
               <label className="text-xs text-text-muted">Urgency</label>
-              <select className={field} value={urgency} onChange={(e) => setUrgency(e.target.value as Urgency)}>
+              <InputSelect value={urgency} onChange={(e) => setUrgency(e.target.value as Urgency)}>
                 {URGENCIES.map((u) => <option key={u} value={u}>{u}</option>)}
-              </select>
+              </InputSelect>
             </div>
           </div>
 
           <div>
             <label className="text-xs text-text-muted">Issue description *</label>
-            <textarea className={field} rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's wrong with the machine?" />
+            <InputTextarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's wrong with the machine?" />
           </div>
           <div>
             <label className="text-xs text-text-muted">Your recommendation (optional)</label>
-            <input className={field} value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
+            <Input value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
           </div>
           {err && <p className="text-xs text-red">{err}</p>}
           <Button variant="primary" size="sm" onClick={submit} disabled={busy}>

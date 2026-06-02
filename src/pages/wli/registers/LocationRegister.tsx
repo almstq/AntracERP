@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { MapPin, Plus } from 'lucide-react';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createLocation } from '../../../lib/services/registry';
 import type { Site } from '../../../types/org';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const TYPES: Site['type'][] = ['project', 'yard', 'office', 'vessel', 'depot', 'hq'];
 
@@ -16,18 +19,22 @@ export function LocationRegister() {
   const [type, setType] = useState<Site['type']>('project');
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-
-  const field = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
 
   async function add() {
     if (!name.trim()) { setErr('Name required'); return; }
     setBusy(true); setErr(null);
     try {
       await createLocation({ name, type, lat: lat ? Number(lat) : undefined, lng: lng ? Number(lng) : undefined });
+      toast('success', 'Location added');
       setName(''); setLat(''); setLng(''); setType('project'); setAdding(false); refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -44,12 +51,12 @@ export function LocationRegister() {
       {adding && (
         <Card className="mb-4">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
-            <input className={field} placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
-            <select className={field} value={type} onChange={(e) => setType(e.target.value as Site['type'])}>
+            <Input placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+            <InputSelect value={type} onChange={(e) => setType(e.target.value as Site['type'])}>
               {TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <input className={field} placeholder="Latitude" value={lat} onChange={(e) => setLat(e.target.value)} />
-            <input className={field} placeholder="Longitude" value={lng} onChange={(e) => setLng(e.target.value)} />
+            </InputSelect>
+            <Input placeholder="Latitude" value={lat} onChange={(e) => setLat(e.target.value)} />
+            <Input placeholder="Longitude" value={lng} onChange={(e) => setLng(e.target.value)} />
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}

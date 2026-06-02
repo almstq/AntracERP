@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import { Briefcase, Plus } from 'lucide-react';
+import { Briefcase, Plus, Search } from 'lucide-react';
 import { listEnquiries } from '../../../lib/services/crm';
 import { formatDate } from '../../../lib/utils/format';
 import type { Enquiry } from '../../../types/crm';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const STATUS_STYLE: Record<string, string> = {
   logged: 'bg-blue/10 text-blue',
@@ -37,6 +38,7 @@ const STATUS_LABELS: Record<string, string> = {
 export function EnquiryList() {
   const [enquiries, setEnquiries] = useState<Enquiry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     listEnquiries('wli').then(e => { setEnquiries(e); setLoading(false); });
@@ -44,6 +46,14 @@ export function EnquiryList() {
 
   const open = enquiries.filter(e => !['quote_declined', 'closed'].includes(e.status));
   const closed = enquiries.filter(e => ['quote_declined', 'closed'].includes(e.status));
+
+  const filtered = !search
+    ? enquiries
+    : enquiries.filter(e =>
+        e.displayId.toLowerCase().includes(search.toLowerCase()) ||
+        e.projectName.toLowerCase().includes(search.toLowerCase()) ||
+        e.customerName.toLowerCase().includes(search.toLowerCase())
+      );
 
   return (
     <PageContainer>
@@ -57,18 +67,27 @@ export function EnquiryList() {
         </Link>
       </div>
 
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
+          placeholder="Search…"
+          value={search} onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       <Card>
         {loading ? (
-          <div className="py-8 text-center text-xs text-text-muted">Loading…</div>
-        ) : enquiries.length === 0 ? (
+          <LoadingSpinner text="Loading…" />
+        ) : filtered.length === 0 ? (
           <div className="py-10 text-center">
             <Briefcase size={28} className="mx-auto text-text-muted mb-2" />
-            <p className="text-xs text-text-muted">No enquiries yet.</p>
+            <p className="text-xs text-text-muted">{search ? 'No results match your search.' : 'No enquiries yet.'}</p>
             <Link to="/wli/crm/enquiries/new" className="text-xs text-blue hover:underline mt-1 block">Log first enquiry →</Link>
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {enquiries.map(e => (
+            {filtered.map(e => (
               <Link key={e.id} to={`/wli/crm/enquiries/${e.id}`}
                 className="flex items-center justify-between p-3 hover:bg-bg-surface transition-colors group">
                 <div className="min-w-0">

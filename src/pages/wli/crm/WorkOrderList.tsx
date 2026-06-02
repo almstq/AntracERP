@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, Search } from 'lucide-react';
 import { listWorkOrders } from '../../../lib/services/crm';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import type { WorkOrder } from '../../../types/crm';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const STATUS_STYLE: Record<string, string> = {
   active:          'bg-blue/10 text-blue',
@@ -31,6 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
 export function WorkOrderList() {
   const [wos, setWos] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     listWorkOrders('wli').then(data => { setWos(data); setLoading(false); });
@@ -38,6 +40,10 @@ export function WorkOrderList() {
 
   const open   = wos.filter(w => w.status !== 'closed');
   const closed = wos.filter(w => w.status === 'closed');
+
+  const filtered = !search
+    ? wos
+    : wos.filter(wo => wo.displayId.toLowerCase().includes(search.toLowerCase()) || wo.customerName.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <PageContainer>
@@ -48,18 +54,27 @@ export function WorkOrderList() {
         </p>
       </div>
 
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
+          placeholder="Search…"
+          value={search} onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       <Card>
         {loading ? (
-          <div className="py-8 text-center text-xs text-text-muted">Loading…</div>
-        ) : wos.length === 0 ? (
+          <LoadingSpinner text="Loading…" />
+        ) : filtered.length === 0 ? (
           <div className="py-10 text-center">
             <Briefcase size={28} className="mx-auto text-text-muted mb-2" />
-            <p className="text-xs text-text-muted">No work orders yet.</p>
+            <p className="text-xs text-text-muted">{search ? 'No results match your search.' : 'No work orders yet.'}</p>
             <p className="text-[10px] text-text-muted mt-1">Work orders are auto-created when a quotation is accepted.</p>
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {wos.map(wo => (
+            {filtered.map(wo => (
               <Link key={wo.id} to={`/wli/crm/work-orders/${wo.id}`}
                 className="flex items-center justify-between p-3 hover:bg-bg-surface transition-colors group">
                 <div className="min-w-0">

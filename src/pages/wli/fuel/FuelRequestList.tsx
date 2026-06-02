@@ -3,12 +3,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
-import { Fuel, Plus, Droplets } from 'lucide-react';
+import { Fuel, Plus, Droplets, Search } from 'lucide-react';
 import { listFuelRequests } from '../../../lib/services/fuel';
 import { listInventoryBalances } from '../../../lib/services/fuel';
 import { formatDate } from '../../../lib/utils/format';
 import type { FuelRequest, InventoryBalance } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const STATUS_STYLE: Record<string, string> = {
   draft:                  'bg-border text-text-muted',
@@ -51,6 +52,7 @@ export function FuelRequestList() {
   const [requests, setRequests] = useState<(FuelRequest & { id: string })[]>([]);
   const [balances, setBalances] = useState<(InventoryBalance & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     Promise.all([listFuelRequests(), listInventoryBalances()])
@@ -58,8 +60,16 @@ export function FuelRequestList() {
       .finally(() => setLoading(false));
   }, []);
 
-  const open   = requests.filter(r => !['closed'].includes(r.status));
-  const closed = requests.filter(r => r.status === 'closed');
+  const searched = !search
+    ? requests
+    : requests.filter(r =>
+        r.displayId.toLowerCase().includes(search.toLowerCase()) ||
+        r.siteId.toLowerCase().includes(search.toLowerCase()) ||
+        (r.fuelType && r.fuelType.toLowerCase().includes(search.toLowerCase()))
+      );
+
+  const open   = searched.filter(r => !['closed'].includes(r.status));
+  const closed = searched.filter(r => r.status === 'closed');
 
   return (
     <PageContainer>
@@ -90,16 +100,25 @@ export function FuelRequestList() {
         </div>
       )}
 
+      <div className="relative mb-3">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+        <input
+          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
+          placeholder="Search…"
+          value={search} onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       {/* Open requests */}
       <div>
         <p className="text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-2">Open Requests</p>
         <Card>
           {loading ? (
-            <div className="py-8 text-center text-xs text-text-muted">Loading…</div>
+            <LoadingSpinner text="Loading…" />
           ) : open.length === 0 ? (
             <div className="py-10 text-center">
               <Fuel size={28} className="mx-auto text-text-muted mb-2" />
-              <p className="text-xs text-text-muted">No open fuel or water requests.</p>
+              <p className="text-xs text-text-muted">{search ? 'No results match your search.' : 'No open fuel or water requests.'}</p>
             </div>
           ) : (
             <div className="divide-y divide-border">

@@ -5,6 +5,7 @@ import { getDbInstance } from '../../../lib/firebase/client';
 import { DOC_TYPE_LABELS, type DocType, type VaultDocument } from '../../../lib/firebase/storage';
 import { Download, Eye, FileText, Image, FolderOpen, X, ShieldCheck } from 'lucide-react';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -151,7 +152,7 @@ export function DocumentVault() {
         </div>
 
         {/* Content */}
-        {loading && <p className="text-xs text-text-muted py-8 text-center">Loading…</p>}
+        {loading && <LoadingSpinner text="Loading…" />}
         {error   && <p className="text-xs text-red py-4 text-center">{error}</p>}
 
         {!loading && !error && filtered.length === 0 && (

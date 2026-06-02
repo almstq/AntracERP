@@ -2,12 +2,16 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { Users, Plus, Search, ChevronRight, TrendingUp, AlertCircle } from 'lucide-react';
 import { listCustomers, createCustomer } from '../../../lib/services/crm';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Customer, CreditTerms } from '../../../types/crm';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const CREDIT_TERMS: { value: CreditTerms; label: string }[] = [
   { value: 'cod', label: 'COD' },
@@ -25,6 +29,7 @@ const BLANK = {
 
 export function CustomerRegister() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -33,7 +38,6 @@ export function CustomerRegister() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  const field = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
   const set = <K extends keyof typeof BLANK>(k: K, v: typeof BLANK[K]) => setForm(f => ({ ...f, [k]: v }));
 
   useEffect(() => {
@@ -68,10 +72,15 @@ export function CustomerRegister() {
         currency: form.currency,
         active: true,
       });
+      toast('success', 'Customer created');
       setForm(BLANK);
       setAdding(false);
       load();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -96,22 +105,22 @@ export function CustomerRegister() {
         <Card className="mb-4">
           <p className="text-xs font-semibold text-text-primary mb-3">New Customer</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
-            <input className={field} placeholder="Company name *" value={form.name} onChange={e => set('name', e.target.value)} />
-            <input className={field} placeholder="Trade name (optional)" value={form.tradeName} onChange={e => set('tradeName', e.target.value)} />
-            <input className={field} placeholder="Contact person *" value={form.contactPerson} onChange={e => set('contactPerson', e.target.value)} />
-            <input className={field} placeholder="Email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} />
-            <input className={field} placeholder="Phone" value={form.contactPhone} onChange={e => set('contactPhone', e.target.value)} />
-            <input className={field} placeholder="GST reg. number" value={form.gstNumber} onChange={e => set('gstNumber', e.target.value)} />
-            <input className={`${field} md:col-span-2`} placeholder="Address" value={form.address} onChange={e => set('address', e.target.value)} />
-            <input className={field} placeholder="Credit limit (MVR)" type="number" value={form.creditLimit} onChange={e => set('creditLimit', e.target.value)} />
+            <Input placeholder="Company name *" value={form.name} onChange={e => set('name', e.target.value)} />
+            <Input placeholder="Trade name (optional)" value={form.tradeName} onChange={e => set('tradeName', e.target.value)} />
+            <Input placeholder="Contact person *" value={form.contactPerson} onChange={e => set('contactPerson', e.target.value)} />
+            <Input placeholder="Email" value={form.contactEmail} onChange={e => set('contactEmail', e.target.value)} />
+            <Input placeholder="Phone" value={form.contactPhone} onChange={e => set('contactPhone', e.target.value)} />
+            <Input placeholder="GST reg. number" value={form.gstNumber} onChange={e => set('gstNumber', e.target.value)} />
+            <Input className="md:col-span-2" placeholder="Address" value={form.address} onChange={e => set('address', e.target.value)} />
+            <Input placeholder="Credit limit (MVR)" type="number" value={form.creditLimit} onChange={e => set('creditLimit', e.target.value)} />
             <div className="flex gap-2">
-              <select className={`${field} flex-1`} value={form.creditTerms} onChange={e => set('creditTerms', e.target.value as CreditTerms)}>
+              <InputSelect className="flex-1" value={form.creditTerms} onChange={e => set('creditTerms', e.target.value as CreditTerms)}>
                 {CREDIT_TERMS.map(ct => <option key={ct.value} value={ct.value}>{ct.label}</option>)}
-              </select>
-              <select className={`${field} w-20`} value={form.currency} onChange={e => set('currency', e.target.value as 'MVR' | 'USD')}>
+              </InputSelect>
+              <InputSelect className="w-20" value={form.currency} onChange={e => set('currency', e.target.value as 'MVR' | 'USD')}>
                 <option value="MVR">MVR</option>
                 <option value="USD">USD</option>
-              </select>
+              </InputSelect>
             </div>
           </div>
           {err && <p className="text-xs text-red mt-1">{err}</p>}
@@ -133,7 +142,7 @@ export function CustomerRegister() {
 
       <Card>
         {loading ? (
-          <div className="py-8 text-center text-xs text-text-muted">Loading…</div>
+          <LoadingSpinner text="Loading…" />
         ) : filtered.length === 0 ? (
           <div className="py-8 text-center">
             <Users size={28} className="mx-auto text-text-muted mb-2" />

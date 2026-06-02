@@ -6,6 +6,8 @@ import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import { AlertTriangle, DollarSign, Clock, TrendingDown, ChevronRight, BarChart2 } from 'lucide-react';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { PageHeader } from '../../../components/shared/PageHeader';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const INV_STATUS_STYLE: Record<string, string> = {
   draft:           'bg-border text-text-muted',
@@ -85,10 +87,7 @@ export function FinanceDashboard() {
 
   return (
     <div className="pb-8">
-      <div className="flex items-center justify-between px-8 md:px-14 lg:px-16 py-5 border-b border-border bg-bg-panel sticky top-0 z-10">
-        <h1 className="text-lg font-bold text-text-primary">Finance Dashboard</h1>
-        <span className="text-xs text-text-muted">WLI Revenue Tracking</span>
-      </div>
+      <PageHeader title="Finance Dashboard" subtitle="WLI Revenue Tracking" sticky />
 
       <PageContainer>
 
@@ -155,7 +154,7 @@ export function FinanceDashboard() {
           </div>
           <Card>
             {loading ? (
-              <p className="text-xs text-text-muted p-2">Loading…</p>
+              <LoadingSpinner text="Loading…" />
             ) : sortedOutstanding.length === 0 ? (
               <p className="text-xs text-text-muted p-2">No outstanding invoices.</p>
             ) : (
@@ -209,7 +208,7 @@ export function FinanceDashboard() {
           </p>
           <Card>
             {loading ? (
-              <p className="text-xs text-text-muted p-2">Loading…</p>
+              <LoadingSpinner text="Loading…" />
             ) : paymentsThisMonth.length === 0 ? (
               <p className="text-xs text-text-muted p-2">No payments received this month yet.</p>
             ) : (

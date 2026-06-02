@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Warehouse } from 'lucide-react';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
 import { useStores } from '../../../lib/hooks/useInventory';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createStore, updateStore } from '../../../lib/services/inventory';
 import type { Store } from '../../../types/inventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const STORE_TYPES: Store['type'][] = ['main', 'yard', 'site', 'transit'];
-const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
 
 export function StoresRegister() {
   const { data: stores, loading, refresh } = useStores();
@@ -17,6 +19,7 @@ export function StoresRegister() {
 
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState({ name: '', siteId: '', type: 'main' as Store['type'] });
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -30,13 +33,20 @@ export function StoresRegister() {
     try {
       const site = sites.find((s) => s.id === form.siteId);
       await createStore({ name: form.name, siteId: form.siteId, siteName: site?.name ?? '', type: form.type });
+      toast('success', 'Store created');
       setForm({ name: '', siteId: '', type: 'main' });
       setAdding(false); refresh();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
   async function toggleActive(store: Store & { id: string }) {
+    const label = store.active ? 'deactivate' : 'activate';
+    if (!window.confirm(`Are you sure you want to ${label} "${store.name}"?`)) return;
     await updateStore(store.id, { active: !store.active });
     refresh();
   }
@@ -66,15 +76,15 @@ export function StoresRegister() {
         <Card className="mb-4">
           <p className="text-xs font-medium text-text-primary mb-3">New Store</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <input className={FIELD} placeholder="Store name" value={form.name}
+            <Input placeholder="Store name" value={form.name}
               onChange={(e) => set('name', e.target.value)} />
-            <select className={FIELD} value={form.siteId} onChange={(e) => set('siteId', e.target.value)}>
+            <InputSelect value={form.siteId} onChange={(e) => set('siteId', e.target.value)}>
               <option value="">— Site —</option>
               {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <select className={FIELD} value={form.type} onChange={(e) => set('type', e.target.value as Store['type'])}>
+            </InputSelect>
+            <InputSelect value={form.type} onChange={(e) => set('type', e.target.value as Store['type'])}>
               {STORE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
-            </select>
+            </InputSelect>
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>
               {busy ? 'Saving…' : 'Save'}
             </Button>

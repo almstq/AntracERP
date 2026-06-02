@@ -5,6 +5,7 @@ import { Button } from '../../components/ui/Button';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { MOCK_FUEL_DISPATCHES, MOCK_FUEL_TANKS, MOCK_INTER_SBU_TRANSFERS } from '../../lib/mock-data/mpl-data';
 import { PageContainer } from '../../components/shared/PageContainer';
+import { PageHeader } from '../../components/shared/PageHeader';
 
 const fuelTankIcon = (current: number, capacity: number) => {
   const pct = (current / capacity) * 100;
@@ -78,16 +79,10 @@ export function MPLDashboard() {
 
   return (
     <PageContainer>
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-lg font-bold text-text-primary">MPL Dashboard</h1>
-          <p className="text-xs text-text-muted">Maldives Petroleum Link — Fuel & Asset Transfers</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" size="sm"><Filter size={14} /> Filter</Button>
-          <Button variant="primary" size="sm"><Plus size={14} /> New Dispatch</Button>
-        </div>
-      </div>
+      <PageHeader title="MPL Dashboard" subtitle="Maldives Petroleum Link — Fuel & Asset Transfers">
+        <Button variant="secondary" size="sm"><Filter size={14} /> Filter</Button>
+        <Button variant="primary" size="sm"><Plus size={14} /> New Dispatch</Button>
+      </PageHeader>
 
       {/* KPI Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-5">

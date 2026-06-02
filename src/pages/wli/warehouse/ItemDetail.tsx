@@ -3,6 +3,7 @@ import { ArrowLeft, TrendingUp, TrendingDown, ArrowLeftRight, Minus } from 'luci
 import { Card } from '../../../components/ui/Card';
 import { useInventoryItem, useStockBalancesForItem, useStockMovementsForItem, useStores } from '../../../lib/hooks/useInventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 import type { MovementType } from '../../../types/inventory';
 
 const TYPE_CONFIG: Record<MovementType, { label: string; colour: string; Icon: typeof TrendingUp }> = {
@@ -31,12 +32,12 @@ export function ItemDetail() {
 
   const totalQty = balances.reduce((s, b) => s + (b.qtyOnHand ?? 0), 0);
 
-  if (loading) return <PageContainer><p className="text-xs text-text-muted">Loading…</p></PageContainer>;
+  if (loading) return <PageContainer><LoadingSpinner text="Loading…" /></PageContainer>;
   if (!item) return <PageContainer><p className="text-xs text-red">Item not found.</p></PageContainer>;
 
   return (
     <PageContainer>
-      <Link to="/wli/warehouse/items" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
+      <Link to="/wli/warehouse/items" aria-label="Back to item catalog" className="flex items-center gap-1 text-xs text-text-muted hover:text-text-primary">
         <ArrowLeft size={14} /> Item Catalog
       </Link>
 

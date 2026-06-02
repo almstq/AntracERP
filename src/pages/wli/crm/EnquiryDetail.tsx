@@ -11,6 +11,7 @@ import { formatDate } from '../../../lib/utils/format';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Enquiry, Customer, Quotation } from '../../../types/crm';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const STATUS_STYLE: Record<string, string> = {
   logged: 'bg-blue/10 text-blue',
@@ -51,7 +52,7 @@ export function EnquiryDetail() {
 
   function refresh() { load(); }
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (!enquiry) return <div className="p-6 text-xs text-text-muted">Enquiry not found.</div>;
 
   const statusLabel = wf.statusLabels[enquiry.status as keyof typeof wf.statusLabels] ?? enquiry.status;
@@ -59,7 +60,12 @@ export function EnquiryDetail() {
   return (
     <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/crm/enquiries" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <Link to="/wli/crm/enquiries" aria-label="Back to enquiries" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/crm/enquiries" className="hover:text-text-primary">Enquiries</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{enquiry.displayId}</span>
+        </nav>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-text-primary">{enquiry.displayId}</h1>

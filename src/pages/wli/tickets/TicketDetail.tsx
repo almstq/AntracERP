@@ -9,13 +9,14 @@ import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { ticketWorkflow, purchaseRequestWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus, PRStatus, PurchaseRequest } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 export function TicketDetail() {
   const { id } = useParams();
   const { data: ticket, loading, error, refresh } = useTicket(id);
   const { data: pr, refresh: refreshPR } = useEntity<PurchaseRequest>('purchaseRequests', ticket?.purchaseRequestId);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (error) return <div className="p-6 text-xs text-red">{error}</div>;
   if (!ticket) return <div className="p-6 text-xs text-text-muted">Ticket not found.</div>;
 
@@ -24,7 +25,12 @@ export function TicketDetail() {
   return (
     <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/tickets" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <Link to="/wli/tickets" aria-label="Back to tickets" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/tickets" className="hover:text-text-primary">Tickets</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{ticket.displayId}</span>
+        </nav>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-lg font-bold text-text-primary truncate">{ticket.description || ticket.displayId}</h1>

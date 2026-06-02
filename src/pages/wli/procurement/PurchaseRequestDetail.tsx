@@ -14,6 +14,8 @@ import { getAvailableTransitions } from '../../../lib/workflow/engine';
 import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
 import { isAiConfigured, generateText } from '../../../lib/services/ai';
 import { Sparkles } from 'lucide-react';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+import { useToast } from '../../../lib/context/ToastContext';
 import type { PurchaseRequest, PRStatus, PRLineItem, PRQuote } from '../../../types/workflow-entities';
 
 export function PurchaseRequestDetail() {
@@ -34,6 +36,7 @@ export function PurchaseRequestDetail() {
   const [aiRec, setAiRec] = useState<string | null>(null);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiErr, setAiErr] = useState<string | null>(null);
+  const { toast } = useToast();
 
   async function runAi(prompt: string) {
     setAiBusy(true); setAiErr(null);
@@ -53,7 +56,7 @@ export function PurchaseRequestDetail() {
     });
   }, [pr]);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (!pr) return <div className="p-6 text-xs text-text-muted">PR not found.</div>;
 
   const role = effectiveRole;
@@ -62,16 +65,17 @@ export function PurchaseRequestDetail() {
   const canEnterQuotes = ['proc_staff', 'super_admin'].includes(role) && (status === 'rfq_sent' || status === 'quotes_under_review');
   const supName = (sid: string) => suppliers.find((s) => s.id === sid)?.name ?? sid;
 
-  async function run(to: PRStatus, fields?: Record<string, unknown>, notes?: string) {
-    if (!user || !pr) return;
+  async function run(to: PRStatus, fields?: Record<string, unknown>, notes?: string): Promise<boolean> {
+    if (!user || !pr) return false;
     setBusy(true); setErr(null);
     const res = await executeTransition({
       workflowId: 'purchase_request', entityId: pr.id, to,
       actor: { id: user.uid, role: effectiveRole, name: user.displayName }, fields, notes,
     });
     setBusy(false);
-    if (!res.success) { setErr(res.message); return; }
+    if (!res.success) { setErr(res.message); return false; }
     refresh();
+    return true;
   }
 
   // Iteratively assign a supplier to a line item (issue another RFQ) — persists, no transition.
@@ -83,7 +87,11 @@ export function PurchaseRequestDetail() {
         : li);
     setBusy(true); setErr(null);
     try { await updateFields('purchaseRequests', pr.id, { lineItems }); refresh(); }
-    catch (e) { setErr(e instanceof Error ? e.message : 'Failed to assign supplier'); }
+    catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to assign supplier';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -102,16 +110,24 @@ export function PurchaseRequestDetail() {
   async function saveQuotes() {
     if (!pr) return;
     setBusy(true); setErr(null);
-    try { await updateFields('purchaseRequests', pr.id, { quotes: buildQuotes() }); refresh(); }
-    catch (e) { setErr(e instanceof Error ? e.message : 'Failed to save quotes'); }
+    try { await updateFields('purchaseRequests', pr.id, { quotes: buildQuotes() }); refresh(); toast('success', 'Quotes saved'); }
+    catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed to save quotes';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
   // Proc hands off to GM once quotes are gathered.
-  function forwardToGm() { run('quotes_under_review', { quotes: buildQuotes() }); }
+  async function forwardToGm() {
+    const ok = await run('quotes_under_review', { quotes: buildQuotes() });
+    if (ok) toast('success', 'Quotes forwarded to GM');
+  }
 
   // Stage 7 → GM picks a supplier per line (split allowed)
-  function approveSuppliers() {
+  async function approveSuppliers() {
+    if (!window.confirm('Approve these supplier selections? This action cannot be undone.')) return;
     const lineItems: PRLineItem[] = pr!.lineItems.map((li) => {
       const sid = lineSel[li.ref];
       const quote = pr!.quotes?.find((q) => q.supplierId === sid);
@@ -120,7 +136,8 @@ export function PurchaseRequestDetail() {
     });
     const selectedSuppliers = [...new Set(Object.values(lineSel).filter(Boolean))];
     if (lineItems.some((li) => !li.selectedSupplierId)) { setErr('Select a supplier for every line.'); return; }
-    run('gm_quote_approved', { lineItems, selectedSuppliers });
+    const ok = await run('gm_quote_approved', { lineItems, selectedSuppliers });
+    if (ok) toast('success', 'Suppliers approved');
   }
 
   const union = [...new Set(pr.lineItems.flatMap((li) => li.assignedSupplierIds ?? []))];
@@ -134,7 +151,12 @@ export function PurchaseRequestDetail() {
   return (
     <PageContainer className="max-w-4xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/procurement/requests" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <Link to="/wli/procurement/requests" aria-label="Back to purchase requests" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/procurement/requests" className="hover:text-text-primary">Purchase Requests</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{pr.displayId}</span>
+        </nav>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-text-primary">{pr.displayId}</h1>

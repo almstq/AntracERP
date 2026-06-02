@@ -2,12 +2,16 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
+import { InputTextarea } from '../../../components/shared/InputTextarea';
 import { ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createFuelRequest } from '../../../lib/services/fuel';
 import type { FuelRequest, Urgency } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
@@ -16,6 +20,7 @@ export function NewFuelRequest() {
   const { user, effectiveRole } = useAuth();
   const navigate = useNavigate();
   const { data: sites } = useSiteList();
+  const { toast } = useToast();
 
   const [requestType, setRequestType] = useState<FuelRequest['requestType']>('fuel');
   const [fuelType, setFuelType] = useState<FuelRequest['fuelType']>('diesel');
@@ -51,19 +56,20 @@ export function NewFuelRequest() {
         },
         { id: user.uid, role: effectiveRole, name: user.displayName },
       );
+      toast('success', 'Fuel request created');
       navigate(`/wli/fuel/requests/${id}`);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Failed to create request');
+      const msg = e instanceof Error ? e.message : 'Failed to create request';
+      setErr(msg);
+      toast('error', msg);
       setBusy(false);
     }
   }
 
-  const field = 'w-full text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary';
-
   return (
     <PageContainer className="max-w-2xl space-y-4">
       <div className="flex items-center gap-3">
-        <Link to="/wli/fuel/requests" className="text-text-muted hover:text-text-primary">
+        <Link to="/wli/fuel/requests" aria-label="Back to fuel requests" className="text-text-muted hover:text-text-primary">
           <ArrowLeft size={18} />
         </Link>
         <h1 className="text-lg font-bold text-text-primary">New Fuel / Water Request</h1>
@@ -96,11 +102,11 @@ export function NewFuelRequest() {
           {requestType !== 'water' && (
             <div>
               <label className="text-xs text-text-muted">Fuel Type *</label>
-              <select className={`${field} mt-1`} value={fuelType} onChange={e => setFuelType(e.target.value as FuelRequest['fuelType'])}>
+              <InputSelect className="mt-1" value={fuelType} onChange={e => setFuelType(e.target.value as FuelRequest['fuelType'])}>
                 <option value="diesel">Diesel</option>
                 <option value="petrol">Petrol</option>
                 <option value="other">Other</option>
-              </select>
+              </InputSelect>
             </div>
           )}
 
@@ -108,32 +114,32 @@ export function NewFuelRequest() {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="text-xs text-text-muted">Quantity *</label>
-              <input
+              <Input
                 type="number" min="1" value={quantity}
                 onChange={e => setQuantity(e.target.value)}
                 placeholder="e.g. 500"
-                className={`${field} mt-1`}
+                className="mt-1"
               />
             </div>
             <div>
               <label className="text-xs text-text-muted">Unit</label>
-              <select className={`${field} mt-1`} value={uom} onChange={e => setUom(e.target.value as FuelRequest['uom'])}>
+              <InputSelect className="mt-1" value={uom} onChange={e => setUom(e.target.value as FuelRequest['uom'])}>
                 <option value="litres">Litres</option>
                 <option value="drums">Drums</option>
                 <option value="tonnes">Tonnes</option>
-              </select>
+              </InputSelect>
             </div>
           </div>
 
           {/* Site */}
           <div>
             <label className="text-xs text-text-muted">Delivery Site *</label>
-            <select className={`${field} mt-1`} value={siteId} onChange={e => setSiteId(e.target.value)}>
+            <InputSelect className="mt-1" value={siteId} onChange={e => setSiteId(e.target.value)}>
               <option value="">Select site…</option>
               {siteOptions.map(s => (
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
-            </select>
+            </InputSelect>
           </div>
 
           {/* Urgency */}
@@ -161,11 +167,11 @@ export function NewFuelRequest() {
           {/* Notes */}
           <div>
             <label className="text-xs text-text-muted">Notes (optional)</label>
-            <textarea
+            <InputTextarea
               value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Any context for the request…"
               rows={3}
-              className={`${field} mt-1`}
+              className="mt-1"
             />
           </div>
 

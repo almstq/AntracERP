@@ -18,7 +18,7 @@ export function ActorSwitcher() {
   if (user?.role !== 'super_admin') return null;
 
   return (
-    <div className="px-5 py-4 border-t border-border bg-amber/5">
+    <div className="px-6 py-4 border-t border-border bg-amber/5">
       <div className="flex items-center gap-1.5 mb-2">
         <UserCheck size={12} className="text-amber" />
         <span className="text-[9px] font-semibold uppercase tracking-wider text-amber">Act As (test)</span>

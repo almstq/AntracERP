@@ -12,11 +12,13 @@ import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { workOrderWorkflow as wf } from '../../../lib/workflow/definitions';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 import { downloadInvoice } from '../../../lib/services/invoice';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { GST_RATE } from '../../../lib/utils/money';
+import { useToast } from '../../../lib/context/ToastContext';
 import type { WorkOrder, Customer, Invoice, Payment, InvoiceLineItem, PaymentMethod } from '../../../types/crm';
 
 const STATUS_STYLE: Record<string, string> = {
@@ -43,6 +45,7 @@ interface InvoiceFormProps {
 
 function InvoiceForm({ wo, onCreated, onCancel }: InvoiceFormProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const cur = wo.currency as 'MVR' | 'USD';
   const [lines, setLines] = useState<InvoiceLineItem[]>([
     { description: '', quantity: 1, unit: 'day', unitRate: 0, amount: 0 },
@@ -91,8 +94,13 @@ function InvoiceForm({ wo, onCreated, onCancel }: InvoiceFormProps) {
       await updateWorkOrder(wo.id, {
         invoiceIds: [...(wo.invoiceIds ?? []), invId],
       });
+      toast('success', 'Invoice issued');
       onCreated(invId);
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -170,6 +178,7 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
 
 function PaymentForm({ inv, wo, onRecorded }: PaymentFormProps) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const cur = inv.currency as 'MVR' | 'USD';
   const [amount, setAmount] = useState(inv.balance);
   const [method, setMethod] = useState<PaymentMethod>('bank_transfer');
@@ -201,8 +210,13 @@ function PaymentForm({ inv, wo, onRecorded }: PaymentFormProps) {
         status: newStatus,
         paymentIds: [...(inv.paymentIds ?? []), pmtId],
       });
+      toast('success', 'Payment recorded');
       onRecorded();
-    } catch (e) { setErr(e instanceof Error ? e.message : 'Failed'); }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Failed';
+      setErr(msg);
+      toast('error', msg);
+    }
     finally { setBusy(false); }
   }
 
@@ -335,7 +349,7 @@ export function WorkOrderDetail() {
 
   useEffect(() => { load(); }, [id]);
 
-  if (loading) return <div className="p-6 text-xs text-text-muted">Loading…</div>;
+  if (loading) return <LoadingSpinner text="Loading…" />;
   if (!wo || !customer) return <div className="p-6 text-xs text-text-muted">Work order not found.</div>;
 
   const cur = wo.currency as 'MVR' | 'USD';
@@ -346,9 +360,14 @@ export function WorkOrderDetail() {
     <PageContainer className="max-w-4xl space-y-4">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <Link to="/wli/crm/work-orders" className="text-text-muted hover:text-text-primary">
+        <Link to="/wli/crm/work-orders" aria-label="Back to work orders" className="text-text-muted hover:text-text-primary">
           <ArrowLeft size={18} />
         </Link>
+        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
+          <Link to="/wli/crm/work-orders" className="hover:text-text-primary">Work Orders</Link>
+          <span>/</span>
+          <span className="text-text-secondary">{wo.displayId}</span>
+        </nav>
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <h1 className="text-lg font-bold text-text-primary">{wo.displayId}</h1>

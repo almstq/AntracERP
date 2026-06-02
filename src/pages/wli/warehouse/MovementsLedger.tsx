@@ -4,6 +4,7 @@ import { Card } from '../../../components/ui/Card';
 import { useAllStockMovements, useInventoryItems, useStores } from '../../../lib/hooks/useInventory';
 import type { MovementType } from '../../../types/inventory';
 import { PageContainer } from '../../../components/shared/PageContainer';
+import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
 const TYPE_LABELS: Record<MovementType, string> = {
   receipt: 'Receipt',
@@ -79,7 +80,7 @@ export function MovementsLedger() {
 
       <Card>
         {loading ? (
-          <p className="text-xs text-text-muted py-4 text-center">Loading…</p>
+          <LoadingSpinner text="Loading…" />
         ) : filtered.length === 0 ? (
           <p className="text-xs text-text-muted py-4 text-center">No movements yet.</p>
         ) : (

@@ -8,6 +8,40 @@ import {
 
 interface Props {
   sites: (Site & { id: string })[];
+  variant?: 'card' | 'helix';
+}
+
+const HELIX_TONE: Record<'teal' | 'amber' | 'red', string> = {
+  teal: 'var(--positive)', amber: 'var(--warning)', red: 'var(--danger)',
+};
+
+function HelixWeatherTile({ w }: { w: SiteWeather }) {
+  const wind = windCategory(w.windMs);
+  const visKm = w.visibilityM / 1000;
+  return (
+    <div className="wx">
+      <div className="wx-top">
+        <div>
+          <div className="wx-name">{w.siteName}</div>
+          <div className="wx-cond">{w.description}</div>
+        </div>
+        <span className="wx-ic">
+          <img src={`https://openweathermap.org/img/wn/${w.icon}@2x.png`} alt={w.conditionMain} width={34} height={34} />
+        </span>
+      </div>
+      <div className="wx-temp num">{w.tempC}°</div>
+      <div className="wx-metrics">
+        <span className="wx-m" style={{ color: HELIX_TONE[wind.tone] }}>
+          <Wind /><span className="v">{w.windMs} m/s</span>
+          <span style={{ color: 'var(--text-muted)' }}>{wind.label}</span>
+        </span>
+        <span className="wx-m" style={{ color: visKm < 5 ? 'var(--warning)' : 'var(--text-muted)' }}>
+          <Eye /><span className="v">{visKm.toFixed(1)} km</span>
+          <span style={{ color: 'var(--text-muted)' }}>vis</span>
+        </span>
+      </div>
+    </div>
+  );
 }
 
 const TONE_CLASS: Record<'teal' | 'amber' | 'red', string> = {
@@ -55,7 +89,7 @@ function WeatherTile({ w }: { w: SiteWeather }) {
   );
 }
 
-export function WeatherPanel({ sites }: Props) {
+export function WeatherPanel({ sites, variant = 'card' }: Props) {
   const located = sites.filter((s) => s.location);
   const [weather, setWeather] = useState<SiteWeather[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,6 +115,14 @@ export function WeatherPanel({ sites }: Props) {
 
   // No located sites — nothing to show
   if (located.length === 0) return null;
+
+  // Helix variant — bare tile grid (no Card wrapper)
+  if (variant === 'helix') {
+    if (!isWeatherConfigured()) return <div className="empty-note">Weather not configured — add VITE_OPENWEATHER_API_KEY.</div>;
+    if (loading) return <div className="empty-note">Loading weather…</div>;
+    if (weather.length === 0) return <div className="empty-note">Weather unavailable. A new key can take ~2h to activate.</div>;
+    return <div className="wx-grid">{weather.map((w) => <HelixWeatherTile key={w.siteId} w={w} />)}</div>;
+  }
 
   // Key missing — graceful setup fallback
   if (!isWeatherConfigured()) {

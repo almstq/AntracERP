@@ -128,7 +128,7 @@ function getVisibleModules(userRole: string | undefined, currentPath: string): M
   return [moduleForPath(currentPath)];
 }
 
-export function Navbar() {
+export function Navbar({ className = '' }: { className?: string }) {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -158,8 +158,8 @@ export function Navbar() {
 
   return (
     <>
-      {/* Mobile top bar — fixed, full width, sits above content */}
-      <div className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 border-b border-border bg-bg-panel">
+      {/* Mobile top bar — floating card bar offset from browser walls */}
+      <div className="md:hidden fixed top-4 inset-x-4 z-40 flex items-center justify-between px-4 py-3 rounded-xl border border-border bg-bg-panel/90 backdrop-blur shadow-md">
         <span className="text-sm font-bold text-text-primary">{isSA ? 'Antrac Group' : visibleModules[0].brand}</span>
         <button onClick={() => setMobileOpen(!mobileOpen)} className="text-text-secondary" aria-label="Toggle menu">
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
@@ -168,93 +168,132 @@ export function Navbar() {
 
       {/* Mobile backdrop */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setMobileOpen(false)} />
+        <div className="md:hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={() => setMobileOpen(false)} aria-hidden="true" />
       )}
 
-      <aside className={`${mobileOpen ? 'fixed inset-y-0 left-0 z-50' : 'hidden'} md:relative md:z-auto md:block w-60 bg-bg-panel border-r border-border flex-shrink-0 overflow-y-auto`}>
-        <div className="p-5 border-b border-border">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue">A</div>
-            <div className="min-w-0">
-              <h1 className="text-sm font-bold text-text-primary leading-tight truncate">
-                {isSA ? 'Antrac Holding Group' : visibleModules[0].brand}
-              </h1>
-              <p className="text-[10px] text-text-muted truncate">
-                {isSA ? 'Global Administrator' : visibleModules[0].subtitle}
-              </p>
-            </div>
-          </div>
-        </div>
+      {/* Mobile sidebar drawer — floating sheet, separate from desktop */}
+      {mobileOpen && (
+        <aside className="md:hidden fixed top-20 bottom-4 left-4 w-[280px] z-50 rounded-xl border border-border bg-bg-panel shadow-2xl flex flex-col overflow-hidden">
+          <SidebarContent
+            isSA={isSA} user={user} visibleModules={visibleModules} isActive={isActive}
+            collapsed={collapsed} toggleSection={toggleSection} logout={logout}
+            onNavClick={() => setMobileOpen(false)}
+          />
+        </aside>
+      )}
 
-        <nav className="px-5 py-5 pb-28 space-y-8">
-          {visibleModules.map((mod) => (
-            <div key={mod.key} className="space-y-1">
-              {isSA && (
-                <div className="px-2 pt-1 pb-2">
-                  <span className="text-[10px] font-black text-blue/60 uppercase tracking-[0.2em]">{mod.brand}</span>
-                </div>
-              )}
-
-              {mod.sections.map((section, si) => {
-                const sectionActive = section.items.some(isActive);
-                const isCollapsed = !!section.title && collapsed.has(section.title) && !sectionActive;
-
-                return (
-                  <div key={si} className={section.title ? 'pt-3' : ''}>
-                    {section.title && (
-                      <button
-                        onClick={() => toggleSection(section.title!)}
-                        className="w-full flex items-center justify-between px-2 pb-2 group"
-                        aria-expanded={!isCollapsed}
-                      >
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
-                        {isCollapsed
-                          ? <ChevronRight size={12} className="text-text-muted group-hover:text-text-secondary" />
-                          : <ChevronDown size={12} className="text-text-muted group-hover:text-text-secondary" />}
-                      </button>
-                    )}
-                    {!isCollapsed && (
-                      <div className="space-y-0.5">
-                        {section.items.map((item) => {
-                          const Icon = item.icon;
-                          const active = isActive(item);
-                          return (
-                            <Link
-                              key={item.to} to={item.to} onClick={() => setMobileOpen(false)}
-                              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all ${
-                                active ? 'bg-blue/10 text-blue' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
-                              }`}
-                            >
-                              <Icon size={16} /> {item.label}
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 border-t border-border bg-bg-panel">
-          <ActorSwitcher />
-          <div className="flex items-center gap-3 mb-2 px-5 pt-4 pb-0">
-            <div className="w-8 h-8 rounded-full bg-blue/20 flex items-center justify-center text-[11px] font-bold text-blue shrink-0">
-              {user?.displayName?.charAt(0) || 'U'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-text-primary truncate">{user?.displayName}</p>
-              <p className="text-[10px] text-text-muted truncate">{user ? (ROLE_LABELS[user.role] ?? user.role) : ''}</p>
-            </div>
-          </div>
-          <ThemeToggle />
-          <button onClick={() => logout()} className="flex items-center gap-2 px-5 py-3 pb-4 w-full text-xs text-text-muted hover:text-red transition-colors">
-            <LogOut size={14} /> Logout
-          </button>
-        </div>
+      {/* Desktop sidebar — always rendered as its own floating card.
+          AppShell passes the card-level classes (rounded-2xl, border, bg, shadow, etc.)
+          via className. We never fight 'hidden' here. */}
+      <aside className={className}>
+        <SidebarContent
+          isSA={isSA} user={user} visibleModules={visibleModules} isActive={isActive}
+          collapsed={collapsed} toggleSection={toggleSection} logout={logout}
+          onNavClick={() => {}}
+        />
       </aside>
     </>
+  );
+}
+
+/* ─── Inner content extracted so both mobile + desktop share the same JSX ─── */
+interface ContentProps {
+  isSA: boolean;
+  user: ReturnType<typeof import('../../lib/hooks/useAuth').useAuth>['user'];
+  visibleModules: ModuleNav[];
+  isActive: (item: NavItem) => boolean;
+  collapsed: Set<string>;
+  toggleSection: (title: string) => void;
+  logout: () => void;
+  onNavClick: () => void;
+}
+
+function SidebarContent({ isSA, user, visibleModules, isActive, collapsed, toggleSection, logout, onNavClick }: ContentProps) {
+  return (
+    <div className="flex flex-col h-full overflow-hidden">
+      {/* Brand header */}
+      <div className="px-6 py-5 border-b border-border shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-blue/15 flex items-center justify-center text-sm font-bold text-blue shrink-0">A</div>
+          <div className="min-w-0">
+            <h1 className="text-sm font-bold text-text-primary leading-tight truncate">
+              {isSA ? 'Antrac Holding Group' : visibleModules[0].brand}
+            </h1>
+            <p className="text-[10px] text-text-muted truncate">
+              {isSA ? 'Global Administrator' : visibleModules[0].subtitle}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Nav links */}
+      <nav className="px-4 py-4 space-y-5 flex-1 overflow-y-auto">
+        {visibleModules.map((mod) => (
+          <div key={mod.key} className="space-y-0.5">
+            {isSA && (
+              <div className="px-3 pt-1 pb-2">
+                <span className="text-[10px] font-black text-blue/60 uppercase tracking-[0.2em]">{mod.brand}</span>
+              </div>
+            )}
+            {mod.sections.map((section, si) => {
+              const sectionActive = section.items.some(isActive);
+              const isCollapsedNow = !!section.title && collapsed.has(section.title) && !sectionActive;
+              return (
+                <div key={si} className={section.title ? 'pt-2' : ''}>
+                  {section.title && (
+                    <button
+                      onClick={() => toggleSection(section.title!)}
+                      className="w-full flex items-center justify-between px-3 pb-1.5 group"
+                      aria-expanded={!isCollapsedNow}
+                    >
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-text-muted group-hover:text-text-secondary">{section.title}</span>
+                      {isCollapsedNow
+                        ? <ChevronRight size={12} className="text-text-muted group-hover:text-text-secondary" />
+                        : <ChevronDown size={12} className="text-text-muted group-hover:text-text-secondary" />}
+                    </button>
+                  )}
+                  {!isCollapsedNow && (
+                    <div className="space-y-0.5">
+                      {section.items.map((item) => {
+                        const Icon = item.icon;
+                        const active = isActive(item);
+                        return (
+                          <Link
+                            key={item.to} to={item.to} onClick={onNavClick}
+                            className={`flex items-center gap-3 mx-1 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all ${
+                              active ? 'bg-blue/10 text-blue font-semibold' : 'text-text-secondary hover:text-text-primary hover:bg-bg-surface'
+                            }`}
+                          >
+                            <Icon size={16} className="shrink-0" /> {item.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer */}
+      <div className="border-t border-border shrink-0">
+        <ActorSwitcher />
+        <div className="flex items-center gap-3 px-6 pt-4 pb-2">
+          <div className="w-8 h-8 rounded-full bg-blue/20 flex items-center justify-center text-[11px] font-bold text-blue shrink-0">
+            {user?.displayName?.charAt(0) || 'U'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium text-text-primary truncate">{user?.displayName}</p>
+            <p className="text-[10px] text-text-muted truncate">{user ? (ROLE_LABELS[user.role] ?? user.role) : ''}</p>
+          </div>
+        </div>
+        <ThemeToggle />
+        <button onClick={() => logout()} className="flex items-center gap-2 px-6 py-3 pb-4 w-full text-xs text-text-muted hover:text-red transition-colors">
+          <LogOut size={14} /> Logout
+        </button>
+      </div>
+    </div>
   );
 }
