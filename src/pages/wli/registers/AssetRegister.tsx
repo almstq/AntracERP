@@ -121,15 +121,19 @@ export function AssetRegister() {
                           <p className="text-[10px] text-text-muted">{a.type} · {a.operationalStatus}</p>
                         </div>
                       </Link>
-                      <select
-                        className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
-                        value={a.currentSiteId}
-                        onChange={(e) => reassign(a.id, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        title="Assign location"
-                      >
-                        {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
+                      {a.pendingDelivery
+                        ? <span className="text-[10px] text-text-muted flex-shrink-0 italic">Not at site</span>
+                        : (
+                          <select
+                            className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
+                            value={a.currentSiteId}
+                            onChange={(e) => reassign(a.id, e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            title="Assign location"
+                          >
+                            {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                          </select>
+                        )}
                     </div>
                   ))}
                 </div>
