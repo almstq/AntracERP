@@ -3,9 +3,9 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../shared/Input';
 import { InputSelect } from '../shared/InputSelect';
-import { UserCog, Plus, Trash2 } from 'lucide-react';
+import { UserCog, Plus, Trash2, Pencil } from 'lucide-react';
 import { useStaffList } from '../../lib/hooks/useWorkflowData';
-import { createStaff, deleteStaff } from '../../lib/services/registry';
+import { createStaff, deleteStaff, updateStaff } from '../../lib/services/registry';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType, type Staff } from '../../types/org';
@@ -48,6 +48,33 @@ export function ModuleStaffRegister({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  // Inline edit (one row at a time)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', designation: '', staffType: '', role: '' });
+  const setE = (k: keyof typeof editForm, v: string) => setEditForm((f) => ({ ...f, [k]: v }));
+
+  function startEdit(p: Staff & { id: string }) {
+    setEditingId(p.id);
+    setEditForm({ name: p.name, designation: p.designation ?? '', staffType: p.staffType ?? '', role: p.role });
+  }
+
+  async function saveEdit() {
+    if (!editingId) return;
+    if (!editForm.name.trim()) { toast('error', 'Name required'); return; }
+    setBusy(true);
+    try {
+      const patch: { name: string; designation: string; role: string; staffType?: StaffType } = {
+        name: editForm.name, designation: editForm.designation, role: editForm.role,
+      };
+      if (editForm.staffType) patch.staffType = editForm.staffType as StaffType;
+      await updateStaff(editingId, patch);
+      toast('success', 'Staff updated');
+      setEditingId(null); refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Update failed');
+    } finally { setBusy(false); }
+  }
 
   const nextId = () => `${idPrefix}-${String(staff.length + 1).padStart(4, '0')}`;
 
@@ -112,7 +139,26 @@ export function ModuleStaffRegister({
           <p className="text-xs text-text-muted p-3">{emptyNote ?? 'No staff yet.'}</p>
         ) : (
           <div className="space-y-1">
-            {staff.map((p) => (
+            {staff.map((p) => editingId === p.id ? (
+              <div key={p.id} className="p-3 rounded-lg bg-bg-surface">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <Input placeholder="Name" value={editForm.name} onChange={(e) => setE('name', e.target.value)} />
+                  <Input placeholder="Designation" value={editForm.designation} onChange={(e) => setE('designation', e.target.value)} />
+                  <InputSelect value={editForm.staffType} onChange={(e) => setE('staffType', e.target.value)} title="Staff type">
+                    <option value="">— none —</option>
+                    {STAFF_TYPES.map((t) => <option key={t} value={t}>{STAFF_TYPE_LABEL[t]}</option>)}
+                  </InputSelect>
+                  <InputSelect value={editForm.role} onChange={(e) => setE('role', e.target.value)} title="System role">
+                    {roleOptions.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
+                  </InputSelect>
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <Button variant="primary" size="sm" onClick={saveEdit} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
+                  <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
+                  <span className="text-[10px] text-text-muted self-center ml-1">{p.displayId}</span>
+                </div>
+              </div>
+            ) : (
               <div key={p.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <UserCog size={16} className="text-text-muted shrink-0" />
@@ -125,6 +171,11 @@ export function ModuleStaffRegister({
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {renderExtra?.(p)}
+                  {canManage && (
+                    <button className="p-1 rounded text-text-muted hover:text-blue" title="Edit" onClick={() => startEdit(p)}>
+                      <Pencil size={13} />
+                    </button>
+                  )}
                   {canManage && (
                     <button className="p-1 rounded text-text-muted hover:text-red" title="Delete" onClick={() => remove(p.id, p.name)}>
                       <Trash2 size={13} />
