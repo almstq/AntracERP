@@ -25,7 +25,7 @@ export function AssetRegister() {
   const { data: assets, loading, refresh } = useAssetList();
   const { data: sites } = useSiteList();
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ code: '', make: '', model: '', type: '', assetClass: 'equipment' as AssetClass, currentSiteId: '', operationalStatus: 'operational' as Asset['operationalStatus'] });
+  const [form, setForm] = useState({ code: '', make: '', model: '', type: '', assetClass: 'equipment' as AssetClass, currentSiteId: '', operationalStatus: 'operational' as Asset['operationalStatus'], pendingDelivery: false });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -33,12 +33,12 @@ export function AssetRegister() {
   const set = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   async function add() {
-    if (!form.code.trim() || !form.currentSiteId) { setErr('Code and location required'); return; }
+    if (!form.code.trim() || (!form.currentSiteId && !form.pendingDelivery)) { setErr('Code and location required (or tick Pending Delivery)'); return; }
     setBusy(true); setErr(null);
     try {
       await createAsset(form);
       toast('success', 'Asset added');
-      setForm({ code: '', make: '', model: '', type: '', assetClass: 'equipment', currentSiteId: '', operationalStatus: 'operational' });
+      setForm({ code: '', make: '', model: '', type: '', assetClass: 'equipment', currentSiteId: '', operationalStatus: 'operational', pendingDelivery: false });
       setAdding(false); refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed';
@@ -74,13 +74,22 @@ export function AssetRegister() {
             <InputSelect value={form.assetClass} onChange={(e) => set('assetClass', e.target.value)}>
               {CLASSES.map((c) => <option key={c} value={c}>{ASSET_CLASS_LABEL[c]}</option>)}
             </InputSelect>
-            <InputSelect value={form.currentSiteId} onChange={(e) => set('currentSiteId', e.target.value)}>
+            <InputSelect value={form.currentSiteId} onChange={(e) => set('currentSiteId', e.target.value)} disabled={form.pendingDelivery}>
               <option value="">Location…</option>
               {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
             </InputSelect>
             <InputSelect value={form.operationalStatus} onChange={(e) => set('operationalStatus', e.target.value)}>
               {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
             </InputSelect>
+            <label className="flex items-center gap-2 text-xs text-text-secondary cursor-pointer select-none col-span-2 md:col-span-1">
+              <input
+                type="checkbox"
+                checked={form.pendingDelivery}
+                onChange={(e) => setForm((f) => ({ ...f, pendingDelivery: e.target.checked, currentSiteId: e.target.checked ? '' : f.currentSiteId }))}
+                className="accent-amber-400"
+              />
+              Pending Delivery (not yet at site)
+            </label>
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}

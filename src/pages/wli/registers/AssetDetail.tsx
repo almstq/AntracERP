@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
-  Gauge, Pencil, Radio, ExternalLink, FileText, type LucideIcon,
+  Gauge, Pencil, Radio, ExternalLink, FileText, PackageCheck, type LucideIcon,
 } from 'lucide-react';
 import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../../lib/hooks/useWorkflowData';
+import { useAuth } from '../../../lib/hooks/useAuth';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
 import { STAFF_TYPE_LABEL } from '../../../types/org';
 import { updateAsset } from '../../../lib/services/registry';
@@ -60,6 +61,8 @@ export function AssetDetail() {
   const { data: allStaff } = useStaffList();
   const { positions, meta } = useFollowMeFleet();
   const { toast } = useToast();
+  const { effectiveRole } = useAuth();
+  const canManageAssets = effectiveRole === 'super_admin' || effectiveRole === 'gm';
 
   const asset = assets.find((a) => a.id === id);
   const siteName = (sid: string | undefined) => (sid ? sites.find((s) => s.id === sid)?.name ?? sid : '—');
@@ -83,6 +86,18 @@ export function AssetDetail() {
     });
     setEditing(true);
   }
+  async function markDelivered() {
+    if (!asset) return;
+    setBusy(true);
+    try {
+      await updateAsset(asset.id, { pendingDelivery: false });
+      toast('success', 'Asset marked as delivered — update site and status as needed.');
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setBusy(false); }
+  }
+
   async function save() {
     if (!asset) return;
     setBusy(true);
@@ -139,6 +154,11 @@ export function AssetDetail() {
           </div>
         </div>
         <div className="dhead-actions">
+          {!editing && asset.pendingDelivery && canManageAssets && (
+            <button className="btn btn-primary" onClick={markDelivered} disabled={busy}>
+              <PackageCheck size={14} /> Mark as Delivered
+            </button>
+          )}
           {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
         </div>
       </div>
