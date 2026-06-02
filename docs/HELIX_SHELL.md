@@ -1,8 +1,7 @@
 # Helix Shell — Design System & Implementation
 
 **Shipped:** 2026-06-02 (session 11) · **Version:** v0.19.0 · **Commit:** `42e42f6`
-**Source:** Claude Design handoff — `D:\!starq\.claude_code_sync\Antrac ERP-handoff\antrac-erp\`
-(`project/Antrac Shell.html`, `project/shell.css`, `README.md`)
+**Source:** Claude Design handoff (internal).
 **Direction chosen:** **Helix** (cool technical console). Atlas (warm editorial) is fully
 specced in the same bundle and can be wired as a runtime toggle later.
 

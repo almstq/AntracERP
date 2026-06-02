@@ -14,8 +14,8 @@
  *     npx tsx seed/ingest-registry.ts "<service-account.json>" --commit
  *   Commit + wipe demo transactions (tickets/PRs/POs/workOrders):
  *     npx tsx seed/ingest-registry.ts "<service-account.json>" --commit --wipe-demo
- *   Custom MD path:
- *     ... --md "D:\\!starq\\.claude_code_sync\\WL_Ops_Command_Center_Claude_DB_Ingestion.md"
+ *   Custom MD path (defaults to seed/data/registry-source.md):
+ *     ... --md "path/to/registry-export.md"
  */
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
@@ -29,7 +29,7 @@ const wipeDemo = args.includes('--wipe-demo');
 const mdArg = args[args.indexOf('--md') + 1];
 const MD_PATH = (args.includes('--md') && mdArg)
   ? mdArg
-  : 'D:\\!starq\\.claude_code_sync\\WL_Ops_Command_Center_Claude_DB_Ingestion.md';
+  : 'seed/data/registry-source.md';
 
 if (!serviceAccountPath) {
   console.error('Usage: npx ts-node --esm seed/ingest-registry.ts "<service-account.json>" [--commit] [--md <path>]');

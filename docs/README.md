@@ -1,41 +1,32 @@
-# Antrac ERP — Documentation (canonical home)
+# Antrac Nexus — Documentation
 
-**This folder is the single source of truth for everything about Antrac ERP.**
-Per the parent workspace organising principle: each project is self-contained under
-`projects/<name>/`; the parent workspace processor *indexes/visualises* this — it does not
-hold project content.
+This folder holds the design, planning, and workflow documentation for the app.
+Start with the root [`README.md`](../README.md) for the product overview.
 
-## Structure
+## Index
 
-```
-docs/
-├── workflows/        # The authoritative workflow specs (from Mustarq)
-│   ├── WLI_WORKFLOW_TICKETS.md        # Issue → Closure (maintenance)
-│   ├── WLI_MPL_FUEL_WORKFLOW.md       # WLI ↔ MPL fuel/water
-│   └── WLI_CRM_SALES_WORKFLOW.md      # CRM & Sales (revenue)
-├── management/       # Strategic/coordination docs
-│   ├── MASTER_TIMELINE.md             # canonical project timeline
-│   └── MASTER_ARCHITECTURE.md         # module architecture + schema
-└── CRM_PLAN.md       # proposed CRM build plan
-```
-Plus `../PROGRESS.md` (live tracker), `../CHANGELOG.md`, `../README.md`.
+### Workflows (authoritative specs)
+- [`workflows/WLI_WORKFLOW_TICKETS.md`](workflows/WLI_WORKFLOW_TICKETS.md) — Issue → Closure (maintenance)
+- [`workflows/WLI_MPL_FUEL_WORKFLOW.md`](workflows/WLI_MPL_FUEL_WORKFLOW.md) — WLI ↔ MPL fuel & water
+- [`workflows/WLI_CRM_SALES_WORKFLOW.md`](workflows/WLI_CRM_SALES_WORKFLOW.md) — CRM & sales (revenue)
 
-## Doc policy
-- **Claude Code writes all project docs here** — never into the parent workspace
-  processor area (`starqos/`, `workspaces/`, `02_ANTRAC_NEXUS`, etc.).
-- `MASTER_TIMELINE.md` / `MASTER_ARCHITECTURE.md` here are the **canonical**
-  copies. The copies under `starqos/content/nexus/` are the Nexus/Hermes mirror
-  (the live agent system still reads those) — keep them in sync until migrated.
+### Architecture & planning
+- [`management/MASTER_ARCHITECTURE.md`](management/MASTER_ARCHITECTURE.md) — module architecture + schema
+- [`management/MASTER_TIMELINE.md`](management/MASTER_TIMELINE.md) — project timeline
+- [`CRM_PLAN.md`](CRM_PLAN.md) · [`INVENTORY_SCM_PLAN.md`](INVENTORY_SCM_PLAN.md) · [`SCM_BENCHMARK.md`](SCM_BENCHMARK.md)
+- [`EMAIL_VAULT_PLAN.md`](EMAIL_VAULT_PLAN.md) — email-to-Vault architecture (deferred)
 
-## Deferred consolidation (next session — needs care)
-The following antrac content still lives in the parent workspace processor because the
-**running** system reads those paths; relocating them requires updating
-Hermes/VOID DECK references + testing:
-- `workspaces/{nexus,lens,quill,vector,cipher,grid}/…` — agent work products
-- `starqos/content/nexus/antrac-erp-*.md` — Nexus mirror
-- `starqos-mission-control/docs/antrac-erp-*.html` — VOID DECK rendered docs
-- `.claude_code_sync/ANTRAC_ERP_*.md`, `_system/sessions/*ANTRAC*`, `02_ANTRAC_NEXUS/`
+### Subsystems
+- [`HELIX_SHELL.md`](HELIX_SHELL.md) — the Helix design system & app shell
+- [`FOLLOWME_INTEGRATION.md`](FOLLOWME_INTEGRATION.md) — vessel AIS tracking integration
+- [`UI_SPACING_CONTRACT.md`](UI_SPACING_CONTRACT.md) — layout spacing rules
 
-**Plan:** move/copy each into `docs/` here, then update the indexer + VOID DECK
-+ any cron paths to read from the project folder, then retire the old copies to
-`_recyclebin/` (never delete). Do this when there's time to test the processor.
+### Data ingestion
+- [`REGISTRY_INGESTION_PLAN.md`](REGISTRY_INGESTION_PLAN.md) — assets & staff mass-ingestion
+- [`MACHINE_STATUS_INGESTION_PLAN.md`](MACHINE_STATUS_INGESTION_PLAN.md) — field machine-status → tickets/suppliers/inventory
+
+### Audits
+- [`QA_AUDIT_2026-06-01.md`](QA_AUDIT_2026-06-01.md) · [`ui-ux-audit.md`](ui-ux-audit.md) · [`ui-ux-implementation-log.md`](ui-ux-implementation-log.md)
+
+### Provenance
+- [`legacy-nexus/`](legacy-nexus/) — archived docs from the Flutter-era predecessor of this app

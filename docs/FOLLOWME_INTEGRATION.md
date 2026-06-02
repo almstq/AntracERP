@@ -1,7 +1,7 @@
 # FollowMe Vessel Tracking — Integration
 
 **Status:** Architecture built & policy-compliant (v0.26.0). **Inert until an API key is provisioned.**
-**Policy source:** `D:\!starq\.claude_code_sync\FOLLOWME API INTEGRATION POLICY (MANDATORY).txt`
+**Policy source:** FollowMe API integration policy (internal handoff).
 **API docs:** https://followme.mv/api · use **v5** only.
 
 ---

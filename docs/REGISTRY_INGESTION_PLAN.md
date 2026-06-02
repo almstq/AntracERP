@@ -1,7 +1,6 @@
 # Registry Mass-Ingestion Plan — Assets & Staff
 
-**Source:** `D:\!starq\.claude_code_sync\WL_Ops_Command_Center_Claude_DB_Ingestion.md`
-(converted from `WL_Ops_Command_Center_updated.xlsx`).
+**Source:** WL Ops Command Center registry export (internal; converted from `WL_Ops_Command_Center_updated.xlsx`).
 **Target:** Antrac ERP Firestore (`assets`, `staff` collections).
 **Scope (as requested):** assets (heavy fleet + marine) + staff. Issues/PRs/compliance/logs **out of scope** for this pass (notes below on converting them later).
 

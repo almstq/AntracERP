@@ -1,7 +1,7 @@
 import type { MockTicket, MockUser, MockSite } from './types';
 
 export const MOCK_USERS: MockUser[] = [
-  { uid: 'user-super', displayName: 'Mustarq Ibrahim', email: 'a.musthaq@gmail.com', role: 'super_admin', orgId: 'antrac-holding', siteIds: [] },
+  { uid: 'user-super', displayName: 'Super Admin', email: 'admin@antrac.mv', role: 'super_admin', orgId: 'antrac-holding', siteIds: [] },
   { uid: 'user-operator', displayName: 'Janaka Operator', email: 'janaka@antrac.com', role: 'operator', orgId: 'sbu-wli', siteIds: ['thilafushi'] },
   { uid: 'user-mech', displayName: 'Hassan Mechanic', email: 'hassan@antrac.com', role: 'mechanic', orgId: 'sbu-wli', siteIds: ['thilafushi'] },
   { uid: 'user-super-v', displayName: 'Sampath Supervisor', email: 'sampath@antrac.com', role: 'supervisor', orgId: 'sbu-wli', siteIds: ['thilafushi'] },

@@ -123,7 +123,7 @@ async function seed() {
 
   // Super admin user doc
   batch.set(db.collection('users').doc(uid), {
-    email: 'a.musthaq@gmail.com',
+    email: process.env.SUPER_ADMIN_EMAIL || 'admin@antrac.mv',
     role: 'super_admin',
     orgId: 'antrac-holding',
     orgName: 'Antrac Holding',
