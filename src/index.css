@@ -1,55 +1,70 @@
 @import "tailwindcss";
 
-/* ── Design tokens — DARK is the default theme ───────────────────────────── */
+/* ── Design tokens — bridged to the HELIX palette (src/styles/shell.css) ─────
+   Old Tailwind utilities (bg-bg-card, text-blue, border-border, …) now resolve
+   to Helix colours, so every legacy page adopts the Helix look automatically.
+   DARK is the default; html.light overrides below. ───────────────────────── */
 @theme {
-  --color-bg-base: #09090B;
-  --color-bg-panel: #141417;
-  --color-bg-surface: #1C1C1F;
-  --color-bg-card: #141417;
-  --color-bg-overlay: #141417;
-  --color-bg-input: #18181B;
-  --color-border: #33333A;
-  --color-border-soft: #26262C;
-  --color-border-hover: #44444C;
-  --color-text-primary: #FAFAFA;
-  --color-text-secondary: #A3A3A3;
-  --color-text-muted: #71717A;
-  --color-text-inverted: #18181B;
-  --color-blue: #3B82F6;
-  --color-blue-hover: #2563EB;
-  --color-focus: rgba(59, 130, 246, 0.24);
-  --color-purple: #AAAAF3;
-  --color-green: #009588;
-  --color-teal: #22C55E;
-  --color-amber: #F99C00;
-  --color-red: #E40014;
-  --color-neutral: #71717A;
+  --color-bg-base: #090C11;
+  --color-bg-panel: #10151C;
+  --color-bg-surface: #1A212B;
+  --color-bg-card: #151B24;
+  --color-bg-overlay: #151B24;
+  --color-bg-input: #131922;
+  --color-border: #232D39;
+  --color-border-soft: #1A222C;
+  --color-border-hover: #34414F;
+  --color-text-primary: #E9F1F7;
+  --color-text-secondary: #9DAFBD;
+  --color-text-muted: #5F6E7C;
+  --color-text-inverted: #04130F;
+  --color-blue: #2FD4C0;        /* accent → teal */
+  --color-blue-hover: #18B6A4;
+  --color-focus: rgba(47, 212, 192, 0.24);
+  --color-purple: #8B7CF6;
+  --color-green: #A9E635;        /* positive → lime */
+  --color-teal: #2FD4C0;
+  --color-amber: #F5B73E;        /* warning */
+  --color-red: #F4655B;          /* danger */
+  --color-neutral: #5F6E7C;
   /* elevation */
-  --shadow-card: 0 1px 2px rgba(0,0,0,0.20), 0 1px 3px rgba(0,0,0,0.12);
+  --shadow-card: 0 1px 2px rgba(0,0,0,.5), 0 10px 28px -14px rgba(0,0,0,.6);
 }
 
 :root { color-scheme: dark; }
 
-/* ── LIGHT theme — override the same semantic tokens under html.light ──────── */
+/* ── LIGHT theme — Helix light palette under html.light ─────────────────────── */
 html.light {
   color-scheme: light;
-  --color-bg-base: #F5F6F8;
+  --color-bg-base: #E7ECF1;
   --color-bg-panel: #FFFFFF;
-  --color-bg-surface: #F0F1F4;
+  --color-bg-surface: #F1F5F9;
   --color-bg-card: #FFFFFF;
   --color-bg-overlay: #FFFFFF;
   --color-bg-input: #FFFFFF;
-  --color-border: #E3E4E9;
-  --color-border-soft: #EDEEF1;
-  --color-border-hover: #CDCFD6;
-  --color-text-primary: #18181B;
-  --color-text-secondary: #4B4C57;
-  --color-text-muted: #8B8C97;
-  --color-text-inverted: #FAFAFA;
-  --shadow-card: 0 1px 2px rgba(16,24,40,0.06), 0 1px 3px rgba(16,24,40,0.10);
+  --color-border: #DBE3EB;
+  --color-border-soft: #E9EEF3;
+  --color-border-hover: #C3CEDA;
+  --color-text-primary: #0C141C;
+  --color-text-secondary: #44535F;
+  --color-text-muted: #788593;
+  --color-text-inverted: #FFFFFF;
+  --color-blue: #0C9E8D;
+  --color-blue-hover: #0A8576;
+  --color-focus: rgba(12, 158, 141, 0.22);
+  --color-purple: #6A55E0;
+  --color-green: #5E920F;
+  --color-teal: #0C9E8D;
+  --color-amber: #B07D12;
+  --color-red: #DA4338;
+  --color-neutral: #788593;
+  --shadow-card: 0 1px 2px rgba(20,40,60,.06), 0 10px 24px -16px rgba(20,40,60,.20);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* NOTE: no manual `* { margin:0; padding:0 }` reset here — Tailwind v4 preflight
+   already resets these inside a cascade layer. An unlayered universal reset would
+   override (beat) every Tailwind padding/margin/space utility, silently zeroing
+   them app-wide. That was the root cause of the long-running "spacing" bugs. */
 
 /* smooth theme switch (surfaces + borders only — never text, to avoid flicker) */
 *, *::before, *::after {

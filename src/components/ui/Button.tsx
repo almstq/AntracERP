@@ -4,7 +4,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-blue text-white hover:opacity-90 focus:ring-2 focus:ring-blue/50',
+  primary: 'bg-blue text-text-inverted hover:opacity-90 focus:ring-2 focus:ring-blue/50',
   secondary: 'bg-transparent border border-border text-text-primary hover:bg-bg-surface focus:ring-2 focus:ring-blue/50',
   danger: 'bg-red text-white hover:opacity-90 focus:ring-2 focus:ring-red/50',
   ghost: 'bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-surface',
