@@ -5,7 +5,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { FleetMapView } from '../../components/workflow/FleetMapView';
-import { WeatherPanel } from '../../components/dashboard/WeatherPanel';
+import { SiteOverview } from '../../components/dashboard/SiteOverview';
 import { AiBrief } from '../../components/dashboard/AiBrief';
 import { useAuth } from '../../lib/hooks/useAuth';
 import { useTicketList, useAssetList, useSiteList, useStaffList, useActionInbox } from '../../lib/hooks/useWorkflowData';
@@ -169,6 +169,15 @@ export function WLIDashboard() {
         </div>
       </div>
 
+      {/* Site Overview — per-site detail: assets, crew, tickets, weather */}
+      <div className="section">
+        <div className="section-head">
+          <h2>Site Overview <span className="hint">Assets · crew · issues</span></h2>
+          <Link className="section-link" to="/wli/map">Fleet map <ChevronRight /></Link>
+        </div>
+        <SiteOverview sites={sites} assets={assets} staff={staff} tickets={tickets} />
+      </div>
+
       {/* Crewing Gaps — vessels/vehicles with no assigned staff */}
       {crewingGaps.length > 0 && (
         <div className="section">
@@ -207,15 +216,6 @@ export function WLIDashboard() {
           </div>
         </div>
       )}
-
-      {/* Site Overview — weather + deployed fleet + crew + issues per site */}
-      <div className="section">
-        <div className="section-head">
-          <h2>Site Overview <span className="hint">Weather · fleet · crew · issues</span></h2>
-          <Link className="section-link" to="/wli/map">All sites <ChevronRight /></Link>
-        </div>
-        <WeatherPanel sites={sites} variant="helix" assets={assets} staff={staff} tickets={tickets} />
-      </div>
     </div>
   );
 }
