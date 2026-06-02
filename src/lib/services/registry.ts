@@ -70,6 +70,7 @@ export type StaffInput = {
   staffType?: import('../../types/org').StaffType;
   designation: string;
   siteId?: string;
+  assignedAssetId?: string;
 };
 
 export async function createStaff(input: StaffInput, displayId: string): Promise<string> {
@@ -88,6 +89,11 @@ export async function updateStaff(id: string, patch: Partial<StaffInput>): Promi
 /** GM assigns staff to a site. */
 export async function assignStaffSite(staffId: string, siteId: string): Promise<void> {
   await updateFields('staff', staffId, { siteId });
+}
+
+/** GM posts staff to an asset (their map location then follows the asset's site). */
+export async function assignStaffAsset(staffId: string, assetId: string | null): Promise<void> {
+  await updateFields('staff', staffId, { assignedAssetId: assetId ?? '' });
 }
 
 // ─── Suppliers ───────────────────────────────────────────────────────────

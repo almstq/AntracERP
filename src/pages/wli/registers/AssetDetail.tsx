@@ -4,8 +4,9 @@ import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
   Gauge, Pencil, type LucideIcon,
 } from 'lucide-react';
-import { useAssetList, useSiteList, useTicketList } from '../../../lib/hooks/useWorkflowData';
+import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../../lib/hooks/useWorkflowData';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
+import { STAFF_TYPE_LABEL } from '../../../types/org';
 import { updateAsset } from '../../../lib/services/registry';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
@@ -53,6 +54,7 @@ export function AssetDetail() {
   const { data: sites } = useSiteList();
   const { data: tickets } = useTicketList();
   const { data: workOrders } = useWorkOrderList();
+  const { data: allStaff } = useStaffList();
   const { toast } = useToast();
 
   const asset = assets.find((a) => a.id === id);
@@ -105,6 +107,9 @@ export function AssetDetail() {
     .filter((d) => !!d.wa)
     .sort((a, b) => +new Date(b.wa!.startDate ?? 0) - +new Date(a.wa!.startDate ?? 0));
   const daysDeployed = deployments.reduce((s, d) => s + (d.wa?.actualDays ?? 0), 0);
+
+  // Crew — staff posted to this asset.
+  const crew = allStaff.filter((p) => p.assignedAssetId === id);
 
   return (
     <div className="page">
@@ -242,6 +247,23 @@ export function AssetDetail() {
                   <div className="v"><span className={`badge ${COMM_BADGE[(asset.commercialStatus || 'available')] ?? 'b-muted'}`}><span className="bdot" />{COMM_LABEL[(asset.commercialStatus || 'available')] ?? (asset.commercialStatus || 'available')}</span></div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="dcard">
+            <div className="dcard-h"><h3><Activity /> Assigned Crew</h3><span className="tc-sub">{crew.length}</span></div>
+            <div className="dcard-b">
+              {crew.length === 0
+                ? <p className="empty-note" style={{ padding: 0 }}>No staff posted to this asset.</p>
+                : crew.map((p) => (
+                  <Link className="linkrow" key={p.id} to={`/wli/staff/${p.id}`}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div className="lr-id" style={{ fontFamily: 'var(--font-ui)' }}>{p.name}</div>
+                      <div className="lr-sub">{p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role}</div>
+                    </div>
+                    <ChevronRight className="lr-chev" />
+                  </Link>
+                ))}
             </div>
           </div>
 

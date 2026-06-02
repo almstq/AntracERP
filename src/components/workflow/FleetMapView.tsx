@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Site } from '../../types/org';
 import type { Asset } from '../../types/asset';
 import type { Staff } from '../../types/org';
+import { STAFF_TYPE_LABEL } from '../../types/org';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
@@ -23,6 +24,28 @@ function loadMaps(key: string): Promise<void> {
   return window.__gmapsLoading;
 }
 
+// ── Google Maps dark style (matches the Helix dark surfaces) ──────────────────
+const DARK_STYLE = [
+  { elementType: 'geometry', stylers: [{ color: '#0f151d' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#0f151d' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#9DAFBD' }] },
+  { featureType: 'administrative', elementType: 'geometry', stylers: [{ color: '#232D39' }] },
+  { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#1A212B' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#5F6E7C' }] },
+  { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0a1016' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#34414F' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#10151c' }] },
+];
+
+interface ThemeColors { site: string; asset: string; staff: string; label: string; infoBg: string; infoText: string; infoSub: string; }
+function colorsFor(dark: boolean): ThemeColors {
+  return dark
+    ? { site: '#2FD4C0', asset: '#5B9DF5', staff: '#A9E635', label: '#E9F1F7', infoBg: '#151B24', infoText: '#E9F1F7', infoSub: '#9DAFBD' }
+    : { site: '#0C9E8D', asset: '#2E73D8', staff: '#5E920F', label: '#0C141C', infoBg: '#FFFFFF', infoText: '#0C141C', infoSub: '#788593' };
+}
+
 interface Props {
   sites: (Site & { id: string })[];
   assets: (Asset & { id: string })[];
@@ -34,10 +57,18 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
   const mapEl = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [dark, setDark] = useState(() => document.documentElement.getAttribute('data-theme') !== 'light');
 
   useEffect(() => {
     if (!MAPS_KEY) return;
     loadMaps(MAPS_KEY).then(() => setReady(true)).catch((e) => setErr(e.message));
+  }, []);
+
+  // Re-style the map when the app theme toggles.
+  useEffect(() => {
+    const obs = new MutationObserver(() => setDark(document.documentElement.getAttribute('data-theme') !== 'light'));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
@@ -46,59 +77,78 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
     const gmaps = (window.google as any).maps;
     const withCoords = sites.filter((s) => s.location);
     if (withCoords.length === 0) return;
+    const c = colorsFor(dark);
 
     const map = new gmaps.Map(mapEl.current, {
       center: withCoords[0].location!,
       zoom: 10,
       mapTypeId: 'roadmap',
       disableDefaultUI: false,
+      styles: dark ? DARK_STYLE : [],
+      backgroundColor: dark ? '#0f151d' : '#E7ECF1',
     });
 
-    // Auto-fit the map to show all sites
     const bounds = new gmaps.LatLngBounds();
     for (const site of withCoords) bounds.extend(site.location!);
     map.fitBounds(bounds);
-    // Don't zoom in too far if only one site
-    gmaps.event.addListenerOnce(map, 'idle', () => {
-      if (map.getZoom() > 13) map.setZoom(13);
+    gmaps.event.addListenerOnce(map, 'idle', () => { if (map.getZoom() > 13) map.setZoom(13); });
+
+    const dot = (fill: string, scale = 6) => ({
+      path: gmaps.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: c.infoBg, strokeWeight: 2,
     });
+    const openInfo = (marker: unknown, html: string) => {
+      const info = new gmaps.InfoWindow({ content: `<div style="color:${c.infoText};font-size:12px;min-width:170px;padding:2px 4px">${html}</div>` });
+      (marker as { addListener: (e: string, cb: () => void) => void }).addListener('click', () => info.open(map, marker));
+    };
+
+    // Staff effective site = assigned asset's site, else own site.
+    const assetById = new Map(assets.map((a) => [a.id, a]));
+    const staffSite = (p: Staff & { id: string }) =>
+      (p.assignedAssetId && assetById.get(p.assignedAssetId)?.currentSiteId) || p.siteId;
 
     for (const site of withCoords) {
       const siteAssets = assets.filter((a) => a.currentSiteId === site.id);
-      const siteStaff = staff.filter((p) => p.siteId === site.id);
+      const siteStaff = staff.filter((p) => staffSite(p) === site.id);
 
-      // Marker with visible site name label
-      const marker = new gmaps.Marker({
-        position: site.location,
-        map,
-        title: site.name,
-        label: {
-          text: site.name,
-          color: '#ffffff',
-          fontSize: '11px',
-          fontWeight: 'bold',
-        },
-        icon: {
-          path: gmaps.SymbolPath.CIRCLE,
-          scale: 10,
-          fillColor: '#3B82F6',
-          fillOpacity: 1,
-          strokeColor: '#ffffff',
-          strokeWeight: 2,
-        },
+      // Site marker (named).
+      const siteMarker = new gmaps.Marker({
+        position: site.location, map, title: site.name,
+        label: { text: site.name, color: c.label, fontSize: '11px', fontWeight: 'bold' },
+        icon: dot(c.site, 10), zIndex: 50,
       });
+      openInfo(siteMarker,
+        `<strong style="font-size:13px">${site.name}</strong>
+         <div style="color:${c.infoSub};margin:4px 0">${siteAssets.length} asset(s) · ${siteStaff.length} staff</div>`);
 
-      const info = new gmaps.InfoWindow({
-        content: `<div style="color:#111;font-size:12px;min-width:180px;padding:4px">
-          <strong style="font-size:13px">${site.name}</strong>
-          <div style="color:#666;margin:4px 0">${siteAssets.length} asset(s) · ${siteStaff.length} staff</div>
-          ${siteAssets.map((a) => `<div style="padding:1px 0">• ${a.code} — ${a.make} ${a.model}</div>`).join('')}
-          ${siteStaff.map((p) => `<div style="padding:1px 0;color:#555">· ${p.name} (${p.role})</div>`).join('')}
-        </div>`,
+      // Ring out the assets + staff around the site so they're individually visible.
+      const ring = [
+        ...siteAssets.map((a) => ({ kind: 'asset' as const, a })),
+        ...siteStaff.map((p) => ({ kind: 'staff' as const, p })),
+      ];
+      const R = 0.0055; // ~600m
+      ring.forEach((item, i) => {
+        const ang = (2 * Math.PI * i) / Math.max(ring.length, 1);
+        const pos = { lat: site.location!.lat + R * Math.cos(ang), lng: site.location!.lng + R * Math.sin(ang) };
+        if (item.kind === 'asset') {
+          const m = new gmaps.Marker({ position: pos, map, title: item.a.code, icon: dot(c.asset, 6), zIndex: 20 });
+          openInfo(m, `<strong>${item.a.code}</strong> — ${item.a.make} ${item.a.model}
+            <div style="color:${c.infoSub};margin-top:2px">${item.a.type} · ${item.a.operationalStatus}</div>
+            <div style="color:${c.asset};font-size:10px;margin-top:2px">${site.name}</div>`);
+        } else {
+          const p = item.p;
+          const onAsset = p.assignedAssetId ? assetById.get(p.assignedAssetId) : undefined;
+          const type = p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role;
+          const m = new gmaps.Marker({
+            position: pos, map, title: p.name, zIndex: 20,
+            icon: { ...dot(c.staff, 5.5), path: gmaps.SymbolPath.BACKWARD_CLOSED_ARROW, scale: 4 },
+          });
+          openInfo(m, `<strong>${p.name}</strong>
+            <div style="color:${c.infoSub};margin-top:2px">${type}</div>
+            ${onAsset ? `<div style="color:${c.staff};font-size:10px;margin-top:2px">on ${onAsset.code} · ${site.name}</div>` : `<div style="color:${c.infoSub};font-size:10px;margin-top:2px">${site.name}</div>`}`);
+        }
       });
-      marker.addListener('click', () => info.open(map, marker));
     }
-  }, [ready, sites, assets, staff]);
+  }, [ready, sites, assets, staff, dark]);
 
   if (!MAPS_KEY) {
     return (

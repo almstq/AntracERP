@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, UserCog, Pencil, MapPin, User } from 'lucide-react';
-import { useStaffList, useSiteList } from '../../../lib/hooks/useWorkflowData';
-import { updateStaff, assignStaffSite } from '../../../lib/services/registry';
+import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
+import { updateStaff, assignStaffSite, assignStaffAsset } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { Input } from '../../../components/shared/Input';
@@ -20,19 +20,24 @@ export function StaffDetail() {
   const { id } = useParams();
   const { data: staff, loading, refresh } = useStaffList();
   const { data: sites } = useSiteList();
+  const { data: assets } = useAssetList();
   const { toast } = useToast();
 
   const person = staff.find((p) => p.id === id);
   const siteName = (sid: string | undefined) => (sid ? sites.find((s) => s.id === sid)?.name ?? sid : 'Unassigned');
+  const assetLabelOf = (aid: string | undefined) => {
+    const a = aid ? assets.find((x) => x.id === aid) : undefined;
+    return a ? `${a.code} — ${a.make} ${a.model}` : '—';
+  };
 
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', role: '', staffType: 'operator' as StaffType, designation: '', siteId: '' });
+  const [form, setForm] = useState({ name: '', role: '', staffType: 'operator' as StaffType, designation: '', siteId: '', assignedAssetId: '' });
   const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   function startEdit() {
     if (!person) return;
-    setForm({ name: person.name, role: person.role, staffType: person.staffType ?? 'operator', designation: person.designation ?? '', siteId: person.siteId ?? '' });
+    setForm({ name: person.name, role: person.role, staffType: person.staffType ?? 'operator', designation: person.designation ?? '', siteId: person.siteId ?? '', assignedAssetId: person.assignedAssetId ?? '' });
     setEditing(true);
   }
   async function save() {
@@ -41,6 +46,7 @@ export function StaffDetail() {
     try {
       await updateStaff(person.id, { name: form.name, role: form.role, staffType: form.staffType, designation: form.designation });
       if (form.siteId !== (person.siteId ?? '')) await assignStaffSite(person.id, form.siteId);
+      if (form.assignedAssetId !== (person.assignedAssetId ?? '')) await assignStaffAsset(person.id, form.assignedAssetId || null);
       toast('success', 'Staff updated');
       setEditing(false);
       refresh();
@@ -98,6 +104,12 @@ export function StaffDetail() {
                         {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </InputSelect>
                     </div>
+                    <div style={{ gridColumn: '1 / -1' }}><div className="k">Assigned Asset (location follows the asset’s site)</div>
+                      <InputSelect value={form.assignedAssetId} onChange={(e) => setF('assignedAssetId', e.target.value)}>
+                        <option value="">— None —</option>
+                        {assets.map((a) => <option key={a.id} value={a.id}>{a.code} — {a.make} {a.model}</option>)}
+                      </InputSelect>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button variant="primary" size="sm" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
@@ -110,7 +122,8 @@ export function StaffDetail() {
                   <div><div className="k">Staff Type</div><div className="v">{person.staffType ? STAFF_TYPE_LABEL[person.staffType] : '—'}</div></div>
                   <div><div className="k">System Role</div><div className="v">{ROLE_LABELS[person.role] ?? person.role}</div></div>
                   <div><div className="k">Designation</div><div className="v">{person.designation || '—'}</div></div>
-                  <div><div className="k">Assigned Site</div><div className="v">{siteName(person.siteId)}</div></div>
+                  <div><div className="k">Assigned Site</div><div className="v">{siteName(person.assignedAssetId ? assets.find((a) => a.id === person.assignedAssetId)?.currentSiteId : person.siteId)}</div></div>
+                  <div><div className="k">Assigned Asset</div><div className="v">{assetLabelOf(person.assignedAssetId)}</div></div>
                   <div><div className="k">Status</div><div className="v" style={{ textTransform: 'capitalize' }}>{person.status}</div></div>
                 </div>
               )}

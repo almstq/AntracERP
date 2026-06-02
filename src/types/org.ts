@@ -75,6 +75,7 @@ export interface Staff {
   orgId: string;
   sbuId: string;
   siteId?: string;
+  assignedAssetId?: string;  // staff posted to an asset; map location derives from the asset's site
   userId?: string;
   status: 'active' | 'inactive';
   documents: { name: string; url: string; uploadedAt?: Date }[];

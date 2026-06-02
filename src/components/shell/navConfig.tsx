@@ -57,7 +57,7 @@ export const WLI_NAV: ModuleNav = {
         { to: '/wli/assets', label: 'Asset Register', icon: Truck },
         { to: '/wli/staff', label: 'Staff Register', icon: UserCog },
         { to: '/wli/suppliers', label: 'Supplier Register', icon: Store },
-        { to: '/wli/map', label: 'Fleet Map', icon: MapIcon },
+        { to: '/wli/map', label: 'Map', icon: MapIcon },
       ],
     },
   ],
