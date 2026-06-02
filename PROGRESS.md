@@ -140,9 +140,10 @@ PDF + Gemini stubbed for now · one shared declarative engine for both workflows
 | **Inventory/Warehouse** | Module 6: Store register, Item Catalog, Stock-by-Store, Movements ledger, Transfers (A–F), CollectItemsPanel, RECEIVE_INTO_INVENTORY, TRIGGER_DELIVERY | ✅ Done | `827b651` |
 | **PROOF CHAIN** | Upload attribution (name+timestamp), SHA-256 (SubtleCrypto), weekly snapshot Cloud Function (pdfkit), Email-to-Vault plan, UI_SPACING_CONTRACT | ✅ Done | `6b98e0e` |
 | **Spacing contract pass** | Retroactive UI_SPACING_CONTRACT compliance — page edges, card gaps, card inner padding, sidebar chrome | ✅ Done | `b97161b`, `aded6fd` |
-| **Helix Shell + Command Center** | Floating-card shell (icon rail · sidebar · topbar · ⌘K) + Command Center rebuilt on real data (metric strip, map+AI hero, fleet readiness, weather). From Claude Design handoff, Helix direction. `docs/HELIX_SHELL.md` | ✅ Done & verified | `42e42f6` |
-| **Tickets list + detail (Helix)** | Redesign table + timeline/action views per handoff | 🔲 Next | — |
-| **Restyle remaining pages** | Procurement / CRM / Warehouse / Registers → Helix system | 🔲 Planned | — |
+| **Helix Shell + Command Center** | Floating-card shell (icon rail · sidebar · topbar · ⌘K) + Command Center rebuilt on real data. From Claude Design handoff, Helix direction. `docs/HELIX_SHELL.md` | ✅ Done & verified | `42e42f6` |
+| **Operations Helix (lists + detail)** | Tickets/PR/PO list pages (summary chips + filter tables) + detail forms (dhead, dcards, timeline, payment chain). Browser-verified | ✅ Done | `1677cc9`, `v0.19.2`, `v0.19.3` |
+| **Helix everywhere (token bridge + reset fix)** | Remapped old `--color-*` tokens → Helix palette; **removed unlayered `*{padding:0;margin:0}` reset that was nuking all Tailwind spacing** (root cause of recurring 'cramped' bugs). All ~40 legacy pages now Helix colours + correct spacing, dark+light | ✅ Done & verified | `v0.20.0` |
+| **Bespoke redesigns (remaining)** | Richer Helix tables/metric-strips for CRM/Warehouse/Registers list pages; restyle shared workflow component internals | 🔲 Optional next | — |
 | **Mobile Responsive** | Inner pages tables → cards (shell already responsive) | 🔲 Planned | — |
 
 ### Cross-cutting backlog
