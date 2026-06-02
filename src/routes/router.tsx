@@ -12,6 +12,8 @@ import { NewTicket } from '../pages/wli/tickets/NewTicket';
 import { LocationRegister } from '../pages/wli/registers/LocationRegister';
 import { AssetRegister } from '../pages/wli/registers/AssetRegister';
 import { AssetDetail } from '../pages/wli/registers/AssetDetail';
+import { StaffDetail } from '../pages/wli/registers/StaffDetail';
+import { SupplierDetail } from '../pages/wli/registers/SupplierDetail';
 import { StaffRegister } from '../pages/wli/registers/StaffRegister';
 import { FleetMap } from '../pages/wli/registers/FleetMap';
 import { SupplierRegister } from '../pages/wli/registers/SupplierRegister';
@@ -82,7 +84,9 @@ export const router = createBrowserRouter([
           { path: 'assets', element: <AssetRegister /> },
           { path: 'assets/:id', element: <AssetDetail /> },
           { path: 'staff', element: <StaffRegister /> },
+          { path: 'staff/:id', element: <StaffDetail /> },
           { path: 'suppliers', element: <SupplierRegister /> },
+          { path: 'suppliers/:id', element: <SupplierDetail /> },
           { path: 'map', element: <FleetMap /> },
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },

@@ -21,6 +21,21 @@ export interface Asset {
   createdAt?: Date;
 }
 
+/** The three main asset categories, in display order. */
+export const ASSET_CLASSES: AssetClass[] = ['vessel', 'vehicle', 'equipment'];
+
+export const ASSET_CLASS_LABEL: Record<AssetClass, string> = {
+  vessel: 'Vessel',
+  vehicle: 'Vehicle',
+  equipment: 'Support Equipment',
+};
+
+export const ASSET_CLASS_PLURAL: Record<AssetClass, string> = {
+  vessel: 'Vessels',
+  vehicle: 'Vehicles',
+  equipment: 'Support Equipment',
+};
+
 /** Display label, e.g. "WL-HV-0002 — VOLVO A40G (Hauler Dump Truck)". */
 export function assetLabel(a: Pick<Asset, 'code' | 'make' | 'model' | 'type'>): string {
   return `${a.code} — ${a.make} ${a.model} (${a.type})`;

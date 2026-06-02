@@ -8,10 +8,11 @@ import { Truck, Ship, Wrench, Plus } from 'lucide-react';
 import { useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createAsset, assignAssetLocation } from '../../../lib/services/registry';
 import type { Asset, AssetClass } from '../../../types/asset';
+import { ASSET_CLASSES, ASSET_CLASS_LABEL, ASSET_CLASS_PLURAL } from '../../../types/asset';
 import { PageContainer } from '../../../components/shared/PageContainer';
 import { useToast } from '../../../lib/context/ToastContext';
 
-const CLASSES: AssetClass[] = ['vehicle', 'vessel', 'equipment'];
+const CLASSES = ASSET_CLASSES;
 const STATUSES: Asset['operationalStatus'][] = ['operational', 'down', 'maintenance', 'idle'];
 
 function ClassIcon({ c }: { c: AssetClass }) {
@@ -71,7 +72,7 @@ export function AssetRegister() {
             <Input placeholder="Model" value={form.model} onChange={(e) => set('model', e.target.value)} />
             <Input placeholder="Type" value={form.type} onChange={(e) => set('type', e.target.value)} />
             <InputSelect value={form.assetClass} onChange={(e) => set('assetClass', e.target.value)}>
-              {CLASSES.map((c) => <option key={c} value={c}>{c}</option>)}
+              {CLASSES.map((c) => <option key={c} value={c}>{ASSET_CLASS_LABEL[c]}</option>)}
             </InputSelect>
             <InputSelect value={form.currentSiteId} onChange={(e) => set('currentSiteId', e.target.value)}>
               <option value="">Location…</option>
@@ -86,30 +87,45 @@ export function AssetRegister() {
         </Card>
       )}
 
-      <Card>
-        <div className="space-y-1">
-          {assets.map((a) => (
-            <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
-              <Link to={`/wli/assets/${a.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
-                <ClassIcon c={a.assetClass} />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{a.code} — {a.make} {a.model}</p>
-                  <p className="text-[10px] text-text-muted">{a.type} · {a.operationalStatus}</p>
+      <div className="space-y-6">
+        {CLASSES.map((cls) => {
+          const inClass = assets.filter((a) => a.assetClass === cls);
+          if (inClass.length === 0) return null;
+          return (
+            <div key={cls}>
+              <div className="flex items-center gap-2 mb-2 px-1">
+                <ClassIcon c={cls} />
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">{ASSET_CLASS_PLURAL[cls]}</h2>
+                <span className="text-[10px] text-text-muted">· {inClass.length}</span>
+              </div>
+              <Card>
+                <div className="space-y-1">
+                  {inClass.map((a) => (
+                    <div key={a.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
+                      <Link to={`/wli/assets/${a.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
+                        <ClassIcon c={a.assetClass} />
+                        <div className="min-w-0">
+                          <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{a.code} — {a.make} {a.model}</p>
+                          <p className="text-[10px] text-text-muted">{a.type} · {a.operationalStatus}</p>
+                        </div>
+                      </Link>
+                      <select
+                        className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
+                        value={a.currentSiteId}
+                        onChange={(e) => reassign(a.id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        title="Assign location"
+                      >
+                        {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                  ))}
                 </div>
-              </Link>
-              <select
-                className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
-                value={a.currentSiteId}
-                onChange={(e) => reassign(a.id, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                title="Assign location"
-              >
-                {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              </Card>
             </div>
-          ))}
-        </div>
-      </Card>
+          );
+        })}
+      </div>
     </PageContainer>
   );
 }

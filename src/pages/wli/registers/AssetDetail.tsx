@@ -1,16 +1,24 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
-  Gauge, type LucideIcon,
+  Gauge, Pencil, type LucideIcon,
 } from 'lucide-react';
 import { useAssetList, useSiteList, useTicketList } from '../../../lib/hooks/useWorkflowData';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
+import { updateAsset } from '../../../lib/services/registry';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
-import type { AssetClass } from '../../../types/asset';
+import type { Asset, AssetClass } from '../../../types/asset';
+import { ASSET_CLASSES, ASSET_CLASS_LABEL } from '../../../types/asset';
+import { Input } from '../../../components/shared/Input';
+import { InputSelect } from '../../../components/shared/InputSelect';
+import { Button } from '../../../components/ui/Button';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+import { useToast } from '../../../lib/context/ToastContext';
 
 const CLASS_ICON: Record<AssetClass, LucideIcon> = { vessel: Ship, vehicle: Truck, equipment: Wrench };
+const OP_STATUSES: Asset['operationalStatus'][] = ['operational', 'idle', 'maintenance', 'down'];
 
 const OP_BADGE: Record<string, string> = {
   operational: 'b-pos', idle: 'b-info', maintenance: 'b-warn', down: 'b-danger',
@@ -41,13 +49,44 @@ function fmtDate(d: Date | string | undefined): string {
 
 export function AssetDetail() {
   const { id } = useParams();
-  const { data: assets, loading } = useAssetList();
+  const { data: assets, loading, refresh } = useAssetList();
   const { data: sites } = useSiteList();
   const { data: tickets } = useTicketList();
   const { data: workOrders } = useWorkOrderList();
+  const { toast } = useToast();
 
   const asset = assets.find((a) => a.id === id);
   const siteName = (sid: string | undefined) => (sid ? sites.find((s) => s.id === sid)?.name ?? sid : '—');
+
+  const [editing, setEditing] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [form, setForm] = useState({
+    make: '', model: '', type: '', assetClass: 'equipment' as AssetClass,
+    operationalStatus: 'operational' as Asset['operationalStatus'], currentSiteId: '',
+  });
+  const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  function startEdit() {
+    if (!asset) return;
+    setForm({
+      make: asset.make ?? '', model: asset.model ?? '', type: asset.type ?? '',
+      assetClass: asset.assetClass, operationalStatus: asset.operationalStatus,
+      currentSiteId: asset.currentSiteId ?? '',
+    });
+    setEditing(true);
+  }
+  async function save() {
+    if (!asset) return;
+    setBusy(true);
+    try {
+      await updateAsset(asset.id, { ...form });
+      toast('success', 'Asset updated');
+      setEditing(false);
+      refresh();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Update failed');
+    } finally { setBusy(false); }
+  }
 
   if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
   if (!asset) return <div className="page"><p className="empty-note">Asset not found.</p></div>;
@@ -76,7 +115,7 @@ export function AssetDetail() {
           <span className="eyebrow">{asset.code}</span>
           <h1 className="dtitle">{asset.make} {asset.model}</h1>
           <div className="dhead-badges">
-            <span className="badge b-info"><Icon size={11} /> {asset.type}</span>
+            <span className="badge b-info"><Icon size={11} /> {ASSET_CLASS_LABEL[asset.assetClass]}</span>
             <span className={`badge ${OP_BADGE[asset.operationalStatus] ?? 'b-muted'}`}>
               <span className="bdot" />{asset.operationalStatus}
             </span>
@@ -84,6 +123,9 @@ export function AssetDetail() {
               <span className="bdot" />{COMM_LABEL[(asset.commercialStatus || 'available')] ?? (asset.commercialStatus || 'available')}
             </span>
           </div>
+        </div>
+        <div className="dhead-actions">
+          {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
         </div>
       </div>
 
@@ -93,14 +135,44 @@ export function AssetDetail() {
           <div className="dcard">
             <div className="dcard-h"><h3><Gauge /> Specifications</h3></div>
             <div className="dcard-b">
-              <div className="kv">
-                <div><div className="k">Code</div><div className="v"><span className="mono">{asset.code}</span></div></div>
-                <div><div className="k">Class</div><div className="v" style={{ textTransform: 'capitalize' }}>{asset.assetClass}</div></div>
-                <div><div className="k">Make</div><div className="v">{asset.make || '—'}</div></div>
-                <div><div className="k">Model</div><div className="v">{asset.model || '—'}</div></div>
-                <div><div className="k">Type</div><div className="v">{asset.type || '—'}</div></div>
-                <div><div className="k">Current Site</div><div className="v">{siteName(asset.currentSiteId)}</div></div>
-              </div>
+              {editing ? (
+                <div style={{ display: 'grid', gap: 12 }}>
+                  <div className="kv">
+                    <div><div className="k">Make</div><Input value={form.make} onChange={(e) => setF('make', e.target.value)} placeholder="Make" /></div>
+                    <div><div className="k">Model</div><Input value={form.model} onChange={(e) => setF('model', e.target.value)} placeholder="Model" /></div>
+                    <div><div className="k">Type</div><Input value={form.type} onChange={(e) => setF('type', e.target.value)} placeholder="e.g. Generator" /></div>
+                    <div><div className="k">Category</div>
+                      <InputSelect value={form.assetClass} onChange={(e) => setF('assetClass', e.target.value)}>
+                        {ASSET_CLASSES.map((c) => <option key={c} value={c}>{ASSET_CLASS_LABEL[c]}</option>)}
+                      </InputSelect>
+                    </div>
+                    <div><div className="k">Operational</div>
+                      <InputSelect value={form.operationalStatus} onChange={(e) => setF('operationalStatus', e.target.value)}>
+                        {OP_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
+                      </InputSelect>
+                    </div>
+                    <div><div className="k">Current Site</div>
+                      <InputSelect value={form.currentSiteId} onChange={(e) => setF('currentSiteId', e.target.value)}>
+                        <option value="">— Site —</option>
+                        {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </InputSelect>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button variant="primary" size="sm" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setEditing(false)}>Cancel</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="kv">
+                  <div><div className="k">Code</div><div className="v"><span className="mono">{asset.code}</span></div></div>
+                  <div><div className="k">Category</div><div className="v">{ASSET_CLASS_LABEL[asset.assetClass]}</div></div>
+                  <div><div className="k">Make</div><div className="v">{asset.make || '—'}</div></div>
+                  <div><div className="k">Model</div><div className="v">{asset.model || '—'}</div></div>
+                  <div><div className="k">Type</div><div className="v">{asset.type || '—'}</div></div>
+                  <div><div className="k">Current Site</div><div className="v">{siteName(asset.currentSiteId)}</div></div>
+                </div>
+              )}
             </div>
           </div>
 

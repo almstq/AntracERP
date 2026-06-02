@@ -103,3 +103,10 @@ export async function createSupplier(input: SupplierInput): Promise<string> {
   await createWithId('suppliers', id, { ...input, active: true });
   return id;
 }
+
+export async function updateSupplier(
+  id: string,
+  patch: Partial<SupplierInput & { contactPhone: string; active: boolean }>,
+): Promise<void> {
+  await updateFields('suppliers', id, patch as Record<string, unknown>);
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
@@ -87,17 +88,18 @@ export function StaffRegister() {
         <div className="space-y-1">
           {staff.map((p) => (
             <div key={p.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface gap-3">
-              <div className="flex items-center gap-3 min-w-0">
+              <Link to={`/wli/staff/${p.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
                 <UserCog size={16} className="text-text-muted" />
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">{p.name}</p>
+                  <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{p.name}</p>
                   <p className="text-[10px] text-text-muted">{p.displayId} · {ROLE_LABELS[p.role] ?? p.role} · {p.designation}</p>
                 </div>
-              </div>
+              </Link>
               <select
                 className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
                 value={p.siteId ?? ''}
                 onChange={(e) => reassign(p.id, e.target.value)}
+                onClick={(e) => e.stopPropagation()}
                 title="Assign site"
               >
                 <option value="">Unassigned</option>
