@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  MapPin, Ship, Truck, Wrench, AlertTriangle, Wind, Eye, TrendingDown,
+  MapPin, Ship, Truck, Wrench, AlertTriangle, Wind, Eye, TrendingDown, Users,
   type LucideIcon,
 } from 'lucide-react';
 import type { Site, Staff } from '../../types/org';
@@ -58,7 +58,20 @@ function SiteCard({
   const siteAssets = allAssets.filter((a) => a.currentSiteId === site.id);
   const assetIdSet = new Set(siteAssets.map((a) => a.id));
 
-  // Staff directly assigned to site OR assigned to an asset currently at this site
+  // Crew posted to a specific asset at this site, grouped by asset id.
+  const crewByAsset = new Map<string, (Staff & { id: string })[]>();
+  for (const p of allStaff) {
+    if (p.assignedAssetId && assetIdSet.has(p.assignedAssetId)) {
+      const list = crewByAsset.get(p.assignedAssetId) ?? [];
+      list.push(p);
+      crewByAsset.set(p.assignedAssetId, list);
+    }
+  }
+  // Crew posted directly to the site (not tied to a specific asset here).
+  const directCrew = allStaff.filter(
+    (p) => p.siteId === site.id && !(p.assignedAssetId && assetIdSet.has(p.assignedAssetId)),
+  );
+  // Total people effectively at this site.
   const siteStaff = allStaff.filter(
     (p) => p.siteId === site.id || (p.assignedAssetId && assetIdSet.has(p.assignedAssetId)),
   );
@@ -93,6 +106,9 @@ function SiteCard({
               <MapPin size={10} /> {SITE_TYPE_LABEL[site.type] ?? site.type}
             </span>
             <h3 style={{ marginTop: 3, fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{site.name}</h3>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+              {siteAssets.length} asset{siteAssets.length !== 1 ? 's' : ''} · {siteStaff.length} crew
+            </div>
           </div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end', flexShrink: 0 }}>
             {critical > 0 && (
@@ -141,86 +157,87 @@ function SiteCard({
           {siteAssets.length === 0 ? (
             <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 6 }}>No assets deployed.</p>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 3, marginTop: 7 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 7 }}>
               {siteAssets.map((a) => {
                 const Icon = CLASS_ICON[a.assetClass] ?? Wrench;
                 const isDown = a.operationalStatus === 'down' || a.operationalStatus === 'maintenance';
+                const assetCrew = crewByAsset.get(a.id) ?? [];
                 return (
-                  <Link
+                  <div
                     key={a.id}
-                    to={`/wli/assets/${a.id}`}
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px',
-                      borderRadius: 6, textDecoration: 'none', transition: 'background 0.1s',
-                      background: isDown
-                        ? 'color-mix(in srgb, var(--danger) 6%, transparent)'
-                        : 'transparent',
+                      borderRadius: 6,
+                      background: isDown ? 'color-mix(in srgb, var(--danger) 6%, transparent)' : 'transparent',
                       border: isDown
                         ? '1px solid color-mix(in srgb, var(--danger) 18%, transparent)'
                         : '1px solid transparent',
                     }}
-                    onMouseEnter={(e) => { if (!isDown) (e.currentTarget as HTMLElement).style.background = 'var(--surface-1)'; }}
-                    onMouseLeave={(e) => { if (!isDown) (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
                   >
-                    <Icon
-                      size={13}
-                      style={{ color: isDown ? 'var(--danger)' : 'var(--text-muted)', flexShrink: 0 }}
-                    />
-                    <span style={{
-                      fontFamily: 'var(--font-mono)', fontSize: 11,
-                      color: 'var(--text-muted)', flexShrink: 0, minWidth: 92,
-                    }}>
-                      {a.code}
-                    </span>
-                    <span style={{
-                      fontSize: 12, color: 'var(--text-primary)',
-                      flex: 1, minWidth: 0, overflow: 'hidden',
-                      textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                    }}>
-                      {a.make} {a.model}
-                    </span>
-                    {a.condition && a.condition !== 'Good' && a.condition !== 'Unknown' && (
-                      <span className="badge b-warn" style={{ flexShrink: 0, fontSize: 10 }}>
-                        {a.condition}
-                      </span>
-                    )}
-                    <span
-                      className={`badge ${OP_BADGE[a.operationalStatus] ?? 'b-muted'}`}
-                      style={{ flexShrink: 0, fontSize: 10 }}
+                    {/* Asset row */}
+                    <Link
+                      to={`/wli/assets/${a.id}`}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px',
+                        textDecoration: 'none',
+                      }}
                     >
-                      <span className="bdot" />
-                      {a.operationalStatus}
-                    </span>
-                  </Link>
+                      <Icon size={13} style={{ color: isDown ? 'var(--danger)' : 'var(--text-muted)', flexShrink: 0 }} />
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--text-muted)', flexShrink: 0, minWidth: 92 }}>
+                        {a.code}
+                      </span>
+                      <span style={{ fontSize: 12, color: 'var(--text-primary)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {a.make} {a.model}
+                      </span>
+                      {a.condition && a.condition !== 'Good' && a.condition !== 'Unknown' && (
+                        <span className="badge b-warn" style={{ flexShrink: 0, fontSize: 10 }}>{a.condition}</span>
+                      )}
+                      <span className={`badge ${OP_BADGE[a.operationalStatus] ?? 'b-muted'}`} style={{ flexShrink: 0, fontSize: 10 }}>
+                        <span className="bdot" />{a.operationalStatus}
+                      </span>
+                    </Link>
+
+                    {/* Nested crew assigned to this asset */}
+                    <div style={{
+                      paddingLeft: 29, paddingRight: 8, paddingBottom: assetCrew.length ? 5 : 4,
+                      display: 'flex', flexWrap: 'wrap', gap: '3px 10px', alignItems: 'center',
+                    }}>
+                      {assetCrew.length === 0 ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--warning)' }}>
+                          <AlertTriangle size={10} /> no crew assigned
+                        </span>
+                      ) : assetCrew.map((p) => (
+                        <Link key={p.id} to={`/wli/staff/${p.id}`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                          <Users size={10} style={{ color: 'var(--text-muted)' }} />
+                          <span style={{ fontSize: 11.5, color: 'var(--text-secondary)' }}>{p.name}</span>
+                          {p.staffType && (
+                            <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>· {STAFF_TYPE_LABEL[p.staffType]}</span>
+                          )}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
 
-        {/* ── Crew ── */}
-        <div style={{
-          paddingTop: 12,
-          borderTop: '1px solid var(--border-soft)',
-          marginBottom: weather ? 12 : 0,
-        }}>
-          <span style={{
-            fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
-            letterSpacing: '0.06em', color: 'var(--text-muted)',
+        {/* ── Other crew on site (not posted to a specific asset) ── */}
+        {directCrew.length > 0 && (
+          <div style={{
+            paddingTop: 12,
+            borderTop: '1px solid var(--border-soft)',
+            marginBottom: weather ? 12 : 0,
           }}>
-            Crew · {siteStaff.length}
-          </span>
-
-          {siteStaff.length === 0 ? (
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>No staff assigned.</p>
-          ) : (
+            <span style={{
+              fontSize: 10, fontWeight: 600, textTransform: 'uppercase',
+              letterSpacing: '0.06em', color: 'var(--text-muted)',
+            }}>
+              Other crew on site · {directCrew.length}
+            </span>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px 12px', marginTop: 6 }}>
-              {siteStaff.map((p) => (
-                <Link
-                  key={p.id}
-                  to={`/wli/staff/${p.id}`}
-                  style={{ textDecoration: 'none' }}
-                >
+              {directCrew.map((p) => (
+                <Link key={p.id} to={`/wli/staff/${p.id}`} style={{ textDecoration: 'none' }}>
                   <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{p.name}</span>
                   {p.staffType && (
                     <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 3 }}>
@@ -230,8 +247,8 @@ function SiteCard({
                 </Link>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* ── Weather footer (optional) ── */}
         {weather && (

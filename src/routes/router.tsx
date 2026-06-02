@@ -10,6 +10,7 @@ import { TicketList } from '../pages/wli/tickets/TicketList';
 import { TicketDetail } from '../pages/wli/tickets/TicketDetail';
 import { NewTicket } from '../pages/wli/tickets/NewTicket';
 import { LocationRegister } from '../pages/wli/registers/LocationRegister';
+import { SiteDetail } from '../pages/wli/registers/SiteDetail';
 import { AssetRegister } from '../pages/wli/registers/AssetRegister';
 import { AssetDetail } from '../pages/wli/registers/AssetDetail';
 import { StaffDetail } from '../pages/wli/registers/StaffDetail';
@@ -81,6 +82,7 @@ export const router = createBrowserRouter([
           { path: 'tickets/new', element: <NewTicket /> },
           { path: 'tickets/:id', element: <TicketDetail /> },
           { path: 'locations', element: <LocationRegister /> },
+          { path: 'locations/:id', element: <SiteDetail /> },
           { path: 'assets', element: <AssetRegister /> },
           { path: 'assets/:id', element: <AssetDetail /> },
           { path: 'staff', element: <StaffRegister /> },

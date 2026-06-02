@@ -17,6 +17,7 @@ export interface LocationInput {
   type: Site['type'];
   lat?: number;
   lng?: number;
+  status?: Site['status'];
 }
 
 export async function createLocation(input: LocationInput): Promise<string> {
@@ -34,6 +35,7 @@ export async function updateLocation(id: string, patch: Partial<LocationInput>):
   if (patch.name != null) data.name = patch.name;
   if (patch.type != null) data.type = patch.type;
   if (patch.lat != null && patch.lng != null) data.location = { lat: patch.lat, lng: patch.lng };
+  if (patch.status != null) data.status = patch.status;
   await updateFields('sites', id, data);
 }
 

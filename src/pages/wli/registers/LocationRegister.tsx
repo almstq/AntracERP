@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
-import { MapPin, Plus } from 'lucide-react';
+import { MapPin, Plus, ChevronRight } from 'lucide-react';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createLocation } from '../../../lib/services/registry';
 import type { Site } from '../../../types/org';
@@ -66,18 +67,21 @@ export function LocationRegister() {
       <Card>
         <div className="space-y-1">
           {sites.map((s) => (
-            <div key={s.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface">
+            <Link key={s.id} to={`/wli/locations/${s.id}`} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface group">
               <div className="flex items-center gap-3">
                 <MapPin size={16} className="text-text-muted" />
                 <div>
-                  <p className="text-xs font-medium text-text-primary">{s.name}</p>
+                  <p className="text-xs font-medium text-text-primary group-hover:text-blue">{s.name}</p>
                   <p className="text-[10px] text-text-muted">
                     {s.type} · {s.location ? `${s.location.lat.toFixed(4)}, ${s.location.lng.toFixed(4)}` : 'no coordinates'}
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{s.status}</span>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{s.status}</span>
+                <ChevronRight size={14} className="text-text-muted" />
+              </div>
+            </Link>
           ))}
         </div>
       </Card>

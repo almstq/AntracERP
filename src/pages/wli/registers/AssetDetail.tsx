@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
-  Gauge, Pencil, Radio, ExternalLink, FileText, PackageCheck, Trash2, type LucideIcon,
+  Gauge, Pencil, Radio, ExternalLink, FileText, PackageCheck, Trash2, Anchor,
+  Users, UserPlus, X, type LucideIcon,
 } from 'lucide-react';
 import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../../lib/hooks/useWorkflowData';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
-import { STAFF_TYPE_LABEL } from '../../../types/org';
-import { updateAsset, deleteAsset } from '../../../lib/services/registry';
+import { STAFF_TYPE_LABEL, type Staff } from '../../../types/org';
+import { updateAsset, deleteAsset, assignStaffAsset } from '../../../lib/services/registry';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
 import type { Asset, AssetClass } from '../../../types/asset';
@@ -52,6 +53,55 @@ function fmtDate(d: Date | string | undefined): string {
   return new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+/** One crew member row with a remove control (used in the asset crew manager). */
+function renderCrewRow(
+  p: Staff & { id: string },
+  canManage: boolean,
+  onRemove: (id: string) => void,
+) {
+  return (
+    <div key={p.id} className="linkrow" style={{ cursor: 'default' }}>
+      <Link to={`/wli/staff/${p.id}`} style={{ minWidth: 0, flex: 1, textDecoration: 'none' }}>
+        <div className="lr-id" style={{ fontFamily: 'var(--font-ui)' }}>{p.name}</div>
+        <div className="lr-sub">{p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role}{p.displayId ? ` · ${p.displayId}` : ''}</div>
+      </Link>
+      {canManage && (
+        <button className="btn btn-ghost" style={{ padding: 4 }} title="Remove from asset" onClick={() => onRemove(p.id)}>
+          <X size={14} />
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Dropdown that assigns the picked staff to the asset, then resets. */
+function CrewAdd({ label, options, onPick, disabled }: {
+  label: string;
+  options: (Staff & { id: string })[];
+  onPick: (id: string) => void;
+  disabled?: boolean;
+}) {
+  if (options.length === 0) return null;
+  return (
+    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <UserPlus size={13} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+      <select
+        className="w-full text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary"
+        value=""
+        disabled={disabled}
+        onChange={(e) => { if (e.target.value) onPick(e.target.value); }}
+      >
+        <option value="">{label}</option>
+        {options.map((p) => (
+          <option key={p.id} value={p.id}>
+            {p.name}{p.staffType ? ` (${STAFF_TYPE_LABEL[p.staffType]})` : ''}{p.assignedAssetId ? ' — reassign' : ''}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 export function AssetDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -59,7 +109,7 @@ export function AssetDetail() {
   const { data: sites } = useSiteList();
   const { data: tickets } = useTicketList();
   const { data: workOrders } = useWorkOrderList();
-  const { data: allStaff } = useStaffList();
+  const { data: allStaff, refresh: refreshStaff } = useStaffList();
   const { positions, meta } = useFollowMeFleet();
   const { toast } = useToast();
   const { effectiveRole } = useAuth();
@@ -127,6 +177,37 @@ export function AssetDetail() {
     } finally { setBusy(false); }
   }
 
+  async function addCrew(staffId: string) {
+    if (!staffId || !asset) return;
+    const p = allStaff.find((x) => x.id === staffId);
+    // Reassign warning if currently posted to a different asset
+    if (p?.assignedAssetId && p.assignedAssetId !== asset.id) {
+      const onAsset = assets.find((a) => a.id === p.assignedAssetId);
+      if (!window.confirm(`${p.name} is currently assigned to ${onAsset?.code ?? 'another asset'}.\n\nReassign them to ${asset.code}?`)) return;
+    }
+    setBusy(true);
+    try {
+      await assignStaffAsset(staffId, asset.id);
+      toast('success', `${p?.name ?? 'Staff'} assigned to ${asset.code}`);
+      refreshStaff();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setBusy(false); }
+  }
+
+  async function removeCrew(staffId: string) {
+    const p = allStaff.find((x) => x.id === staffId);
+    if (!window.confirm(`Remove ${p?.name} from ${asset!.code}?`)) return;
+    setBusy(true);
+    try {
+      await assignStaffAsset(staffId, null);
+      toast('success', `${p?.name ?? 'Staff'} unassigned`);
+      refreshStaff();
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Failed');
+    } finally { setBusy(false); }
+  }
+
   if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
   if (!asset) return <div className="page"><p className="empty-note">Asset not found.</p></div>;
 
@@ -147,6 +228,14 @@ export function AssetDetail() {
 
   // Crew — staff posted to this asset.
   const crew = allStaff.filter((p) => p.assignedAssetId === id);
+  const isVessel = asset.assetClass === 'vessel';
+  // For vessels, split into captain(s) vs deck crew by staffType.
+  const captains = crew.filter((p) => p.staffType === 'captain');
+  const deckCrew = crew.filter((p) => p.staffType !== 'captain');
+  // Staff available to add (not already on this asset).
+  const addableStaff = allStaff.filter((p) => p.assignedAssetId !== id);
+  const addableCaptains = addableStaff.filter((p) => p.staffType === 'captain');
+  const addableCrew = addableStaff.filter((p) => p.staffType !== 'captain');
 
   return (
     <div className="page">
@@ -316,7 +405,7 @@ export function AssetDetail() {
                   );
                 })() : (
                   <p className="empty-note" style={{ padding: 0 }}>
-                    No tracking ID yet. Click <b>Edit</b> and paste the vessel’s FollowMe ID (e.g. 18599) to show its live position.
+                    No tracking ID yet. Click <b>Edit</b> and paste the vessel's FollowMe ID (e.g. 18599) to show its live position.
                   </p>
                 )}
               </div>
@@ -414,19 +503,48 @@ export function AssetDetail() {
           </div>
 
           <div className="dcard">
-            <div className="dcard-h"><h3><Activity /> Assigned Crew</h3><span className="tc-sub">{crew.length}</span></div>
+            <div className="dcard-h">
+              <h3>{isVessel ? <Anchor /> : <Users />} {isVessel ? 'Vessel Crew' : 'Assigned Crew'}</h3>
+              <span className="tc-sub">{crew.length}</span>
+            </div>
             <div className="dcard-b">
-              {crew.length === 0
-                ? <p className="empty-note" style={{ padding: 0 }}>No staff posted to this asset.</p>
-                : crew.map((p) => (
-                  <Link className="linkrow" key={p.id} to={`/wli/staff/${p.id}`}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div className="lr-id" style={{ fontFamily: 'var(--font-ui)' }}>{p.name}</div>
-                      <div className="lr-sub">{p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role}</div>
-                    </div>
-                    <ChevronRight className="lr-chev" />
-                  </Link>
-                ))}
+              {isVessel ? (
+                <>
+                  {/* Captain */}
+                  <div style={{ marginBottom: 14 }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+                      Captain · {captains.length}
+                    </span>
+                    {captains.length === 0
+                      ? <p className="empty-note" style={{ padding: '4px 0 0' }}>No captain assigned.</p>
+                      : <div style={{ marginTop: 6 }}>{captains.map((p) => renderCrewRow(p, canManageAssets, removeCrew))}</div>}
+                    {canManageAssets && (
+                      <CrewAdd label="+ Assign captain…" options={addableCaptains} onPick={addCrew} disabled={busy} />
+                    )}
+                  </div>
+                  {/* Deck crew */}
+                  <div style={{ paddingTop: 12, borderTop: '1px solid var(--border-soft)' }}>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)' }}>
+                      Deck Crew · {deckCrew.length}
+                    </span>
+                    {deckCrew.length === 0
+                      ? <p className="empty-note" style={{ padding: '4px 0 0' }}>No deck crew assigned.</p>
+                      : <div style={{ marginTop: 6 }}>{deckCrew.map((p) => renderCrewRow(p, canManageAssets, removeCrew))}</div>}
+                    {canManageAssets && (
+                      <CrewAdd label="+ Add deck crew…" options={addableCrew} onPick={addCrew} disabled={busy} />
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  {crew.length === 0
+                    ? <p className="empty-note" style={{ padding: 0 }}>No staff posted to this asset.</p>
+                    : <div>{crew.map((p) => renderCrewRow(p, canManageAssets, removeCrew))}</div>}
+                  {canManageAssets && (
+                    <CrewAdd label="+ Assign operator / driver…" options={addableStaff} onPick={addCrew} disabled={busy} />
+                  )}
+                </>
+              )}
             </div>
           </div>
 
