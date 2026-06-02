@@ -6,7 +6,7 @@
  * to JS Dates so the rest of the app sees plain Date objects.
  */
 import {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc,
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc,
   query, where, orderBy, writeBatch, serverTimestamp, Timestamp,
   type WhereFilterOp, type WriteBatch, type Firestore,
 } from 'firebase/firestore';
@@ -103,3 +103,9 @@ export function batchAddTop(batch: WriteBatch, coll: string, data: Record<string
 }
 
 export { serverTimestamp };
+
+// ─── Delete ─────────────────────────────────────────────────────────────────
+
+export async function deleteDocument(coll: string, id: string): Promise<void> {
+  await deleteDoc(doc(db(), coll, id));
+}

@@ -2,7 +2,7 @@
  * Master-data registry services — GM-managed locations, assets, staff.
  * Thin wrappers over db.ts. IDs are slugified from a code/name for readability.
  */
-import { createWithId, updateFields } from '../firebase/db';
+import { createWithId, updateFields, deleteDocument } from '../firebase/db';
 import type { Site } from '../../types/org';
 import type { Asset } from '../../types/asset';
 
@@ -61,6 +61,10 @@ export async function updateAsset(id: string, patch: Partial<AssetInput>): Promi
   await updateFields('assets', id, clean);
 }
 
+export async function deleteAsset(id: string): Promise<void> {
+  await deleteDocument('assets', id);
+}
+
 /** GM assigns an asset to a location. */
 export async function assignAssetLocation(assetId: string, siteId: string): Promise<void> {
   await updateFields('assets', assetId, { currentSiteId: siteId });
@@ -88,6 +92,10 @@ export async function createStaff(input: StaffInput, displayId: string): Promise
 
 export async function updateStaff(id: string, patch: Partial<StaffInput>): Promise<void> {
   await updateFields('staff', id, patch as Record<string, unknown>);
+}
+
+export async function deleteStaff(id: string): Promise<void> {
+  await deleteDocument('staff', id);
 }
 
 /** GM assigns staff to a site. */

@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, UserCog, Pencil, MapPin, User, Briefcase, AlertTriangle } from 'lucide-react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { ArrowLeft, UserCog, Pencil, MapPin, User, Briefcase, AlertTriangle, Trash2 } from 'lucide-react';
 import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
-import { updateStaff, assignStaffSite, assignStaffAsset } from '../../../lib/services/registry';
+import { useAuth } from '../../../lib/hooks/useAuth';
+import { updateStaff, assignStaffSite, assignStaffAsset, deleteStaff } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
 import { Input } from '../../../components/shared/Input';
@@ -18,10 +19,13 @@ const ASSIGNABLE_ROLES = [
 
 export function StaffDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: staff, loading, refresh } = useStaffList();
   const { data: sites } = useSiteList();
   const { data: assets } = useAssetList();
   const { toast } = useToast();
+  const { effectiveRole } = useAuth();
+  const canManageStaff = effectiveRole === 'super_admin' || effectiveRole === 'gm';
 
   const person = staff.find((p) => p.id === id);
   const siteName = (sid: string | undefined) => (sid ? sites.find((s) => s.id === sid)?.name ?? sid : 'Unassigned');
@@ -34,6 +38,19 @@ export function StaffDetail() {
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({ name: '', role: '', staffType: 'operator' as StaffType, designation: '', siteId: '', assignedAssetId: '' });
   const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
+
+  async function handleDelete() {
+    if (!person) return;
+    const confirmed = window.confirm(`Delete "${person.name}" (${person.displayId})?\n\nThis cannot be undone.`);
+    if (!confirmed) return;
+    try {
+      await deleteStaff(person.id);
+      toast('success', `${person.name} removed from staff register.`);
+      navigate('/wli/staff');
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Delete failed');
+    }
+  }
 
   function startEdit() {
     if (!person) return;
@@ -75,6 +92,11 @@ export function StaffDetail() {
         </div>
         <div className="dhead-actions">
           {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
+          {!editing && canManageStaff && (
+            <button className="btn btn-ghost" onClick={handleDelete} style={{ color: 'var(--danger)' }}>
+              <Trash2 size={14} /> Delete
+            </button>
+          )}
         </div>
       </div>
 

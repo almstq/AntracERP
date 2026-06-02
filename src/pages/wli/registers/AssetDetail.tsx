@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft, Truck, Ship, Wrench, MapPin, Briefcase, Activity, ChevronRight,
-  Gauge, Pencil, Radio, ExternalLink, FileText, PackageCheck, type LucideIcon,
+  Gauge, Pencil, Radio, ExternalLink, FileText, PackageCheck, Trash2, type LucideIcon,
 } from 'lucide-react';
 import { useAssetList, useSiteList, useTicketList, useStaffList } from '../../../lib/hooks/useWorkflowData';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useWorkOrderList } from '../../../lib/hooks/useCrmData';
 import { STAFF_TYPE_LABEL } from '../../../types/org';
-import { updateAsset } from '../../../lib/services/registry';
+import { updateAsset, deleteAsset } from '../../../lib/services/registry';
 import { ticketWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus } from '../../../types/workflow-entities';
 import type { Asset, AssetClass } from '../../../types/asset';
@@ -54,6 +54,7 @@ function fmtDate(d: Date | string | undefined): string {
 
 export function AssetDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { data: assets, loading, refresh } = useAssetList();
   const { data: sites } = useSiteList();
   const { data: tickets } = useTicketList();
@@ -86,6 +87,21 @@ export function AssetDetail() {
     });
     setEditing(true);
   }
+  async function handleDelete() {
+    if (!asset) return;
+    const confirmed = window.confirm(`Delete "${asset.code} — ${asset.make} ${asset.model}"?\n\nThis cannot be undone. Any tickets linked to this asset will remain but lose their asset reference.`);
+    if (!confirmed) return;
+    setBusy(true);
+    try {
+      await deleteAsset(asset.id);
+      toast('success', `${asset.code} deleted.`);
+      navigate('/wli/assets');
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Delete failed');
+      setBusy(false);
+    }
+  }
+
   async function markDelivered() {
     if (!asset) return;
     setBusy(true);
@@ -160,6 +176,11 @@ export function AssetDetail() {
             </button>
           )}
           {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
+          {!editing && canManageAssets && (
+            <button className="btn btn-ghost" onClick={handleDelete} disabled={busy} style={{ color: 'var(--danger)' }}>
+              <Trash2 size={14} /> Delete
+            </button>
+          )}
         </div>
       </div>
 
