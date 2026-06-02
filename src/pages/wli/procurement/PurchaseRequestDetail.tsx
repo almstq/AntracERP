@@ -9,7 +9,6 @@ import { Timeline } from '../../../components/workflow/Timeline';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { executeTransition } from '../../../lib/workflow/executor';
 import { purchaseRequestWorkflow as prWf } from '../../../lib/workflow/definitions';
-import { PageContainer } from '../../../components/shared/PageContainer';
 import { getAvailableTransitions } from '../../../lib/workflow/engine';
 import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
 import { isAiConfigured, generateText } from '../../../lib/services/ai';
@@ -149,20 +148,19 @@ export function PurchaseRequestDetail() {
   }
 
   return (
-    <PageContainer className="max-w-4xl space-y-4">
-      <div className="flex items-center gap-3">
-        <Link to="/wli/procurement/requests" aria-label="Back to purchase requests" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
-        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
-          <Link to="/wli/procurement/requests" className="hover:text-text-primary">Purchase Requests</Link>
-          <span>/</span>
-          <span className="text-text-secondary">{pr.displayId}</span>
-        </nav>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-text-primary">{pr.displayId}</h1>
-            <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{prWf.statusLabels[status]}</span>
+    <div className="page">
+      <Link to="/wli/procurement/requests" className="dback"><ArrowLeft /> Purchase Requests</Link>
+      <div className="dhead">
+        <div>
+          <span className="eyebrow">{pr.displayId}</span>
+          <h1 className="dtitle">Purchase Request</h1>
+          <div className="dhead-badges">
+            <span className={`badge ${status === 'closed' ? 'b-pos' : status === 'gm_quote_approved' || status === 'po_raised' ? 'b-accent' : 'b-info'}`}>
+              <span className="bdot" />{prWf.statusLabels[status]}
+            </span>
+            <Link className="tc-sub" to={`/wli/tickets/${pr.ticketId}`} style={{ color: 'var(--accent)' }}>Ticket {pr.ticketId}</Link>
+            <span className="tc-sub">{pr.urgency}</span>
           </div>
-          <p className="text-xs text-text-muted">Ticket <Link to={`/wli/tickets/${pr.ticketId}`} className="text-blue">{pr.ticketId}</Link> · {pr.urgency}</p>
         </div>
       </div>
 
@@ -418,6 +416,6 @@ export function PurchaseRequestDetail() {
           </Card>
         </div>
       </div>
-    </PageContainer>
+    </div>
   );
 }

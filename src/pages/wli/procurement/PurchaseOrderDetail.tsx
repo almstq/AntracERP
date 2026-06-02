@@ -1,108 +1,111 @@
 import { useParams, Link } from 'react-router-dom';
-import { Card } from '../../../components/ui/Card';
+import { ArrowLeft, Download, Check, Package, Banknote } from 'lucide-react';
 import { FileUpload } from '../../../components/shared/FileUpload';
-import { ArrowLeft, Download } from 'lucide-react';
-import { useEntity } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { CollectItemsPanel } from '../../../components/workflow/CollectItemsPanel';
 import { buildPoHtml, downloadHtml } from '../../../lib/services/rfq';
 import { computeTotals, formatMoney, type Currency } from '../../../lib/utils/money';
 import { purchaseOrderWorkflow as poWf } from '../../../lib/workflow/definitions';
+import { useEntity } from '../../../lib/hooks/useWorkflowData';
 import type { PurchaseOrder, POStatus } from '../../../types/workflow-entities';
-import { PageContainer } from '../../../components/shared/PageContainer';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
-// Pay-first order: full payment chain settles before goods are collected.
 const PAYMENT_CHAIN: POStatus[] = [
   'raised', 'supplier_confirmed', 'payment_request_sent',
   'antrac_finance_accepted', 'cfo_verified', 'director_approved',
   'payment_completed', 'wli_finance_confirmed', 'items_collected', 'po_closed',
 ];
 
+function poBadge(status: string): string {
+  if (status === 'po_closed' || status === 'items_collected' || status === 'wli_finance_confirmed') return 'b-pos';
+  if (status === 'payment_completed' || status === 'director_approved') return 'b-accent';
+  if (status === 'raised' || status === 'supplier_confirmed') return 'b-info';
+  return 'b-warn';
+}
+
 export function PurchaseOrderDetail() {
   const { id } = useParams();
   const { data: po, loading, refresh } = useEntity<PurchaseOrder>('purchaseOrders', id);
 
-  if (loading) return <LoadingSpinner text="Loading…" />;
-  if (!po) return <div className="p-6 text-xs text-text-muted">PO not found.</div>;
+  if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
+  if (!po) return <div className="page"><p className="empty-note">PO not found.</p></div>;
 
   const idx = PAYMENT_CHAIN.indexOf(po.status as POStatus);
   const totals = computeTotals(po.lineItems ?? []);
   const cur = (po.currency ?? 'MVR') as Currency;
 
   return (
-    <PageContainer className="max-w-4xl space-y-4">
-      <div className="flex items-center gap-3">
-        <Link to="/wli/procurement/orders" aria-label="Back to purchase orders" className="text-text-muted hover:text-text-primary"><ArrowLeft size={18} /></Link>
-        <nav className="flex items-center gap-1.5 text-[11px] text-text-muted">
-          <Link to="/wli/procurement/orders" className="hover:text-text-primary">Purchase Orders</Link>
-          <span>/</span>
-          <span className="text-text-secondary">{po.displayId}</span>
-        </nav>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold text-text-primary">{po.displayId}</h1>
-            <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{poWf.statusLabels[po.status as POStatus]}</span>
+    <div className="page">
+      <Link to="/wli/procurement/orders" className="dback"><ArrowLeft /> Purchase Orders</Link>
+
+      <div className="dhead">
+        <div>
+          <span className="eyebrow">{po.displayId}</span>
+          <h1 className="dtitle">{po.supplierName}</h1>
+          <div className="dhead-badges">
+            <span className={`badge ${poBadge(po.status)}`}><span className="bdot" />{poWf.statusLabels[po.status as POStatus]}</span>
+            <Link className="tc-sub" to={`/wli/procurement/requests/${po.purchaseRequestId}`} style={{ color: 'var(--accent)' }}>View source PR</Link>
           </div>
-          <p className="text-xs text-text-muted">
-            {po.supplierName} · PR <Link to={`/wli/procurement/requests/${po.purchaseRequestId}`} className="text-blue">view</Link>
-          </p>
+        </div>
+        <div className="dhead-actions">
+          <button className="btn btn-ghost" onClick={() => downloadHtml(`${po.displayId}.html`, buildPoHtml(po))}>
+            <Download /> Download PO
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-4">
-          <Card header={
-            <div className="flex items-center justify-between w-full">
-              <span className="text-sm font-medium">Order</span>
-              <button onClick={() => downloadHtml(`${po.displayId}.html`, buildPoHtml(po))}
-                className="flex items-center gap-1 text-[11px] text-blue hover:underline">
-                <Download size={12} /> Download PO
-              </button>
-            </div>
-          }>
-            <div className="space-y-2 text-xs">
+      <div className="detail">
+        <div className="dcol">
+          <div className="dcard">
+            <div className="dcard-h"><h3><Package /> Order</h3><span className="tc-sub">{po.currency} {po.total?.toLocaleString()}</span></div>
+            <div className="dcard-b">
               {po.lineItems?.map((li, i) => (
-                <div key={i} className="flex justify-between p-2 rounded-lg bg-bg-surface">
-                  <span className="text-text-primary">{li.description}</span>
-                  <span className="text-text-muted">×{li.quantity} {li.uom} @ {li.unitPrice} = {(li.quantity * li.unitPrice).toLocaleString()}</span>
+                <div className="lineitem" key={i}>
+                  <div><div className="li-t">{li.description}</div><div className="li-s">×{li.quantity} {li.uom} @ {li.unitPrice}</div></div>
+                  <div className="li-v">{(li.quantity * li.unitPrice).toLocaleString()}</div>
                 </div>
               ))}
-              <div className="space-y-1 pt-2 border-t border-border text-xs">
-                <div className="flex justify-between text-text-muted">
-                  <span>Subtotal</span>
-                  <span>{formatMoney(totals.subtotal, cur)}</span>
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--border)' }}>
+                <div className="lineitem" style={{ padding: '6px 0', border: 'none' }}>
+                  <span className="li-s">Subtotal</span><span className="li-v">{formatMoney(totals.subtotal, cur)}</span>
                 </div>
-                <div className="flex justify-between text-text-muted">
-                  <span>GST 8%</span>
-                  <span>{formatMoney(totals.gst, cur)}</span>
+                <div className="lineitem" style={{ padding: '6px 0', border: 'none' }}>
+                  <span className="li-s">GST 8%</span><span className="li-v">{formatMoney(totals.gst, cur)}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-text-primary pt-1 border-t border-border">
-                  <span>Grand Total</span>
-                  <span>{formatMoney(totals.total, cur)}</span>
+                <div className="lineitem" style={{ padding: '6px 0', border: 'none' }}>
+                  <span className="li-t" style={{ fontWeight: 600 }}>Grand Total</span>
+                  <span className="li-v" style={{ color: 'var(--accent)', fontWeight: 600 }}>{formatMoney(totals.total, cur)}</span>
                 </div>
               </div>
             </div>
-          </Card>
+          </div>
 
-          {/* Payment chain progress */}
-          <Card header={<span className="text-sm font-medium">Payment Chain</span>}>
-            <div className="space-y-1.5">
-              {PAYMENT_CHAIN.map((st, i) => (
-                <div key={st} className="flex items-center gap-2 text-xs">
-                  <div className={`w-2 h-2 rounded-full ${i <= idx ? 'bg-teal' : 'bg-border'}`} />
-                  <span className={i <= idx ? 'text-text-primary' : 'text-text-muted'}>{poWf.statusLabels[st]}</span>
-                </div>
-              ))}
+          <div className="dcard">
+            <div className="dcard-h"><h3><Banknote /> Payment Chain</h3><span className="tc-sub">pay-first</span></div>
+            <div className="dcard-b">
+              <div className="tl">
+                {PAYMENT_CHAIN.map((st, i) => {
+                  const state = i < idx ? 'done' : i === idx ? 'current' : 'pending';
+                  return (
+                    <div className={`tl-step ${state}`} key={st}>
+                      <div className="tl-rail">
+                        <span className="tl-dot">{state === 'done' ? <Check /> : null}</span>
+                        <span className="tl-line" />
+                      </div>
+                      <div className="tl-c"><div className="tl-title">{poWf.statusLabels[st]}</div></div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </Card>
+          </div>
 
           <FileUpload
             collection="purchaseOrders"
             entityId={po.id}
             entityDisplayId={po.displayId}
-            attachments={(po as any).attachments ?? []}
+            attachments={(po as { attachments?: [] }).attachments ?? []}
             onUpdate={refresh}
             label="Tax Invoices & Receipts"
             accept="image/*,.pdf"
@@ -111,13 +114,12 @@ export function PurchaseOrderDetail() {
           <Timeline collection="purchaseOrders" entityId={po.id} />
         </div>
 
-        <div className="space-y-4">
+        <div className="dcol">
           {po.status === 'wli_finance_confirmed'
             ? <CollectItemsPanel po={po} onDone={refresh} />
-            : <TransitionPanel workflowId="purchase_order" entityId={po.id} status={po.status} onDone={refresh} />
-          }
+            : <TransitionPanel workflowId="purchase_order" entityId={po.id} status={po.status} onDone={refresh} />}
         </div>
       </div>
-    </PageContainer>
+    </div>
   );
 }
