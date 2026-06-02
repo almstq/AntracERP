@@ -41,7 +41,7 @@ Before raising tickets, these asset records need correcting based on the status 
 | WL-HV-0009 | Komatsu PC350 Low Bed | `idle`, location blank | → `operational` (working but slow), location → `bodufinolhu` |
 | WL-HV-0023 | CAT 745C Dump Truck | `down` at Bodufinolhu | → `operational` (running, with known issues — not grounded) |
 
-> **Volvo A40G at Muthaafushi:** The doc mentions a Volvo A40G at Muthaafushi with a broken door glass. Registry has WL-HV-0001 at Bodufinolhu and WL-HV-0002 at Thilafushi. One of these has moved. Flag for Mustarq to confirm which unit (0001 or 0002) is actually at Muthaafushi. For now, raise the ticket against the asset code Mustarq confirms.
+> **Volvo A40G at Muthaafushi:** **Confirmed — WL-HV-0002** is the unit at Muthaafushi. Update its `currentSiteId` → `muthaafushi` before raising Ticket C.
 
 ---
 
@@ -221,7 +221,7 @@ These come from the standalone items list at the bottom of the document — a ge
    - Ticket A (boom bush): advance to `gm_approved` — payment was already done 1 June
    - Ticket B (Kobelco): leave at `submitted` / `diagnosed` — sourcing active
    - Tickets C, D, E, F: leave at `submitted` — sourcing pending
-7. **Staff note:** Lkamal is WLI staff — do NOT add as external supplier. Full staff list coming from Mustarq next session; add Lkamal then.
+7. **Staff note:** "Lkamal" in Ticket D = **Ruwan Lakmal Walapita Godellage** (Crane Operator) — confirmed in staff register. Do NOT add as supplier. Reference by full name when wiring the service line in Ticket D.
 
 ---
 
@@ -231,7 +231,7 @@ These come from the standalone items list at the bottom of the document — a ge
 |----------|--------|
 | Which Volvo A40G at Muthaafushi? | **WL-HV-0002** — update location to muthaafushi |
 | Add Al Dahr to supplier register? | **Yes** — Dubai supplier, heavy equipment + spare parts |
-| Lkamal (CAT 745C electrician)? | **WLI staff** — staff register incomplete, full list next session |
+| Lkamal (CAT 745C electrician)? | **Ruwan Lakmal Walapita Godellage** (Crane Operator) — confirmed in staff register |
 | "Grease Leo Trade 1000" — price or code? | **MVR 1,000 price** — leave blank until actual quote received |
 | Welding machine — procure or existing? | **Leave for now** — do not add to inventory this pass |
 

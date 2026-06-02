@@ -20,15 +20,14 @@ Full plan: `docs/MACHINE_STATUS_INGESTION_PLAN.md`
 
 **Source doc:** `D:\!starq\.claude_code_sync\Machine Status as of 14.05.2026 till 02-06-26.docx`
 
-Steps (in order, confirm with Mustarq before starting):
-1. Add 5 suppliers: Anam Trade, Leo Trade, Parts Master, WEW, ELM Marine
-2. Correct 5 asset statuses (see plan §2)
-3. Mustarq confirms which Volvo A40G (0001 or 0002) is at Muthaafushi
-4. Add ~30 inventory items at 0 stock (workshop tools + machine spare parts)
-5. Create 6 backdated tickets (14/05/2026) with materials + services
-6. Advance ticket workflows to match actual current state
+Steps (in order — all questions resolved, execute straight through):
+1. Add 6 suppliers: Anam Trade, Leo Trade, Parts Master, WEW, ELM Marine, Al Dahr (Dubai)
+2. Correct 5 asset statuses + update WL-HV-0002 location → muthaafushi (see plan §2)
+3. Add ~30 inventory items at 0 stock (workshop tools + spare parts, see plan §4)
+4. Create 6 backdated tickets (14/05/2026) with materials + services wired in
+5. Advance Ticket A workflow to `gm_approved` (payment already done 1 June); others at submitted/diagnosed
 
-**All questions resolved — see plan §6 for confirmed answers. Ready to execute.**
+**All questions resolved — see plan §6. "Lkamal" in Ticket D = Ruwan Lakmal Walapita Godellage (Crane Operator, in staff register). Ready to execute.**
 
 ---
 
