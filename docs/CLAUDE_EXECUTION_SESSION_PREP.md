@@ -2,7 +2,41 @@
 
 **Prepared:** 2026-06-03 (end of build session, pre-execution)
 **Source of truth:** `docs/ANTRAC_ERP_ENGINEERING_READINESS_REPORT.md` (Cipher, reconciled review)
-**This file:** the implementer's runbook for the NEXT session. Prep only — nothing here is implemented yet.
+**This file:** the implementer's runbook. **9 of 10 steps DONE** (see status markers below).
+
+---
+
+## ▶ NEXT SESSION — START HERE (updated 2026-06-03, end of execution run)
+
+**State:** 9/10 steps done, readiness 42% → ~85%. Everything committed to `master` and pushed to the
+`local` remote (`D:\!starq\_git-remotes\antrac-erp.git` — this repo's GitHub; never call real GitHub).
+Steps 1–8 + 10 ✅; **Step 9 (code-split) is the ONLY remaining numbered step.** Run on **Sonnet, medium effort.**
+
+**How to work (the rhythm that worked this run):**
+- One item at a time → verify `npm run build` (= `tsc -b` strict + vite) **and** `npm test` (95 passing) **and**
+  `npx eslint <touched files>` → commit `chore(readiness): …` to `master` → push `local` → update this doc's
+  status marker + the user's memory. State the readiness delta each time.
+- Live-verify in the user's Chrome via Claude-in-Chrome against their running dev server at
+  `http://localhost:3000` (read-only) when a change has runtime behaviour worth confirming.
+- **Philosophy (important):** this is Mustarq's *personal/unofficial* app, deployed to Vercel, onboarding
+  *non-technical* island staff. Curate every step to THAT reality — do the best self-contained half, keep it
+  owner-customizable, and SKIP enterprise infra (Cloud Functions, heavy validation pipelines). When a
+  prescription here collides with how the app actually runs, FLAG it, don't obey blindly (see FLAG A, Step 3, Step 7).
+
+**Do next (Claude work), priority order:**
+1. **Step 9 — code-split** (only remaining step; small — see its entry below).
+2. *(optional, highest staff value)* **non-tech usability pass** — plain-language labels, bigger tap targets,
+   friendlier empty/error states. Best tokens-to-value for who actually uses this.
+3. *(optional)* **Sentry opt-in** — wire `Sentry.captureException` into `ErrorBoundary.reportError()` + DSN env.
+4. *(optional)* **lint debt** — 12 pre-existing `react-hooks/set-state-in-effect` in `useWorkflowData.ts`
+   (a shared `useLoadable` helper); there's a spawned-task chip for it.
+5. *(optional)* glance at `storage.rules` (file-upload exposure on the public URL).
+
+**Owner actions (NOT Claude work — Mustarq does these, zero usage):**
+- **Deploy the Step 7 rules:** `firebase deploy --only firestore:rules` (the pending-gate protecting data once staff sign up).
+- Offline felt-test: open the app, kill wifi, confirm data still shows.
+
+**Do NOT touch:** `docs/adr/`, `docs/handover/`, `docs/sop/` — untracked dirs from another process, not part of this work.
 
 ---
 
