@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { useState, useEffect, useCallback } from 'react';
 import type { User as FirebaseUser } from 'firebase/auth';
 import { onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut as firebaseSignOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuthInstance, getDbInstance } from '../firebase/client';
 import { AuthContext } from './AuthContext.context';
 import type { AuthUser } from './AuthContext.context';
@@ -68,6 +68,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             siteIds: data.siteIds ?? [],
           });
         } else {
+          // First sign-in — persist a pending user doc so the Super Admin sees the
+          // access request and can assign a role. Login still proceeds if rules block it.
+          try {
+            await setDoc(doc(firebaseDb, 'users', fbUser.uid), {
+              email: fbUser.email || '', displayName: fbUser.displayName || '',
+              role: 'pending', orgId: '', siteIds: [], createdAt: serverTimestamp(),
+            }, { merge: true });
+          } catch { /* security rules may block self-write; non-fatal */ }
           setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '', siteIds: [] });
         }
       } catch {

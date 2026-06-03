@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
@@ -15,26 +15,32 @@ export function Login() {
   const [devMode, setDevMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname || '/';
+
+  // Navigate only once auth state has actually resolved — fixes the "click twice"
+  // race where navigate ran before onAuthStateChanged had set the user.
+  useEffect(() => {
+    if (user) navigate(from, { replace: true });
+  }, [user, from, navigate]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault(); setError('');
     if (!email || !password) { setError('Please enter both email and password.'); return; }
-    try { await loginWithEmail(email, password); navigate(from, { replace: true }); }
+    try { await loginWithEmail(email, password); }
     catch { setError('Unable to sign in. Check your credentials and try again.'); }
   };
 
   const handleGoogle = async () => {
     setError('');
-    try { await loginWithGoogle(); navigate(from, { replace: true }); }
+    try { await loginWithGoogle(); }
     catch (err) { setError(err instanceof Error ? err.message : 'Google sign-in failed.'); }
   };
 
   const handleDev = async (uid: string) => {
     setError('');
-    try { await login(uid); navigate(from, { replace: true }); }
+    try { await login(uid); }
     catch { setError('Dev login failed.'); }
   };
 

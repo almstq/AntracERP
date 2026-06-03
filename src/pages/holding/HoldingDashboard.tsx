@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
-import { Factory, Fuel, Settings, Banknote, Inbox, ChevronRight, type LucideIcon } from 'lucide-react';
+import { Factory, Fuel, Settings, Banknote, Inbox, ChevronRight, UserPlus, type LucideIcon } from 'lucide-react';
 import { usePOList } from '../../lib/hooks/useWorkflowData';
+import { useUsers } from '../../lib/hooks/useUsers';
 import { purchaseOrderWorkflow as poWf } from '../../lib/workflow/definitions';
 import { getAvailableTransitions } from '../../lib/workflow/engine';
 import { useAuth } from '../../lib/hooks/useAuth';
@@ -17,6 +18,24 @@ function poBadge(status: string): string {
   if (status === 'payment_completed' || status === 'director_approved') return 'b-accent';
   if (status === 'raised' || status === 'supplier_confirmed') return 'b-info';
   return 'b-warn';
+}
+
+/** SA-only access-request banner. Separate component so the users read only
+ *  happens for the Super Admin (it's conditionally mounted). */
+function PendingSignups() {
+  const { data: users } = useUsers();
+  const pending = users.filter((u) => u.role === 'pending');
+  if (pending.length === 0) return null;
+  return (
+    <Link to="/admin/users" className="card" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 18px', marginBottom: 18, borderLeft: '3px solid var(--warning)' }}>
+      <span className="metric-ic tint-warn"><UserPlus /></span>
+      <div style={{ flex: 1 }}>
+        <div className="row-id">{pending.length} new sign-up{pending.length > 1 ? 's' : ''} awaiting a role</div>
+        <div className="row-sub">Assign access so they land in their module on next login</div>
+      </div>
+      <ChevronRight className="row-chev" />
+    </Link>
+  );
 }
 
 export function HoldingDashboard() {
@@ -61,6 +80,8 @@ export function HoldingDashboard() {
           );
         })}
       </div>
+
+      {effectiveRole === 'super_admin' && <PendingSignups />}
 
       {/* Awaiting my approval — the HQ payment chain */}
       <div className="section">

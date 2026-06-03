@@ -11,9 +11,10 @@
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 
-// Model names: gemini-1.5-flash is the stable workhorse. 
-const MODEL = 'gemini-1.5-flash';
-const ENDPOINT = `https://generativelanguage.googleapis.com/v1/models/${MODEL}:generateContent`;
+// gemini-2.0-flash is the current free-tier model; served on the v1beta endpoint.
+// (gemini-1.5-flash on /v1 returns 404 "model not found for API version".)
+const MODEL = 'gemini-2.0-flash';
+const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 export function isAiConfigured(): boolean {
   return !!API_KEY;
