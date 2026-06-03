@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { ProtectedRoute, RoleRoute, DeskRedirect } from '../components/layout/AppShell';
 import { Login } from '../pages/Login';
+import { Signup } from '../pages/Signup';
 import { PendingApproval } from '../pages/PendingApproval';
 import { Unauthorized } from '../pages/Unauthorized';
 import { Dashboard } from '../pages/Dashboard';
@@ -65,6 +66,7 @@ import { RouteError } from '../components/shared/RouteError';
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
+  { path: '/signup', element: <Signup /> },
   { path: '/pending', element: <PendingApproval /> },
   { path: '/unauthorized', element: <Unauthorized /> },
   {

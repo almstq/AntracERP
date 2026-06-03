@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { loginWithEmail, loginWithGoogle } from '../lib/firebase/auth';
@@ -106,7 +106,12 @@ export function Login() {
                 {isProcessing ? 'Signing in…' : 'Sign in with Google'}
               </Button>
 
-              <div className="mt-6 text-center">
+              <p className="mt-4 text-center text-[11px] text-text-muted">
+                New to Antrac?{' '}
+                <Link to="/signup" className="text-blue hover:underline font-medium">Create an account</Link>
+              </p>
+
+              <div className="mt-4 text-center">
                 <button onClick={() => setDevMode(true)} className="text-[10px] text-text-muted hover:text-text-secondary underline">Developer Login</button>
               </div>
             </>
