@@ -11,6 +11,15 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
 
+    // True once a Super Admin has assigned a real role — i.e. NOT the self-registered
+    // 'pending' placeholder. Gates all business-data reads/writes so a brand-new signup
+    // (or anyone who finds the public URL and registers) cannot touch operational data
+    // until an admin approves them. Self-read of one's own users/{uid} doc stays open
+    // so the pending screen + auth bootstrap still work.
+    function hasAssignedRole() {
+      return isAuth() && getUserRole() != 'pending';
+    }
+
     function isSuperAdmin() {
       return isAuth() && getUserRole() == 'super_admin';
     }
@@ -54,7 +63,7 @@ service cloud.firestore {
 
     // Orgs — read by all authenticated users, write by super admin only
     match /orgs/{orgId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isSuperAdmin();
     }
 
@@ -68,21 +77,21 @@ service cloud.firestore {
 
     // Sites — read by all, write by site manager+
     match /sites/{siteId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isSiteManager() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
 
     // Staff — read by all, write by site manager+
     match /staff/{staffId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isSiteManager() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
 
     // Assets — read by all, write by site manager+
     match /assets/{assetId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isSiteManager() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
@@ -90,13 +99,13 @@ service cloud.firestore {
     // Tickets — operators raise; WLI staff act on them through the workflow.
     // Fine-grained stage gating is enforced in app logic (transition tables).
     match /tickets/{ticketId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create: if isWLIStaff();
       allow update: if isWLIStaff();
       allow delete: if isSuperAdmin();
       // Timeline subcollection — append-only audit trail
       match /timeline/{eventId} {
-        allow read: if isAuth();
+        allow read: if hasAssignedRole();
         allow create: if isWLIStaff();
         allow update, delete: if false;
       }
@@ -104,12 +113,12 @@ service cloud.firestore {
 
     // Purchase requests (created on_hold at mechanic diagnosis; advanced by proc/gm)
     match /purchaseRequests/{prId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create: if isWLIStaff();
       allow update: if isWLIStaff();
       allow delete: if isSuperAdmin();
       match /timeline/{eventId} {
-        allow read: if isAuth();
+        allow read: if hasAssignedRole();
         allow create: if isWorkflowParticipant();
         allow update, delete: if false;
       }
@@ -117,19 +126,19 @@ service cloud.firestore {
 
     // RFQs
     match /rfqs/{rfqId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isProcurement() || isGM();
       allow delete: if isSuperAdmin();
     }
 
     // Purchase orders (carry the 4-tier HQ payment chain → HQ roles must update)
     match /purchaseOrders/{poId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create: if isWLIStaff();
       allow update: if isWorkflowParticipant();
       allow delete: if isSuperAdmin();
       match /timeline/{eventId} {
-        allow read: if isAuth();
+        allow read: if hasAssignedRole();
         allow create: if isWorkflowParticipant();
         allow update, delete: if false;
       }
@@ -137,33 +146,33 @@ service cloud.firestore {
 
     // Stores register — named stock-holding places attached to sites
     match /stores/{storeId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isSiteManager() || isInventoryStaff() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
 
     // Inventory items (catalog — no quantity)
     match /inventoryItems/{itemId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isProcurement() || isSiteManager() || isInventoryStaff() || isSuperAdmin();
     }
 
     // Stock balances — quantity per item × store
     match /stockBalances/{balanceId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isProcurement() || isSiteManager() || isInventoryStaff() || isSuperAdmin();
     }
 
     // Stock movements — append-only ledger
     match /stockMovements/{movementId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create: if isSiteManager() || isProcurement() || isInventoryStaff() || isSuperAdmin();
       allow update, delete: if false;
     }
 
     // Stock transfers — logistics (store → store)
     match /stockTransfers/{transferId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create: if isInventoryStaff() || isSiteManager() || isSuperAdmin();
       allow update: if isInventoryStaff() || isSiteManager() || isSuperAdmin();
       allow delete: if isSuperAdmin();
@@ -171,24 +180,24 @@ service cloud.firestore {
 
     // Sequence counters — written by inventory service
     match /_sequences/{seqId} {
-      allow read, write: if isAuth();
+      allow read, write: if hasAssignedRole();
     }
 
     // Customers
     match /customers/{customerId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isGM() || isSuperAdmin();
     }
 
     // CRM enquiries
     match /crmEnquiries/{enquiryId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isGM() || isSuperAdmin();
     }
 
     // Jobs
     match /jobs/{jobId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isGM() || isSuperAdmin();
     }
 
@@ -199,30 +208,30 @@ service cloud.firestore {
 
     // Audit events — append only
     match /auditEvents/{eventId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
+      allow read: if hasAssignedRole();
+      allow create: if hasAssignedRole();
       allow update, delete: if false;
     }
 
     // FollowMe vessel-tracking cache — written ONLY by the syncFollowMe Cloud
     // Function (admin SDK bypasses rules). Clients read the cache; never write.
     match /followmeCache/{vesselId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if false;
     }
     match /followmeMeta/{docId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if false;
     }
 
     // Fuel/water requests (WLI↔MPL; supervisor, inventory, gm, mpl_manager, director act)
     match /fuelRequests/{requestId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create: if isWLIStaff();
       allow update: if isWorkflowParticipant();
       allow delete: if isSuperAdmin();
       match /timeline/{eventId} {
-        allow read: if isAuth();
+        allow read: if hasAssignedRole();
         allow create: if isWorkflowParticipant();
         allow update, delete: if false;
       }
@@ -230,13 +239,13 @@ service cloud.firestore {
 
     // Suppliers — read by all auth; managed by procurement/GM
     match /suppliers/{supplierId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isProcurement() || isGM() || isSuperAdmin();
     }
 
     // WLI inventory balances (fuel/water) — deducted on fuel request closure
     match /inventoryBalances/{balanceId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow write: if isWorkflowParticipant();
     }
 
@@ -250,16 +259,16 @@ service cloud.firestore {
 
     // Document Vault — all authenticated users can read; create on upload; delete by uploader or admin
     match /documents/{docId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
+      allow read: if hasAssignedRole();
+      allow create: if hasAssignedRole();
       allow delete: if isAuth();
       allow update: if false;
     }
 
     // AI tasks
     match /aiTasks/{taskId} {
-      allow read: if isAuth();
-      allow create: if isAuth();
+      allow read: if hasAssignedRole();
+      allow create: if hasAssignedRole();
       allow update: if isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
@@ -267,14 +276,14 @@ service cloud.firestore {
     // Machine deployments — revenue terms on hire (creating one also flips the
     // asset to deployed, so the deployer must be a site manager / GM / SA)
     match /deployments/{depId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isSiteManager() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
 
     // Deployment revenue (lump figures, e.g. from Finance/CFO)
     match /deploymentRevenue/{revId} {
-      allow read: if isAuth();
+      allow read: if hasAssignedRole();
       allow create, update: if isGM() || isFinance() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
