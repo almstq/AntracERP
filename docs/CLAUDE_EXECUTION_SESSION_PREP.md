@@ -8,9 +8,9 @@
 
 ## ▶ NEXT SESSION — START HERE (updated 2026-06-03, end of execution run)
 
-**State:** 9/10 steps done, readiness 42% → ~85%. Everything committed to `master` and pushed to the
+**State:** ALL 10 steps done, readiness 42% → ~90%. Everything committed to `master` and pushed to the
 `local` remote (`D:\!starq\_git-remotes\antrac-erp.git` — this repo's GitHub; never call real GitHub).
-Steps 1–8 + 10 ✅; **Step 9 (code-split) is the ONLY remaining numbered step.** Run on **Sonnet, medium effort.**
+Steps 1–10 ✅. **Runbook complete.**
 
 **How to work (the rhythm that worked this run):**
 - One item at a time → verify `npm run build` (= `tsc -b` strict + vite) **and** `npm test` (95 passing) **and**
@@ -24,7 +24,7 @@ Steps 1–8 + 10 ✅; **Step 9 (code-split) is the ONLY remaining numbered step.
   prescription here collides with how the app actually runs, FLAG it, don't obey blindly (see FLAG A, Step 3, Step 7).
 
 **Do next (Claude work), priority order:**
-1. **Step 9 — code-split** (only remaining step; small — see its entry below).
+1. ~~**Step 9 — code-split**~~ ✅ DONE (commit `acf2eeb`). Initial bundle 1,307 KB → 847 KB (−35%).
 2. *(optional, highest staff value)* **non-tech usability pass** — plain-language labels, bigger tap targets,
    friendlier empty/error states. Best tokens-to-value for who actually uses this.
 3. *(optional)* **Sentry opt-in** — wire `Sentry.captureException` into `ErrorBoundary.reportError()` + DSN env.
@@ -189,12 +189,15 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 - TODO if wanted later: `npm i @sentry/react @sentry/vite-plugin`, init in main.tsx, call
   `Sentry.captureException` inside `ErrorBoundary.reportError`, source maps in prod, set DSN env.
 
-### Step 9 — Code Splitting · P1 · ~1d · ⬜  ← **THE ONLY REMAINING STEP** (Step 10 was done first)
-- File: `src/routes/router.tsx` (note: report says `src/router.tsx` — actual path is `src/routes/router.tsx`).
-- Wrap route elements in `React.lazy()`; `Suspense` with a loading skeleton; confirm bundle drop in build output.
-- NOTE: routes use NAMED exports → lazy at a sensible grain (heavy feature modules) via
-  `lazy(() => import('...').then(m => ({ default: m.X })))`, not all ~60 routes mechanically.
-- **Accept:** initial bundle smaller (currently ~1.17MB); routes load on demand; no broken routes.
+### Step 9 — Code Splitting · P1 · ✅ DONE (commit `acf2eeb`)
+- File: `src/routes/router.tsx`.
+- All 53 feature-page routes → `React.lazy(named-export pattern)`. Auth pages + Dashboard/Settings +
+  shell components kept eager (critical first-load path). `s()` helper wraps each route element in
+  a `<Suspense>` boundary with `<LoadingSpinner />` fallback.
+- `/* eslint-disable react-refresh/only-export-components */` at file top — router config is not a
+  component module; the rule is correct to fire but inapplicable here.
+- **Accept:** MET. Initial bundle 1,307 KB → 847 KB (−35%); all feature chunks on-demand; `tsc -b
+  strict + vite` clean; `npm test` 95 passed; eslint clean. Readiness ~90%.
 
 ### Step 10 — Offline Persistence · P1 · ✅ DONE + LIVE-VERIFIED (commit `4c04a5e`)
 - `client.ts`: `getFirestore` → `initializeFirestore(app, { localCache: persistentLocalCache({ tabManager:
