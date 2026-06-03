@@ -11,9 +11,15 @@
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 
-// gemini-2.0-flash is the current free-tier model; served on the v1beta endpoint.
-// (gemini-1.5-flash on /v1 returns 404 "model not found for API version".)
-const MODEL = 'gemini-2.0-flash';
+// Model is env-configurable (VITE_GEMINI_MODEL) so a free-tier availability shift
+// can be handled by editing env + rebuilding, without a code change. Verified live
+// against this key 2026-06-03:
+//   - gemini-1.5-flash  /v1     → 404 (model retired)              — do not use
+//   - gemini-2.0-flash  /v1beta → 429 limit:0 (whole 2.0 family    — do not use
+//                                  is off the free tier on this key)
+//   - gemini-2.5-flash  /v1beta → 200                              — current default
+// Other free-tier-verified fallbacks: gemini-2.5-flash-lite, gemini-flash-latest.
+const MODEL = (import.meta.env.VITE_GEMINI_MODEL as string | undefined) || 'gemini-2.5-flash';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 export function isAiConfigured(): boolean {
