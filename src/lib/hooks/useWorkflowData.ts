@@ -3,7 +3,8 @@
  * Simple fetch-on-mount + manual refresh() (called after a transition).
  */
 import { useCallback, useEffect, useState } from 'react';
-import { listAll, listWhere, getById, listSub } from '../firebase/db';
+import { listAll, listWhere, listBySites, getById, listSub } from '../firebase/db';
+import { useAuth } from './useAuth';
 import { byName, byCode } from '../utils/sort';
 import { ticketWorkflow, purchaseRequestWorkflow, purchaseOrderWorkflow } from '../workflow/definitions';
 import { getAvailableTransitions } from '../workflow/engine';
@@ -20,17 +21,24 @@ interface Loadable<T> {
 }
 
 export function useTicketList(sbuId = 'sbu-wli'): Loadable<(Ticket & { id: string })[]> {
+  const { user } = useAuth();
+  // Site-bound field roles (operator/mechanic/supervisor/inventory/proc) carry
+  // siteIds and get scoped to their sites; GM/super/finance/etc. have [] → see all.
+  const siteKey = (user?.siteIds ?? []).join('|');
   const [data, setData] = useState<(Ticket & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    listWhere<Ticket>('tickets', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows); setError(null); })
+    const siteIds = siteKey ? siteKey.split('|') : [];
+    const p = siteIds.length
+      ? listBySites<Ticket>('tickets', 'siteId', siteIds)
+      : listWhere<Ticket>('tickets', 'sbuId', '==', sbuId);
+    p.then((rows) => { setData(rows); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load tickets'))
       .finally(() => setLoading(false));
-  }, [sbuId]);
+  }, [sbuId, siteKey]);
 
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
@@ -55,48 +63,68 @@ export function useTicket(id: string | undefined): Loadable<(Ticket & { id: stri
 }
 
 export function useAssetList(sbuId = 'sbu-wli'): Loadable<(Asset & { id: string })[]> {
+  const { user } = useAuth();
+  const siteKey = (user?.siteIds ?? []).join('|');
   const [data, setData] = useState<(Asset & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    listWhere<Asset>('assets', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows.sort(byCode((a) => a.code))); setError(null); })
+    const siteIds = siteKey ? siteKey.split('|') : [];
+    // Assets scope on currentSiteId (deployment location), NOT siteId.
+    const p = siteIds.length
+      ? listBySites<Asset>('assets', 'currentSiteId', siteIds)
+      : listWhere<Asset>('assets', 'sbuId', '==', sbuId);
+    p.then((rows) => { setData(rows.sort(byCode((a) => a.code))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load assets'))
       .finally(() => setLoading(false));
-  }, [sbuId]);
+  }, [sbuId, siteKey]);
 
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
 }
 
 export function useSiteList(sbuId = 'sbu-wli'): Loadable<(Site & { id: string })[]> {
+  const { user } = useAuth();
+  const siteKey = (user?.siteIds ?? []).join('|');
   const [data, setData] = useState<(Site & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
     setLoading(true);
-    listWhere<Site>('sites', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
+    const siteIds = siteKey ? siteKey.split('|') : [];
+    // Sites scope by document id (the doc id *is* the site id).
+    const p = siteIds.length
+      ? listBySites<Site>('sites', 'id', siteIds)
+      : listWhere<Site>('sites', 'sbuId', '==', sbuId);
+    p.then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load sites'))
       .finally(() => setLoading(false));
-  }, [sbuId]);
+  }, [sbuId, siteKey]);
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
 }
 
 export function useStaffList(sbuId = 'sbu-wli'): Loadable<(Staff & { id: string })[]> {
+  const { user } = useAuth();
+  const siteKey = (user?.siteIds ?? []).join('|');
   const [data, setData] = useState<(Staff & { id: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const load = useCallback(() => {
     setLoading(true);
-    listWhere<Staff>('staff', 'sbuId', '==', sbuId)
-      .then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
+    const siteIds = siteKey ? siteKey.split('|') : [];
+    // Staff scope on siteId. NOTE: staff posted to an asset (assignedAssetId,
+    // no siteId) are intentionally not returned for site-bound users — accepted
+    // tradeoff vs. a client-side asset-join. GM/super (no siteIds) see all.
+    const p = siteIds.length
+      ? listBySites<Staff>('staff', 'siteId', siteIds)
+      : listWhere<Staff>('staff', 'sbuId', '==', sbuId);
+    p.then((rows) => { setData(rows.sort(byName((s) => s.name))); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load staff'))
       .finally(() => setLoading(false));
-  }, [sbuId]);
+  }, [sbuId, siteKey]);
   useEffect(load, [load]);
   return { data, loading, error, refresh: load };
 }

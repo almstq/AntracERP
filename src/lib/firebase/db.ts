@@ -7,7 +7,7 @@
  */
 import {
   collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc,
-  query, where, orderBy, writeBatch, serverTimestamp, Timestamp,
+  query, where, orderBy, writeBatch, serverTimestamp, Timestamp, documentId,
   type WhereFilterOp, type WriteBatch, type Firestore,
 } from 'firebase/firestore';
 import { getDbInstance } from './client';
@@ -51,6 +51,24 @@ export async function listWhere<T = Record<string, unknown>>(
   const constraints = [where(field, op, value)];
   if (sortBy) constraints.push(orderBy(sortBy) as never);
   const snap = await getDocs(query(collection(db(), coll), ...constraints));
+  return snap.docs.map((d) => ({ id: d.id, ...deepConvert(d.data()) }) as T & { id: string });
+}
+
+/**
+ * List a collection scoped to a set of site ids, matched on `field`. Pass
+ * `field='id'` to match the document id itself (the `sites` collection, where
+ * the doc id *is* the site id). Deliberately a single `in` constraint with NO
+ * sbuId equality — a site id already belongs to exactly one SBU — so it rides
+ * Firestore's automatic single-field index and needs NO composite index.
+ * Returns [] for an empty id set (an `in` with [] throws).
+ */
+export async function listBySites<T = Record<string, unknown>>(
+  coll: string, field: string, siteIds: readonly string[],
+): Promise<(T & { id: string })[]> {
+  if (!siteIds.length) return [];
+  const target = field === 'id' ? documentId() : field;
+  // Firestore caps `in` at 30 values; site-bound field roles have ≤4 sites.
+  const snap = await getDocs(query(collection(db(), coll), where(target, 'in', siteIds.slice(0, 30))));
   return snap.docs.map((d) => ({ id: d.id, ...deepConvert(d.data()) }) as T & { id: string });
 }
 
