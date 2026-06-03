@@ -58,10 +58,12 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
-    // Users — self read, admin write
+    // Users — self read; new sign-ups self-register as 'pending'; only SA assigns roles
     match /users/{userId} {
       allow read: if isAuth() && (request.auth.uid == userId || isSuperAdmin());
-      allow write: if isSuperAdmin();
+      allow create: if isAuth() && request.auth.uid == userId
+                    && request.resource.data.role == 'pending';
+      allow update, delete: if isSuperAdmin();
     }
 
     // Sites — read by all, write by site manager+
@@ -259,6 +261,21 @@ service cloud.firestore {
       allow read: if isAuth();
       allow create: if isAuth();
       allow update: if isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Machine deployments — revenue terms on hire (creating one also flips the
+    // asset to deployed, so the deployer must be a site manager / GM / SA)
+    match /deployments/{depId} {
+      allow read: if isAuth();
+      allow create, update: if isSiteManager() || isSuperAdmin();
+      allow delete: if isSuperAdmin();
+    }
+
+    // Deployment revenue (lump figures, e.g. from Finance/CFO)
+    match /deploymentRevenue/{revId} {
+      allow read: if isAuth();
+      allow create, update: if isGM() || isFinance() || isSuperAdmin();
       allow delete: if isSuperAdmin();
     }
   }
