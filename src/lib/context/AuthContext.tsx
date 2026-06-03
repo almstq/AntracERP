@@ -54,6 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return;
       }
+      // Re-enter loading while we fetch the user doc — prevents auth-gap flicker
+      // if a user logs out then back in (loading was false after logout).
+      setLoading(true);
       try {
         const userDoc = await getDoc(doc(firebaseDb, 'users', fbUser.uid));
         if (userDoc.exists()) {
