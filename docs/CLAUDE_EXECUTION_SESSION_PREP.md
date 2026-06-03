@@ -96,11 +96,18 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 - KNOWN: `useWorkflowData.ts` has 12 PRE-EXISTING `react-hooks/set-state-in-effect` lint errors (not from
   this step; tracked separately). Hook branch-selection logic verified by reading (trivial ternary).
 
-### Step 4 — Add Test Coverage · P0 · ~2d · ⬜
-- `npm i -D vitest @testing-library/react @testing-library/jest-dom`
-- Create `src/lib/workflow/engine.test.ts`; test every transition + role gates + the ticket→PR→PO→approval flow.
-- Add a `test` script to package.json.
-- **Accept:** `npm test` green; workflow engine covered.
+### Step 4 — Add Test Coverage · P0 · ~2d · ✅ DONE (commit `bce726d`)
+- Installed Vitest 4 + @testing-library/react + jest-dom + jsdom. Standalone `vitest.config.ts`
+  (node env, no app plugins). Scripts `test`/`test:watch`. Test files excluded from prod build
+  (tsconfig.app `exclude`).
+- `src/lib/workflow/engine.test.ts` — **95 tests**: all 7 engine fns (incl. system-only exclusion,
+  requiresNotes/Fields, system-role bypass); structural invariants over ALL 6 machines (reachability,
+  no dead-ends, unique actions, labels-cover-states, super_admin-on-every-transition, zero-outgoing⇒terminal);
+  full ticket→PR→PO walk incl. 4-tier payment chain + tier-ordering + side-effect bridges.
+- **Accept:** MET. `npm test` → 95 passed; build (tsc -b + vite) clean; new files lint-clean.
+- NOTE: executor (Firestore writes) NOT unit-tested here — needs Firebase mocks; the engine/business
+  rules are fully covered. RTL+jsdom installed but not yet wired (no component tests yet).
+- ✅✅ **P0 BLOCK (Steps 1–4) COMPLETE.** Readiness ~60%.
 
 ### Step 5 — Enable Strict Types · P1 · ~1-2d · ⬜
 - File: `tsconfig.app.json` → `"strict": true`; fix all errors; remove `any`; handle null/undefined.
