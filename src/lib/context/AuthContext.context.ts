@@ -7,6 +7,8 @@ export interface AuthUser {
   role: string;
   orgId: string;
   orgName: string;
+  /** Operational territory — site IDs this user covers. Empty = not site-bound (e.g. finance). */
+  siteIds: string[];
 }
 
 export interface AuthContextType {

@@ -17,6 +17,7 @@ function mapFirebaseUser(user: User): AuthUser {
     role: 'pending',
     orgId: '',
     orgName: '',
+    siteIds: [],
   };
 }
 

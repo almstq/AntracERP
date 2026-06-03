@@ -14,9 +14,9 @@ export const purchaseRequestWorkflow: WorkflowDefinition<PRStatus> = {
   initialState: 'on_hold',
   states: [
     'on_hold', 'approved', 'pr_accepted', 'rfq_sent',
-    'quotes_under_review', 'gm_quote_approved', 'po_raised', 'closed',
+    'quotes_under_review', 'gm_quote_approved', 'po_raised', 'closed', 'rejected',
   ],
-  terminalStates: ['closed'],
+  terminalStates: ['closed', 'rejected'],
   statusLabels: {
     on_hold: 'On Hold',
     approved: 'Approved',
@@ -26,13 +26,21 @@ export const purchaseRequestWorkflow: WorkflowDefinition<PRStatus> = {
     gm_quote_approved: 'Supplier Approved',
     po_raised: 'PO Raised',
     closed: 'Closed',
+    rejected: 'Rejected',
   },
   transitions: [
-    // Activated by ticket GM approval (side-effect driven → 'system')
+    // on_hold → approved. Ticket-origin PRs are activated by the ticket's GM
+    // approval (side-effect, 'system'); direct PRs are approved here by the GM.
     {
       from: 'on_hold', to: 'approved', action: 'activate',
-      label: 'Activate (GM Approved)', allowedRoles: ['system', 'gm', 'super_admin'],
+      label: 'Approve', allowedRoles: ['system', 'gm', 'super_admin'],
       notify: ['proc_staff'],
+    },
+    // Direct PR declined by the approver.
+    {
+      from: 'on_hold', to: 'rejected', action: 'decline_request',
+      label: 'Decline Request', allowedRoles: ['gm', 'super_admin'],
+      requiresNotes: true, isReject: true, notify: ['proc_staff'],
     },
     // Stage 5 — proc staff accepts
     {

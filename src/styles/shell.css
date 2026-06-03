@@ -104,7 +104,8 @@
    SHELL LAYOUT — floating cards on padded base
    ============================================================ */
 .app {
-  height: 100vh;
+  height: 100vh;            /* fallback for older browsers */
+  height: 100dvh;           /* tracks visible viewport excl. mobile browser chrome */
   width: 100%;
   display: flex;
   gap: calc(16px * var(--d));
@@ -554,6 +555,9 @@
 @keyframes fadeUp { from { transform: translateY(8px); opacity: 0; } to { transform: none; opacity: 1; } }
 .section, .metrics, .hero { animation: fadeUp .4s ease both; }
 
+/* Mobile module-switcher strip inside sidebar — hidden on desktop, shown on mobile */
+.side-modswitcher { display: none; }
+
 /* Mobile: collapse rail, stack */
 .shell-mobilebar { display: none; }
 @media (max-width: 1100px) {
@@ -578,6 +582,21 @@
   .metrics { grid-template-columns: repeat(2, 1fr); }
   .wx-grid { grid-template-columns: 1fr; }
   .page { padding: 18px 16px 32px; }
+
+  /* Module switcher strip — shown at top of sidebar on mobile */
+  .side-modswitcher {
+    display: flex; align-items: center; gap: 4px;
+    padding: 10px 12px; border-bottom: var(--hair) solid var(--border-soft);
+    flex-shrink: 0;
+  }
+  .side-modbtn {
+    flex: 1; height: 40px; border-radius: var(--r-md);
+    display: grid; place-items: center;
+    color: var(--text-muted);
+  }
+  .side-modbtn svg { width: 18px; height: 18px; }
+  .side-modbtn:hover { background: var(--bg-hover); color: var(--text-primary); }
+  .side-modbtn.active { background: var(--accent-soft); color: var(--accent); }
 }
 
 /* ============================================================

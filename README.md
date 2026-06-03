@@ -90,7 +90,7 @@ that revenue.
 |---|---|---|
 | **Command Center** | ✅ Live | Role-scoped dashboard: live fleet readiness, action inbox, per-site overview (assets + crew + in-charge + open issues), crewing-gap flags, weather, AI brief |
 | **Issue → Closure Pipeline** | ✅ Live | Full ticket lifecycle — operator raises → mechanic diagnoses → supervisor checks → GM approves → procurement → delivery → close, with a Firestore-backed timeline |
-| **Procurement** | ✅ Live | PR → RFQ (1 PDF/supplier) → competitive quotes → GM comparison & award → PO → **four-tier payment chain** (WLI Finance → Antrac Finance → CFO → Director), pay-first before collection |
+| **Procurement** | ✅ Live | Two PR origins — **ticket-spawned** (from a mechanic diagnosis) and **direct/group-level** (raised by authorised non-field roles with a mandatory justification + GM approval gate). Then RFQ (1 PDF/supplier) → competitive quotes → GM comparison & award → PO → **four-tier payment chain** (WLI Finance → Antrac Finance → CFO → Director), pay-first before collection |
 | **Warehouse & Inventory** | ✅ Live | Stores register, item catalogue, stock balances per store, full movement ledger, transfers, pick-or-create on collection |
 | **Fleet / Asset Registers** | ✅ Live | Vessels, vehicles, support equipment; specs, repair history, deployment history, condition, crew |
 | **Sites & In-Charge** | ✅ Live | Site profiles, GPS, asset & staff assignment, explicit site in-charge (incl. cross-org HQ project managers) |
@@ -104,9 +104,17 @@ that revenue.
 
 ### Issue-to-Purchase SOP
 
-No purchase can be raised without a GM-approved issue ticket. Every procurement
-record traces back to a specific asset problem; every material movement links to the
-ticket it resolves.
+Procurement has two legitimate doors, both with an approval gate before sourcing:
+
+- **Maintenance purchases** must trace to a **GM-approved issue ticket** — the PR
+  auto-spawns from the mechanic's diagnosis, so every repair material links to the
+  fault it resolves. Field crew (operators/mechanics) only ever go through this door.
+- **Direct / general requests** (office, project materials, services, stock) are
+  raised by authorised non-field roles — Supervisors and above, Procurement, Finance,
+  Inventory, and HQ staff — with a **mandatory justification (why)** and **location
+  (where)**. A direct PR requires **GM approval** (requester ≠ approver) before it
+  joins the same sourcing → award → PO → payment chain. PRs are SBU-tagged, so the
+  request surface is shared across the WLI and Holding modules.
 
 ```
 Issue raised against an asset
@@ -261,10 +269,26 @@ kept outside the repo) live under `seed/` and default to dry-run; pass `--commit
 
 - `.env.local` and all `*.local` files are gitignored — web keys never committed.
 - Service-account JSON for seeds/admin stays **outside** the repo, never committed.
-- Role-based access enforced in the app (effective-role guards, route gating) and in
+- Role-based access enforced in the app (effective-role guards, **role-filtered
+  navigation**, role-gated module switcher, module-level route gating) and in
   Firestore security rules (workflow-participant gates, per-collection rules).
+- Each role lands on a view scoped to its job; field roles are scoped to their sites
+  (`siteIds`). Act-As previews any role faithfully (nav, landing, and access switch).
 - Uploads are attributed (`uploadedByName`) and integrity-hashed (SHA-256) on the client.
 - See [`SECURITY.md`](SECURITY.md) for the reporting process and the production checklist.
+
+### Known limitations (tracked, deferred to future patches)
+
+- **Per-page route hardening within a module.** The sidebar hides every section a
+  role can't use, and module access is role-gated — but in-module route access is
+  currently enforced at the *module* level. A user could still reach a sibling page
+  inside their own module by typing its URL directly (the nav never links them there).
+  Firestore security rules remain the authoritative server-side gate; tightening the
+  client to per-route role checks is a planned hardening pass.
+- **Settings page.** The icon-rail gear is a placeholder; theme and density currently
+  live in the sidebar footer. A consolidated Settings screen is planned.
+- **AI brief model id.** `ai.ts` targets a Gemini model id that returns 404 on API
+  `v1`; the brief falls back gracefully. A one-line model-id fix is pending.
 
 ---
 

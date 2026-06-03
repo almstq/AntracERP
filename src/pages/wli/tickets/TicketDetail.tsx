@@ -5,6 +5,7 @@ import { FileUpload } from '../../../components/shared/FileUpload';
 import { AiDiagnosisHint } from '../../../components/workflow/AiDiagnosisHint';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
+import { TicketAdminEdit } from '../../../components/workflow/TicketAdminEdit';
 import { ticketWorkflow, purchaseRequestWorkflow } from '../../../lib/workflow/definitions';
 import type { TicketStatus, PRStatus, PurchaseRequest } from '../../../types/workflow-entities';
 import { useTicket, useEntity } from '../../../lib/hooks/useWorkflowData';
@@ -196,6 +197,7 @@ export function TicketDetail() {
         {/* Right column — these components carry their own card + header */}
         <div className="dcol">
           <TransitionPanel workflowId="ticket" entityId={ticket.id} status={ticket.status} onDone={onDone} />
+          {effectiveRole === 'super_admin' && <TicketAdminEdit ticket={ticket} onSaved={onDone} />}
           <Timeline collection="tickets" entityId={ticket.id} />
         </div>
       </div>

@@ -102,7 +102,8 @@ export type PRStatus =
   | 'quotes_under_review'
   | 'gm_quote_approved'
   | 'po_raised'
-  | 'closed';
+  | 'closed'
+  | 'rejected';
 
 export interface PRLineItem {
   ref: string; // links back to ticket material/service
@@ -131,7 +132,14 @@ export interface PRQuote {
 export interface PurchaseRequest {
   id: string;
   displayId: string; // PR-YYYYMM-###
-  ticketId: string;
+  /** 'ticket' = spawned from a mechanic diagnosis; 'direct' = raised standalone. */
+  origin?: 'ticket' | 'direct';
+  /** Set for ticket-origin PRs; absent for direct requests. */
+  ticketId?: string;
+  // Direct-request fields (mandatory on the raise form):
+  title?: string;          // short subject of the request
+  reason?: string;         // justification — why these items/services are needed
+  raisedById?: string;     // who raised it
   orgId: string;
   sbuId: string;
   siteId: string;

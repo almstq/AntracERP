@@ -89,6 +89,7 @@ export function FleetMapView({ sites, assets, staff, height = '60vh', vesselPosi
       zoom: 10,
       mapTypeId: 'roadmap',
       disableDefaultUI: false,
+      gestureHandling: 'cooperative',   // Ctrl+scroll on desktop, 2-finger pan on mobile
       styles: dark ? DARK_STYLE : [],
       backgroundColor: dark ? '#0f151d' : '#E7ECF1',
     });

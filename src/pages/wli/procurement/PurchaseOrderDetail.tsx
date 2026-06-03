@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { ArrowLeft, Download, Check, Package, Banknote } from 'lucide-react';
 import { FileUpload } from '../../../components/shared/FileUpload';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -26,6 +26,12 @@ function poBadge(status: string): string {
 
 export function PurchaseOrderDetail() {
   const { id } = useParams();
+  const { pathname } = useLocation();
+  // Reached from the Holding payment-approvals area (Antrac Finance / CFO / Director)
+  // or the WLI procurement area — keep back/source links inside the right module.
+  const inHolding = pathname.startsWith('/holding');
+  const backTo = inHolding ? '/holding/approvals' : '/wli/procurement/orders';
+  const backLabel = inHolding ? 'Payment Approvals' : 'Purchase Orders';
   const { data: po, loading, refresh } = useEntity<PurchaseOrder>('purchaseOrders', id);
 
   if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
@@ -37,7 +43,7 @@ export function PurchaseOrderDetail() {
 
   return (
     <div className="page">
-      <Link to="/wli/procurement/orders" className="dback"><ArrowLeft /> Purchase Orders</Link>
+      <Link to={backTo} className="dback"><ArrowLeft /> {backLabel}</Link>
 
       <div className="dhead">
         <div>
@@ -45,7 +51,7 @@ export function PurchaseOrderDetail() {
           <h1 className="dtitle">{po.supplierName}</h1>
           <div className="dhead-badges">
             <span className={`badge ${poBadge(po.status)}`}><span className="bdot" />{poWf.statusLabels[po.status as POStatus]}</span>
-            <Link className="tc-sub" to={`/wli/procurement/requests/${po.purchaseRequestId}`} style={{ color: 'var(--accent)' }}>View source PR</Link>
+            <Link className="tc-sub" to={`${inHolding ? '/holding/procurement' : '/wli/procurement'}/requests/${po.purchaseRequestId}`} style={{ color: 'var(--accent)' }}>View source PR</Link>
           </div>
         </div>
         <div className="dhead-actions">

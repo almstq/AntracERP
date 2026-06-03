@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { ArrowLeft } from 'lucide-react';
@@ -10,6 +10,7 @@ import { useAuth } from '../../../lib/hooks/useAuth';
 import { executeTransition } from '../../../lib/workflow/executor';
 import { purchaseRequestWorkflow as prWf } from '../../../lib/workflow/definitions';
 import { getAvailableTransitions } from '../../../lib/workflow/engine';
+import { procurementBase } from '../../../lib/services/procurement';
 import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
 import { isAiConfigured, generateText } from '../../../lib/services/ai';
 import { Sparkles } from 'lucide-react';
@@ -19,6 +20,9 @@ import type { PurchaseRequest, PRStatus, PRLineItem, PRQuote } from '../../../ty
 
 export function PurchaseRequestDetail() {
   const { id } = useParams();
+  const { pathname } = useLocation();
+  const base = procurementBase(pathname);
+  const inHolding = pathname.startsWith('/holding');
   const { user, effectiveRole } = useAuth();
   const { data: pr, loading, refresh } = useEntity<PurchaseRequest>('purchaseRequests', id);
   const { data: suppliers } = useSupplierList();
@@ -118,6 +122,14 @@ export function PurchaseRequestDetail() {
     finally { setBusy(false); }
   }
 
+  // Direct-PR approval gate (requester ≠ approver).
+  async function declineRequest() {
+    const notes = window.prompt('Reason for declining this request:');
+    if (!notes?.trim()) return;
+    const ok = await run('rejected', undefined, notes.trim());
+    if (ok) toast('success', 'Request declined');
+  }
+
   // Proc hands off to GM once quotes are gathered.
   async function forwardToGm() {
     const ok = await run('quotes_under_review', { quotes: buildQuotes() });
@@ -149,16 +161,18 @@ export function PurchaseRequestDetail() {
 
   return (
     <div className="page">
-      <Link to="/wli/procurement/requests" className="dback"><ArrowLeft /> Purchase Requests</Link>
+      <Link to={`${base}/requests`} className="dback"><ArrowLeft /> Purchase Requests</Link>
       <div className="dhead">
         <div>
           <span className="eyebrow">{pr.displayId}</span>
-          <h1 className="dtitle">Purchase Request</h1>
+          <h1 className="dtitle">{pr.title || 'Purchase Request'}</h1>
           <div className="dhead-badges">
-            <span className={`badge ${status === 'closed' ? 'b-pos' : status === 'gm_quote_approved' || status === 'po_raised' ? 'b-accent' : 'b-info'}`}>
+            <span className={`badge ${status === 'closed' ? 'b-pos' : status === 'rejected' ? 'b-danger' : status === 'gm_quote_approved' || status === 'po_raised' ? 'b-accent' : status === 'on_hold' ? 'b-warn' : 'b-info'}`}>
               <span className="bdot" />{prWf.statusLabels[status]}
             </span>
-            <Link className="tc-sub" to={`/wli/tickets/${pr.ticketId}`} style={{ color: 'var(--accent)' }}>Ticket {pr.ticketId}</Link>
+            {pr.origin === 'direct'
+              ? <span className="tc-sub">Direct request</span>
+              : pr.ticketId && <Link className="tc-sub" to={`/wli/tickets/${pr.ticketId}`} style={{ color: 'var(--accent)' }}>Ticket {pr.ticketId}</Link>}
             <span className="tc-sub">{pr.urgency}</span>
           </div>
         </div>
@@ -166,6 +180,23 @@ export function PurchaseRequestDetail() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="md:col-span-2 space-y-4">
+          {pr.origin === 'direct' && (
+            <Card header={<span className="text-sm font-medium">Request</span>}>
+              <div className="space-y-2 text-xs">
+                {pr.reason && (
+                  <div>
+                    <p className="text-[10px] uppercase tracking-wider text-text-muted mb-0.5">Justification</p>
+                    <p className="text-text-secondary leading-relaxed">{pr.reason}</p>
+                  </div>
+                )}
+                <div className="flex gap-4 pt-1 text-text-muted">
+                  <span>Site: <span className="text-text-primary">{pr.siteId}</span></span>
+                  <span>SBU: <span className="text-text-primary">{pr.sbuId}</span></span>
+                </div>
+              </div>
+            </Card>
+          )}
+
           <Card header={<span className="text-sm font-medium">Line Items</span>}>
             <div className="space-y-2 text-xs">
               {pr.lineItems.map((li) => (
@@ -374,7 +405,7 @@ export function PurchaseRequestDetail() {
             <Card header={<span className="text-sm font-medium">Purchase Orders</span>}>
               <div className="space-y-1 text-xs">
                 {pr.purchaseOrderIds.map((poId) => (
-                  <Link key={poId} to={`/wli/procurement/orders/${poId}`} className="block p-2 rounded-lg bg-bg-surface text-blue hover:bg-bg-base">View PO →</Link>
+                  <Link key={poId} to={inHolding ? `/holding/approvals/${poId}` : `/wli/procurement/orders/${poId}`} className="block p-2 rounded-lg bg-bg-surface text-blue hover:bg-bg-base">View PO →</Link>
                 ))}
               </div>
             </Card>
@@ -386,6 +417,17 @@ export function PurchaseRequestDetail() {
         <div className="space-y-4">
           <Card header={<span className="text-sm font-medium">Actions</span>}>
             {err && <p className="text-xs text-red mb-2">{err}</p>}
+
+            {/* Direct-PR approval gate — GM approves or declines before sourcing */}
+            {pr.origin === 'direct' && status === 'on_hold' && can('activate') && (
+              <Button variant="primary" size="sm" className="w-full mb-2" onClick={() => run('approved')} disabled={busy}>Approve Request</Button>
+            )}
+            {pr.origin === 'direct' && status === 'on_hold' && can('decline_request') && (
+              <Button variant="danger" size="sm" className="w-full mb-2" onClick={declineRequest} disabled={busy}>Decline</Button>
+            )}
+            {pr.origin === 'direct' && status === 'on_hold' && getAvailableTransitions(prWf, status, role).length === 0 && (
+              <p className="text-xs text-text-muted">Submitted — awaiting GM approval.</p>
+            )}
 
             {can('accept_pr') && (
               <Button variant="primary" size="sm" className="w-full" onClick={() => run('pr_accepted')} disabled={busy}>Accept PR</Button>

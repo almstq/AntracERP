@@ -17,13 +17,28 @@ const KIND_META: Record<string, { icon: LucideIcon; tint: string; label: string 
   po: { icon: Package, tint: 'tint-pos', label: 'Purchase Order' },
 };
 
-export function WLIDashboard() {
+/**
+ * The Command Center. When `scopeSiteIds` is passed (e.g. a Supervisor's sites)
+ * the whole view — metrics, map, fleet, site overview, crewing — is filtered to
+ * those sites. Omitted (GM / super_admin) → full WLI view.
+ */
+export function WLIDashboard({ scopeSiteIds }: { scopeSiteIds?: string[] } = {}) {
   const { effectiveRole } = useAuth();
-  const { data: tickets } = useTicketList();
-  const { data: assets } = useAssetList();
-  const { data: sites } = useSiteList();
-  const { data: staff } = useStaffList();
+  const { data: allTickets } = useTicketList();
+  const { data: allAssets } = useAssetList();
+  const { data: allSites } = useSiteList();
+  const { data: allStaff } = useStaffList();
   const role = effectiveRole;
+
+  // ── Territory scope ──────────────────────────────────────────────────────
+  const scope = scopeSiteIds && scopeSiteIds.length ? new Set(scopeSiteIds) : null;
+  const sites = scope ? allSites.filter((s) => scope.has(s.id)) : allSites;
+  const assets = scope ? allAssets.filter((a) => scope.has(a.currentSiteId)) : allAssets;
+  const scopedAssetIds = new Set(assets.map((a) => a.id));
+  const staff = scope
+    ? allStaff.filter((p) => (p.siteId && scope.has(p.siteId)) || (p.assignedAssetId && scopedAssetIds.has(p.assignedAssetId)))
+    : allStaff;
+  const tickets = scope ? allTickets.filter((t) => scope.has(t.siteId)) : allTickets;
 
   const projectSiteIds = new Set(sites.filter((s) => s.type === 'project').map((s) => s.id));
   // Deployment sites exclude Malé HQ (corporate office, not a field site).
@@ -73,10 +88,10 @@ export function WLIDashboard() {
       {/* Page header */}
       <div className="page-head">
         <div>
-          <h1 className="page-title">Command Center</h1>
+          <h1 className="page-title">{scope ? 'Site Command' : 'Command Center'}</h1>
           <p className="page-sub">
             <span className="live"><i /> Live</span>
-            <span>{ROLE_LABELS[role] ?? role} · Well Land Investment</span>
+            <span>{ROLE_LABELS[role] ?? role} · {scope ? sites.map((s) => s.name).join(', ') || 'Well Land Investment' : 'Well Land Investment'}</span>
             <span>·</span>
             <span className="num">{today}</span>
           </p>

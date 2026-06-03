@@ -21,6 +21,7 @@ function findMockUser(uid: string): AuthUser | null {
     role: mock.role,
     orgId: mock.orgId,
     orgName: mock.orgId === 'antrac-holding' ? 'Antrac Holding' : mock.orgId === 'sbu-wli' ? 'WLI' : 'Antrac',
+    siteIds: mock.siteIds ?? [],
   };
 }
 
@@ -56,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const userDoc = await getDoc(doc(firebaseDb, 'users', fbUser.uid));
         if (userDoc.exists()) {
-          const data = userDoc.data() as { role: string; orgId: string; orgName?: string };
+          const data = userDoc.data() as { role: string; orgId: string; orgName?: string; siteIds?: string[] };
           setUser({
             uid: fbUser.uid,
             email: fbUser.email || '',
@@ -64,12 +65,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role: data.role,
             orgId: data.orgId,
             orgName: data.orgName || 'Antrac Holding',
+            siteIds: data.siteIds ?? [],
           });
         } else {
-          setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '' });
+          setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '', siteIds: [] });
         }
       } catch {
-        setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '' });
+        setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '', siteIds: [] });
       }
       setLoading(false);
     });

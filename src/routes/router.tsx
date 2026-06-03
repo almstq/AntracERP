@@ -4,9 +4,11 @@ import { Login } from '../pages/Login';
 import { PendingApproval } from '../pages/PendingApproval';
 import { Unauthorized } from '../pages/Unauthorized';
 import { Dashboard } from '../pages/Dashboard';
+import { Settings } from '../pages/Settings';
 import { HoldingDashboard } from '../pages/holding/HoldingDashboard';
 import { HoldingStaffRegister } from '../pages/holding/HoldingStaffRegister';
-import { WLIDashboard } from '../pages/wli/WLIDashboard';
+import { PaymentApprovals } from '../pages/holding/PaymentApprovals';
+import { WLIHome } from '../pages/wli/WLIHome';
 import { TicketList } from '../pages/wli/tickets/TicketList';
 import { TicketDetail } from '../pages/wli/tickets/TicketDetail';
 import { NewTicket } from '../pages/wli/tickets/NewTicket';
@@ -22,6 +24,7 @@ import { SupplierRegister } from '../pages/wli/registers/SupplierRegister';
 import { RoleInbox } from '../pages/wli/RoleInbox';
 import { PurchaseRequestList } from '../pages/wli/procurement/PurchaseRequestList';
 import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestDetail';
+import { NewPurchaseRequest } from '../pages/wli/procurement/NewPurchaseRequest';
 import { RFQList } from '../pages/wli/procurement/RFQList';
 import { PurchaseOrderList } from '../pages/wli/procurement/PurchaseOrderList';
 import { PurchaseOrderDetail } from '../pages/wli/procurement/PurchaseOrderDetail';
@@ -67,19 +70,29 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <DeskRedirect /> },
       { path: 'dashboard', element: <Dashboard /> },
+      { path: 'settings', element: <Settings /> },
       {
         path: 'holding',
         element: <RoleRoute allowedRoles={HOLDING_ROLES} />,
         children: [
           { index: true, element: <HoldingDashboard /> },
           { path: 'staff', element: <HoldingStaffRegister /> },
+          // HQ payment-approval chain (Antrac Finance → CFO → Director) acts on POs here,
+          // staying inside the Holding module. PO detail is reused (links are context-aware).
+          { path: 'approvals', element: <PaymentApprovals /> },
+          { path: 'approvals/:id', element: <PurchaseOrderDetail /> },
+          // Group-level procurement requests — HQ staff raise/view here; same shared
+          // components as WLI, links resolve to /holding via procurementBase().
+          { path: 'procurement/requests', element: <PurchaseRequestList /> },
+          { path: 'procurement/requests/new', element: <NewPurchaseRequest /> },
+          { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
         ],
       },
       {
         path: 'wli',
         element: <RoleRoute allowedRoles={WLI_ROLES} />,
         children: [
-          { index: true, element: <WLIDashboard /> },
+          { index: true, element: <WLIHome /> },
           { path: 'desk/:role', element: <RoleInbox /> },
           { path: 'tickets', element: <TicketList /> },
           { path: 'tickets/new', element: <NewTicket /> },
@@ -94,6 +107,7 @@ export const router = createBrowserRouter([
           { path: 'suppliers/:id', element: <SupplierDetail /> },
           { path: 'map', element: <FleetMap /> },
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
+          { path: 'procurement/requests/new', element: <NewPurchaseRequest /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
           { path: 'procurement/rfqs', element: <RFQList /> },
           { path: 'procurement/orders', element: <PurchaseOrderList /> },

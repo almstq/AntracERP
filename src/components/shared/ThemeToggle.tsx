@@ -1,20 +1,9 @@
 import { useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
-
-type Theme = 'light' | 'dark';
-
-function current(): Theme {
-  return document.documentElement.classList.contains('light') ? 'light' : 'dark';
-}
-
-export function applyTheme(theme: Theme) {
-  document.documentElement.classList.toggle('light', theme === 'light');
-  document.documentElement.setAttribute('data-theme', theme); // Helix shell tokens
-  try { localStorage.setItem('theme', theme); } catch { /* ignore */ }
-}
+import { applyTheme, currentTheme, type Theme } from '../../lib/prefs';
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>(current);
+  const [theme, setTheme] = useState<Theme>(currentTheme);
 
   function toggle() {
     const next: Theme = theme === 'light' ? 'dark' : 'light';

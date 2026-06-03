@@ -16,6 +16,10 @@ try {
     document.documentElement.classList.add('light');
     document.documentElement.setAttribute('data-theme', 'light');
   }
+  const density = localStorage.getItem('density');
+  if (density === 'compact' || density === 'comfortable') {
+    document.documentElement.setAttribute('data-density', density);
+  }
 } catch { /* ignore */ }
 
 const queryClient = new QueryClient({

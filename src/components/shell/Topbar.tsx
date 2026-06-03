@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutGrid, Search, Bell, Inbox, Moon, Sun, Menu } from 'lucide-react';
 import { moduleForPath } from './navConfig';
-import { applyTheme } from '../shared/ThemeToggle';
+import { applyTheme } from '../../lib/prefs';
 
 function currentLabel(pathname: string): string {
   const mod = moduleForPath(pathname);
