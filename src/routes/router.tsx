@@ -1,3 +1,5 @@
+/* eslint-disable react-refresh/only-export-components */
+import React, { lazy, Suspense } from 'react';
 import { createBrowserRouter } from 'react-router-dom';
 import { ProtectedRoute, RoleRoute, DeskRedirect } from '../components/layout/AppShell';
 import { Login } from '../pages/Login';
@@ -6,63 +8,104 @@ import { PendingApproval } from '../pages/PendingApproval';
 import { Unauthorized } from '../pages/Unauthorized';
 import { Dashboard } from '../pages/Dashboard';
 import { Settings } from '../pages/Settings';
-import { HoldingDashboard } from '../pages/holding/HoldingDashboard';
-import { HoldingStaffRegister } from '../pages/holding/HoldingStaffRegister';
-import { PaymentApprovals } from '../pages/holding/PaymentApprovals';
-import { WLIHome } from '../pages/wli/WLIHome';
-import { TicketList } from '../pages/wli/tickets/TicketList';
-import { TicketDetail } from '../pages/wli/tickets/TicketDetail';
-import { NewTicket } from '../pages/wli/tickets/NewTicket';
-import { LocationRegister } from '../pages/wli/registers/LocationRegister';
-import { SiteDetail } from '../pages/wli/registers/SiteDetail';
-import { AssetRegister } from '../pages/wli/registers/AssetRegister';
-import { AssetDetail } from '../pages/wli/registers/AssetDetail';
-import { StaffDetail } from '../pages/wli/registers/StaffDetail';
-import { SupplierDetail } from '../pages/wli/registers/SupplierDetail';
-import { StaffRegister } from '../pages/wli/registers/StaffRegister';
-import { FleetMap } from '../pages/wli/registers/FleetMap';
-import { SupplierRegister } from '../pages/wli/registers/SupplierRegister';
-import { RoleInbox } from '../pages/wli/RoleInbox';
-import { PurchaseRequestList } from '../pages/wli/procurement/PurchaseRequestList';
-import { PurchaseRequestDetail } from '../pages/wli/procurement/PurchaseRequestDetail';
-import { NewPurchaseRequest } from '../pages/wli/procurement/NewPurchaseRequest';
-import { RFQList } from '../pages/wli/procurement/RFQList';
-import { PurchaseOrderList } from '../pages/wli/procurement/PurchaseOrderList';
-import { PurchaseOrderDetail } from '../pages/wli/procurement/PurchaseOrderDetail';
-import { CustomerRegister } from '../pages/wli/crm/CustomerRegister';
-import { CustomerDetail } from '../pages/wli/crm/CustomerDetail';
-import { EnquiryList } from '../pages/wli/crm/EnquiryList';
-import { NewEnquiry } from '../pages/wli/crm/NewEnquiry';
-import { EnquiryDetail } from '../pages/wli/crm/EnquiryDetail';
-import { WorkOrderList } from '../pages/wli/crm/WorkOrderList';
-import { WorkOrderDetail } from '../pages/wli/crm/WorkOrderDetail';
-import { SalesDashboard } from '../pages/wli/crm/SalesDashboard';
-import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
-import { Profitability } from '../pages/wli/reports/Profitability';
-import { FleetUptime } from '../pages/wli/reports/FleetUptime';
-import { DeploymentRegister } from '../pages/wli/deployments/DeploymentRegister';
-import { NewDeployment } from '../pages/wli/deployments/NewDeployment';
-import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
-import { NewFuelRequest } from '../pages/wli/fuel/NewFuelRequest';
-import { FuelRequestDetail } from '../pages/wli/fuel/FuelRequestDetail';
-import { DocumentVault } from '../pages/wli/vault/DocumentVault';
-import { StoresRegister } from '../pages/wli/warehouse/StoresRegister';
-import { ItemCatalog } from '../pages/wli/warehouse/ItemCatalog';
-import { ItemDetail } from '../pages/wli/warehouse/ItemDetail';
-import { StockByStore } from '../pages/wli/warehouse/StockByStore';
-import { MovementsLedger } from '../pages/wli/warehouse/MovementsLedger';
-import { TransferList } from '../pages/wli/warehouse/TransferList';
-import { NewTransfer } from '../pages/wli/warehouse/NewTransfer';
-import { TransferDetail } from '../pages/wli/warehouse/TransferDetail';
-import { FuelDispatchList } from '../pages/mpl/FuelDispatchList';
-import { FuelDispatchDetail } from '../pages/mpl/FuelDispatchDetail';
-import { InterSBUTransferList } from '../pages/mpl/InterSBUTransferList';
-import { MPLDashboard } from '../pages/mpl/MPLDashboard';
-import { MplStaffRegister } from '../pages/mpl/MplStaffRegister';
-import { EMSDashboard } from '../pages/ems/EMSDashboard';
-import { UserList } from '../pages/admin/UserList';
 import { HOLDING_ROLES, WLI_ROLES, MPL_ROLES, EMS_ROLES } from '../lib/permissions/roles';
 import { RouteError } from '../components/shared/RouteError';
+import { LoadingSpinner } from '../components/shared/LoadingSpinner';
+
+// --- Lazy-loaded feature modules (grouped by SBU / sub-area) ---
+// Auth pages, core shell, and Dashboard/Settings stay eager — they're on the critical first-load path.
+
+// Holding
+const HoldingDashboard    = lazy(() => import('../pages/holding/HoldingDashboard').then(m => ({ default: m.HoldingDashboard })));
+const HoldingStaffRegister = lazy(() => import('../pages/holding/HoldingStaffRegister').then(m => ({ default: m.HoldingStaffRegister })));
+const PaymentApprovals    = lazy(() => import('../pages/holding/PaymentApprovals').then(m => ({ default: m.PaymentApprovals })));
+
+// WLI — core
+const WLIHome  = lazy(() => import('../pages/wli/WLIHome').then(m => ({ default: m.WLIHome })));
+const RoleInbox = lazy(() => import('../pages/wli/RoleInbox').then(m => ({ default: m.RoleInbox })));
+
+// WLI — tickets
+const TicketList   = lazy(() => import('../pages/wli/tickets/TicketList').then(m => ({ default: m.TicketList })));
+const TicketDetail = lazy(() => import('../pages/wli/tickets/TicketDetail').then(m => ({ default: m.TicketDetail })));
+const NewTicket    = lazy(() => import('../pages/wli/tickets/NewTicket').then(m => ({ default: m.NewTicket })));
+
+// WLI — registers
+const LocationRegister = lazy(() => import('../pages/wli/registers/LocationRegister').then(m => ({ default: m.LocationRegister })));
+const SiteDetail       = lazy(() => import('../pages/wli/registers/SiteDetail').then(m => ({ default: m.SiteDetail })));
+const AssetRegister    = lazy(() => import('../pages/wli/registers/AssetRegister').then(m => ({ default: m.AssetRegister })));
+const AssetDetail      = lazy(() => import('../pages/wli/registers/AssetDetail').then(m => ({ default: m.AssetDetail })));
+const StaffRegister    = lazy(() => import('../pages/wli/registers/StaffRegister').then(m => ({ default: m.StaffRegister })));
+const StaffDetail      = lazy(() => import('../pages/wli/registers/StaffDetail').then(m => ({ default: m.StaffDetail })));
+const SupplierRegister = lazy(() => import('../pages/wli/registers/SupplierRegister').then(m => ({ default: m.SupplierRegister })));
+const SupplierDetail   = lazy(() => import('../pages/wli/registers/SupplierDetail').then(m => ({ default: m.SupplierDetail })));
+const FleetMap         = lazy(() => import('../pages/wli/registers/FleetMap').then(m => ({ default: m.FleetMap })));
+
+// WLI — procurement (shared with Holding)
+const PurchaseRequestList   = lazy(() => import('../pages/wli/procurement/PurchaseRequestList').then(m => ({ default: m.PurchaseRequestList })));
+const PurchaseRequestDetail = lazy(() => import('../pages/wli/procurement/PurchaseRequestDetail').then(m => ({ default: m.PurchaseRequestDetail })));
+const NewPurchaseRequest    = lazy(() => import('../pages/wli/procurement/NewPurchaseRequest').then(m => ({ default: m.NewPurchaseRequest })));
+const RFQList               = lazy(() => import('../pages/wli/procurement/RFQList').then(m => ({ default: m.RFQList })));
+const PurchaseOrderList     = lazy(() => import('../pages/wli/procurement/PurchaseOrderList').then(m => ({ default: m.PurchaseOrderList })));
+const PurchaseOrderDetail   = lazy(() => import('../pages/wli/procurement/PurchaseOrderDetail').then(m => ({ default: m.PurchaseOrderDetail })));
+
+// WLI — CRM
+const CustomerRegister = lazy(() => import('../pages/wli/crm/CustomerRegister').then(m => ({ default: m.CustomerRegister })));
+const CustomerDetail   = lazy(() => import('../pages/wli/crm/CustomerDetail').then(m => ({ default: m.CustomerDetail })));
+const EnquiryList      = lazy(() => import('../pages/wli/crm/EnquiryList').then(m => ({ default: m.EnquiryList })));
+const NewEnquiry       = lazy(() => import('../pages/wli/crm/NewEnquiry').then(m => ({ default: m.NewEnquiry })));
+const EnquiryDetail    = lazy(() => import('../pages/wli/crm/EnquiryDetail').then(m => ({ default: m.EnquiryDetail })));
+const WorkOrderList    = lazy(() => import('../pages/wli/crm/WorkOrderList').then(m => ({ default: m.WorkOrderList })));
+const WorkOrderDetail  = lazy(() => import('../pages/wli/crm/WorkOrderDetail').then(m => ({ default: m.WorkOrderDetail })));
+const SalesDashboard   = lazy(() => import('../pages/wli/crm/SalesDashboard').then(m => ({ default: m.SalesDashboard })));
+const FinanceDashboard = lazy(() => import('../pages/wli/crm/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
+
+// WLI — reports (shared with Holding)
+const Profitability = lazy(() => import('../pages/wli/reports/Profitability').then(m => ({ default: m.Profitability })));
+const FleetUptime   = lazy(() => import('../pages/wli/reports/FleetUptime').then(m => ({ default: m.FleetUptime })));
+
+// WLI — deployments
+const DeploymentRegister = lazy(() => import('../pages/wli/deployments/DeploymentRegister').then(m => ({ default: m.DeploymentRegister })));
+const NewDeployment      = lazy(() => import('../pages/wli/deployments/NewDeployment').then(m => ({ default: m.NewDeployment })));
+
+// WLI — fuel
+const FuelRequestList   = lazy(() => import('../pages/wli/fuel/FuelRequestList').then(m => ({ default: m.FuelRequestList })));
+const NewFuelRequest    = lazy(() => import('../pages/wli/fuel/NewFuelRequest').then(m => ({ default: m.NewFuelRequest })));
+const FuelRequestDetail = lazy(() => import('../pages/wli/fuel/FuelRequestDetail').then(m => ({ default: m.FuelRequestDetail })));
+
+// WLI — vault
+const DocumentVault = lazy(() => import('../pages/wli/vault/DocumentVault').then(m => ({ default: m.DocumentVault })));
+
+// WLI — warehouse
+const StoresRegister   = lazy(() => import('../pages/wli/warehouse/StoresRegister').then(m => ({ default: m.StoresRegister })));
+const ItemCatalog      = lazy(() => import('../pages/wli/warehouse/ItemCatalog').then(m => ({ default: m.ItemCatalog })));
+const ItemDetail       = lazy(() => import('../pages/wli/warehouse/ItemDetail').then(m => ({ default: m.ItemDetail })));
+const StockByStore     = lazy(() => import('../pages/wli/warehouse/StockByStore').then(m => ({ default: m.StockByStore })));
+const MovementsLedger  = lazy(() => import('../pages/wli/warehouse/MovementsLedger').then(m => ({ default: m.MovementsLedger })));
+const TransferList     = lazy(() => import('../pages/wli/warehouse/TransferList').then(m => ({ default: m.TransferList })));
+const NewTransfer      = lazy(() => import('../pages/wli/warehouse/NewTransfer').then(m => ({ default: m.NewTransfer })));
+const TransferDetail   = lazy(() => import('../pages/wli/warehouse/TransferDetail').then(m => ({ default: m.TransferDetail })));
+
+// MPL
+const MPLDashboard        = lazy(() => import('../pages/mpl/MPLDashboard').then(m => ({ default: m.MPLDashboard })));
+const MplStaffRegister    = lazy(() => import('../pages/mpl/MplStaffRegister').then(m => ({ default: m.MplStaffRegister })));
+const FuelDispatchList    = lazy(() => import('../pages/mpl/FuelDispatchList').then(m => ({ default: m.FuelDispatchList })));
+const FuelDispatchDetail  = lazy(() => import('../pages/mpl/FuelDispatchDetail').then(m => ({ default: m.FuelDispatchDetail })));
+const InterSBUTransferList = lazy(() => import('../pages/mpl/InterSBUTransferList').then(m => ({ default: m.InterSBUTransferList })));
+
+// EMS
+const EMSDashboard = lazy(() => import('../pages/ems/EMSDashboard').then(m => ({ default: m.EMSDashboard })));
+
+// Admin
+const UserList = lazy(() => import('../pages/admin/UserList').then(m => ({ default: m.UserList })));
+
+// Wraps a lazy component in a route-level Suspense boundary.
+function s(C: React.ComponentType) {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner /></div>}>
+      <C />
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
   { path: '/login', element: <Login /> },
@@ -81,102 +124,91 @@ export const router = createBrowserRouter([
         path: 'holding',
         element: <RoleRoute allowedRoles={HOLDING_ROLES} />,
         children: [
-          { index: true, element: <HoldingDashboard /> },
-          { path: 'staff', element: <HoldingStaffRegister /> },
-          // HQ payment-approval chain (Antrac Finance → CFO → Director) acts on POs here,
-          // staying inside the Holding module. PO detail is reused (links are context-aware).
-          { path: 'approvals', element: <PaymentApprovals /> },
-          { path: 'approvals/:id', element: <PurchaseOrderDetail /> },
-          // Group-level procurement requests — HQ staff raise/view here; same shared
-          // components as WLI, links resolve to /holding via procurementBase().
-          { path: 'procurement/requests', element: <PurchaseRequestList /> },
-          { path: 'procurement/requests/new', element: <NewPurchaseRequest /> },
-          { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
-          // Profitability + uptime reports for HQ oversight (Director / CFO) — same components as WLI
-          { path: 'reports', element: <Profitability /> },
-          { path: 'reports/uptime', element: <FleetUptime /> },
+          { index: true, element: s(HoldingDashboard) },
+          { path: 'staff', element: s(HoldingStaffRegister) },
+          { path: 'approvals', element: s(PaymentApprovals) },
+          { path: 'approvals/:id', element: s(PurchaseOrderDetail) },
+          { path: 'procurement/requests', element: s(PurchaseRequestList) },
+          { path: 'procurement/requests/new', element: s(NewPurchaseRequest) },
+          { path: 'procurement/requests/:id', element: s(PurchaseRequestDetail) },
+          { path: 'reports', element: s(Profitability) },
+          { path: 'reports/uptime', element: s(FleetUptime) },
         ],
       },
       {
         path: 'wli',
         element: <RoleRoute allowedRoles={WLI_ROLES} />,
         children: [
-          { index: true, element: <WLIHome /> },
-          { path: 'desk/:role', element: <RoleInbox /> },
-          { path: 'tickets', element: <TicketList /> },
-          { path: 'tickets/new', element: <NewTicket /> },
-          { path: 'tickets/:id', element: <TicketDetail /> },
-          { path: 'locations', element: <LocationRegister /> },
-          { path: 'locations/:id', element: <SiteDetail /> },
-          { path: 'assets', element: <AssetRegister /> },
-          { path: 'assets/:id', element: <AssetDetail /> },
-          { path: 'staff', element: <StaffRegister /> },
-          { path: 'staff/:id', element: <StaffDetail /> },
-          { path: 'suppliers', element: <SupplierRegister /> },
-          { path: 'suppliers/:id', element: <SupplierDetail /> },
-          { path: 'map', element: <FleetMap /> },
-          { path: 'procurement/requests', element: <PurchaseRequestList /> },
-          { path: 'procurement/requests/new', element: <NewPurchaseRequest /> },
-          { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
-          { path: 'procurement/rfqs', element: <RFQList /> },
-          { path: 'procurement/orders', element: <PurchaseOrderList /> },
-          { path: 'procurement/orders/:id', element: <PurchaseOrderDetail /> },
-          // CRM & Sales
-          { path: 'crm/customers', element: <CustomerRegister /> },
-          { path: 'crm/customers/:id', element: <CustomerDetail /> },
-          { path: 'crm/enquiries', element: <EnquiryList /> },
-          { path: 'crm/enquiries/new', element: <NewEnquiry /> },
-          { path: 'crm/enquiries/:id', element: <EnquiryDetail /> },
-          { path: 'crm/work-orders', element: <WorkOrderList /> },
-          { path: 'crm/work-orders/:id', element: <WorkOrderDetail /> },
-          { path: 'crm/sales', element: <SalesDashboard /> },
-          { path: 'crm/finance', element: <FinanceDashboard /> },
-          // Profitability report — revenue vs repair (shared with Holding)
-          { path: 'reports', element: <Profitability /> },
-          { path: 'reports/uptime', element: <FleetUptime /> },
-          // Deployments — machine-on-hire revenue capture
-          { path: 'deployments', element: <DeploymentRegister /> },
-          { path: 'deployments/new', element: <NewDeployment /> },
-          // Fuel & Water
-          { path: 'fuel/requests', element: <FuelRequestList /> },
-          { path: 'fuel/requests/new', element: <NewFuelRequest /> },
-          { path: 'fuel/requests/:id', element: <FuelRequestDetail /> },
-          // Document Vault
-          { path: 'documents', element: <DocumentVault /> },
-          // Warehouse / Inventory
-          { path: 'warehouse/stores', element: <StoresRegister /> },
-          { path: 'warehouse/items', element: <ItemCatalog /> },
-          { path: 'warehouse/items/:id', element: <ItemDetail /> },
-          { path: 'warehouse/stock', element: <StockByStore /> },
-          { path: 'warehouse/movements', element: <MovementsLedger /> },
-          { path: 'warehouse/transfers', element: <TransferList /> },
-          { path: 'warehouse/transfers/new', element: <NewTransfer /> },
-          { path: 'warehouse/transfers/:id', element: <TransferDetail /> },
+          { index: true, element: s(WLIHome) },
+          { path: 'desk/:role', element: s(RoleInbox) },
+          { path: 'tickets', element: s(TicketList) },
+          { path: 'tickets/new', element: s(NewTicket) },
+          { path: 'tickets/:id', element: s(TicketDetail) },
+          { path: 'locations', element: s(LocationRegister) },
+          { path: 'locations/:id', element: s(SiteDetail) },
+          { path: 'assets', element: s(AssetRegister) },
+          { path: 'assets/:id', element: s(AssetDetail) },
+          { path: 'staff', element: s(StaffRegister) },
+          { path: 'staff/:id', element: s(StaffDetail) },
+          { path: 'suppliers', element: s(SupplierRegister) },
+          { path: 'suppliers/:id', element: s(SupplierDetail) },
+          { path: 'map', element: s(FleetMap) },
+          { path: 'procurement/requests', element: s(PurchaseRequestList) },
+          { path: 'procurement/requests/new', element: s(NewPurchaseRequest) },
+          { path: 'procurement/requests/:id', element: s(PurchaseRequestDetail) },
+          { path: 'procurement/rfqs', element: s(RFQList) },
+          { path: 'procurement/orders', element: s(PurchaseOrderList) },
+          { path: 'procurement/orders/:id', element: s(PurchaseOrderDetail) },
+          { path: 'crm/customers', element: s(CustomerRegister) },
+          { path: 'crm/customers/:id', element: s(CustomerDetail) },
+          { path: 'crm/enquiries', element: s(EnquiryList) },
+          { path: 'crm/enquiries/new', element: s(NewEnquiry) },
+          { path: 'crm/enquiries/:id', element: s(EnquiryDetail) },
+          { path: 'crm/work-orders', element: s(WorkOrderList) },
+          { path: 'crm/work-orders/:id', element: s(WorkOrderDetail) },
+          { path: 'crm/sales', element: s(SalesDashboard) },
+          { path: 'crm/finance', element: s(FinanceDashboard) },
+          { path: 'reports', element: s(Profitability) },
+          { path: 'reports/uptime', element: s(FleetUptime) },
+          { path: 'deployments', element: s(DeploymentRegister) },
+          { path: 'deployments/new', element: s(NewDeployment) },
+          { path: 'fuel/requests', element: s(FuelRequestList) },
+          { path: 'fuel/requests/new', element: s(NewFuelRequest) },
+          { path: 'fuel/requests/:id', element: s(FuelRequestDetail) },
+          { path: 'documents', element: s(DocumentVault) },
+          { path: 'warehouse/stores', element: s(StoresRegister) },
+          { path: 'warehouse/items', element: s(ItemCatalog) },
+          { path: 'warehouse/items/:id', element: s(ItemDetail) },
+          { path: 'warehouse/stock', element: s(StockByStore) },
+          { path: 'warehouse/movements', element: s(MovementsLedger) },
+          { path: 'warehouse/transfers', element: s(TransferList) },
+          { path: 'warehouse/transfers/new', element: s(NewTransfer) },
+          { path: 'warehouse/transfers/:id', element: s(TransferDetail) },
         ],
       },
       {
         path: 'mpl',
         element: <RoleRoute allowedRoles={MPL_ROLES} />,
         children: [
-          { index: true, element: <MPLDashboard /> },
-          { path: 'staff', element: <MplStaffRegister /> },
-          { path: 'dispatches', element: <FuelDispatchList /> },
-          { path: 'dispatches/:id', element: <FuelDispatchDetail /> },
-          { path: 'transfers', element: <InterSBUTransferList /> },
+          { index: true, element: s(MPLDashboard) },
+          { path: 'staff', element: s(MplStaffRegister) },
+          { path: 'dispatches', element: s(FuelDispatchList) },
+          { path: 'dispatches/:id', element: s(FuelDispatchDetail) },
+          { path: 'transfers', element: s(InterSBUTransferList) },
         ],
       },
       {
         path: 'ems',
         element: <RoleRoute allowedRoles={EMS_ROLES} />,
         children: [
-          { index: true, element: <EMSDashboard /> },
+          { index: true, element: s(EMSDashboard) },
         ],
       },
       {
         path: 'admin',
         element: <RoleRoute allowedRoles={['super_admin']} />,
         children: [
-          { path: 'users', element: <UserList /> },
+          { path: 'users', element: s(UserList) },
         ],
       },
     ],
