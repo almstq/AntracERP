@@ -109,9 +109,11 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
   rules are fully covered. RTL+jsdom installed but not yet wired (no component tests yet).
 - ✅✅ **P0 BLOCK (Steps 1–4) COMPLETE.** Readiness ~60%.
 
-### Step 5 — Enable Strict Types · P1 · ~1-2d · ⬜
-- File: `tsconfig.app.json` → `"strict": true`; fix all errors; remove `any`; handle null/undefined.
-- **Accept:** `tsc + vite` clean under strict; no behavioural change.
+### Step 5 — Enable Strict Types · P1 · ~~1-2d~~ → 5 min · ✅ DONE (commit `0168b50`)
+- A probe (tsconfig extends + strict:true, verified non-no-op via an injected TS18048) found the codebase
+  ALREADY strict-clean: **0 errors**. The author coded as-if-strict throughout. So Step 5 = just the flag flip.
+- `tsconfig.app.json` → `"strict": true`. No `any` removal / null-guarding needed.
+- **Accept:** MET. `tsc -b + vite` clean under strict; `npm test` 95 passed; no behavioural change. Readiness ~65%.
 
 ### Step 6 — Create Signup Flow · P1 · ~1d · 🟨 partial (Google self-register exists)
 - NOTE: Google sign-ups already self-register as `role: 'pending'` (AuthContext) + SA assigns roles. This step adds the EMAIL/PASSWORD path.
