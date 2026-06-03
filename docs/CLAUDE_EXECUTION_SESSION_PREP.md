@@ -36,15 +36,20 @@ The report was authored from static source-code scans. Two of its prescriptions 
 behaviour we **verified live in the browser this session** (real Firebase + real Gemini key). Per
 Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently followed, NOT silently ignored.
 
-### FLAG A — Step 2 Gemini model/endpoint = CONFIRMED REGRESSION if applied verbatim
+### FLAG A — ✅ RESOLVED 2026-06-03 (Step 2 + 2.1, Mustarq-authorized model change)
 - Report says: *"Change MODEL to `gemini-1.5-flash`, change ENDPOINT to `/v1` (not v1beta)."*
 - **Live evidence this session:** that exact config (`gemini-1.5-flash` on `/v1`) produced a runtime
   **HTTP 404 — "models/gemini-1.5-flash is not found for API version v1"** in the user's browser console.
-- It was fixed to **`gemini-2.0-flash` on `/v1beta`** (commit `b8e794f`), which is the current working state.
-- **Action for the implementer:** Apply the *rest* of Step 2 (retry/backoff for 429/503, move prompts to
-  `ai.prompts.ts`, add Retry button). **HOLD the model/endpoint revert** — reverting re-introduces a
-  confirmed 404. Confirm with Cipher/Mustarq before touching `MODEL`/`ENDPOINT`. Likely the report's
-  model line is stale (the 404 only surfaces at runtime with a live key, not in a static scan).
+- **RESOLUTION:** The report's model line was stale AND a live probe of the production key (2026-06-03)
+  found the whole **`gemini-2.0-flash` family is off the free tier** (`429 RESOURCE_EXHAUSTED limit:0`),
+  while the **`gemini-2.5` family returns 200**. With Mustarq's explicit sign-off, the model was changed:
+  - `MODEL` → **`gemini-2.5-flash`**, now env-overridable via `VITE_GEMINI_MODEL` (commit `90eff29`).
+  - `thinkingConfig.thinkingBudget = 0` added — 2.5 thinking-on-by-default ate the token budget and
+    truncated briefs; disabling it restored full output (commit `f45b610`).
+  - ENDPOINT stays `/v1beta` (reverting to `/v1` still 404s — the original flag holds).
+  - Verified end-to-end live: ops-brief generates, `finishReason: STOP`.
+- **Net:** the report's prescription (revert to 1.5/v1) was correctly NOT followed; the real fix was a
+  forward move to 2.5-flash. No action remains for the next session.
 
 ### FLAG B — Step 1 login is PARTIALLY DONE; report's AuthContext fix is additive
 - This session already fixed the navigation race in `Login.tsx` (navigate via an auth-state `useEffect`
@@ -60,20 +65,21 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 
 > Status legend: ⬜ not started · 🟨 partially done this session · ✅ effectively done (verify only)
 
-### Step 1 — Fix Double Login · P0 · ~2h · 🟨 partial
+### Step 1 — Fix Double Login · P0 · ~2h · ✅ DONE (commit `f7ab71d`)
 - File: `src/lib/context/AuthContext.tsx`, `src/pages/Login.tsx`
-- Add `setLoading(true)` immediately after the `if (!fbUser)` guard, BEFORE `await getDoc` (FLAG B).
-- Add `isProcessing` state to `Login.tsx` → disable button + "Signing in…" during auth transition.
-- Keep existing effect-based navigation (already in place).
-- **Accept:** sign in (Google + email) once; no redirect-to-login flicker; button disabled mid-auth.
+- ✅ `setLoading(true)` added after the `if (!fbUser)` guard, before `await getDoc` (FLAG B).
+- ✅ `isProcessing` state in `Login.tsx` → disables both buttons + "Signing in…" during auth.
+- ✅ Kept existing effect-based navigation.
+- **Accept:** met — tsc/vite/eslint clean; button disabled mid-auth.
 
-### Step 2 — Stabilize Gemini AI · P0 · ~4h · 🟨 partial (model already fixed)
+### Step 2 — Stabilize Gemini AI · P0 · ~4h · ✅ DONE (commits `26e62a8`, `90eff29`, `f45b610`)
 - File: `src/lib/services/ai.ts` (+ new `src/lib/services/ai.prompts.ts`)
-- ⚠️ FLAG A: do NOT revert model/endpoint. Keep `gemini-2.0-flash` / `/v1beta`.
-- Add exponential backoff retry for 429 + 503 (max 3 retries).
-- Move prompt strings from `AiBrief.tsx` + `AiDiagnosisHint.tsx` → `ai.prompts.ts`.
-- Add a "Retry" button to AI error states.
-- **Accept:** brief generates; transient 429/503 retried; prompts centralized; build clean.
+- ✅ FLAG A resolved (see above): model → `gemini-2.5-flash` (env-overridable), thinking disabled,
+  endpoint stays `/v1beta`. Mustarq-authorized; verified live.
+- ✅ Exponential backoff retry for 429 + 503 (max 3), abort-aware.
+- ✅ Prompts moved to `ai.prompts.ts` (wording preserved for mock-mode detection).
+- ✅ Retry buttons added to both AI components' error states.
+- **Accept:** met — brief generates live (`finishReason: STOP`), prompts centralized, build clean.
 
 ### Step 3 — Enforce Site Scoping · P0 · ~1d · ⬜
 - File: `src/lib/hooks/useWorkflowData.ts`
