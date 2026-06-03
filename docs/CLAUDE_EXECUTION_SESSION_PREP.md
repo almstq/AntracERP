@@ -143,9 +143,17 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 - PARALLEL NOTE: `storage.rules` (file uploads) not reviewed this step — worth a glance if the vault is used publicly.
 - **Accept:** rules written + committed; deploy + smoke-test pending on owner. Readiness ~72%.
 
-### Step 8 — Add Sentry Monitoring · P1 · ~1d · ⬜
-- `@sentry/react` + `@sentry/vite-plugin`; init in `main.tsx`; error boundary around the router; source maps in prod.
-- **Accept:** a thrown error is captured; boundary renders fallback.
+### Step 8 — Error Monitoring · P1 · ✅ DONE (curated — error boundary only) — commit `b050e39`
+- Did the self-contained half (protects staff, stays owner-controlled). Sentry (external SaaS, needs
+  account/DSN, sends data out) DEFERRED as a future opt-in — not installed.
+- New `src/components/shared/ErrorBoundary.tsx` (class component, no new dep), mounted ABOVE the
+  providers + router in `main.tsx`. Catches what RouteError can't (provider errors, top-level
+  /login /signup /pending, RouterProvider init). Branded Reload/Home fallback. `reportError()` is the
+  single seam to add Sentry later with zero other changes.
+- **Accept (re-scoped):** MET. boundary renders fallback on a thrown error; `tsc -b strict + vite` clean;
+  `npm test` 95; lint-clean. Readiness ~78%.
+- TODO if wanted later: `npm i @sentry/react @sentry/vite-plugin`, init in main.tsx, call
+  `Sentry.captureException` inside `ErrorBoundary.reportError`, source maps in prod, set DSN env.
 
 ### Step 9 — Code Splitting · P1 · ~1d · ⬜
 - File: `src/routes/router.tsx` (note: report says `src/router.tsx` — actual path is `src/routes/router.tsx`).
