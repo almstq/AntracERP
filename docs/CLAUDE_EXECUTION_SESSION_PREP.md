@@ -81,13 +81,20 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 - ✅ Retry buttons added to both AI components' error states.
 - **Accept:** met — brief generates live (`finishReason: STOP`), prompts centralized, build clean.
 
-### Step 3 — Enforce Site Scoping · P0 · ~1d · ⬜
-- File: `src/lib/hooks/useWorkflowData.ts`
-- Accept `siteIds` (from `AuthContext`); add `where('siteId', 'in', siteIds)` for site-bound roles.
-- Apply to `useTicketList`, `useAssetList`, `useStaffList`, and other list hooks.
-- NOTE: Firestore `in` is max 10 values; field roles have ≤4 sites so OK. Super/GM (all sites) skip filter.
-- NOTE: this session scopes the *dashboards* by siteIds client-side; this step pushes it into the *query*.
-- **Accept:** an operator's hooks return only their site's docs; GM/super unchanged; build clean.
+### Step 3 — Enforce Site Scoping · P0 · ~1d · ✅ DONE + LIVE-VERIFIED (commit `98b505a`)
+- File: `src/lib/hooks/useWorkflowData.ts` + new `listBySites()` in `src/lib/firebase/db.ts`.
+- ⚠️ The prep one-liner ("`where('siteId','in',siteIds)` on all") was WRONG — corrected per live code:
+  - assets scope on **`currentSiteId`** (NOT `siteId` — would've returned 0), sites on **document id**,
+    tickets/staff on `siteId`. (Verified against the existing client-side scope in WLIDashboard/OperatorHome.)
+  - Single-field `in` only (no `sbuId==` alongside) → rides the auto index, **no composite index** to deploy.
+  - Reads `user.siteIds` via `useAuth`; empty → existing `sbuId==` query (GM/super/finance/etc. unchanged).
+- Scope decision (Mustarq): **all four incl. staff**; asset-posted crew (assignedAssetId, no siteId) dropped
+  for site-bound users — accepted.
+- **Accept:** MET. Live-verified on prod data as a.musthaq (super_admin) running the real db.ts fns for
+  site `thilafushi`: assets 35→18, staff 31→25, sites 5→1, tickets 0→0 — every scoped doc in-site, no
+  query errored. Build (tsc+vite) clean.
+- KNOWN: `useWorkflowData.ts` has 12 PRE-EXISTING `react-hooks/set-state-in-effect` lint errors (not from
+  this step; tracked separately). Hook branch-selection logic verified by reading (trivial ternary).
 
 ### Step 4 — Add Test Coverage · P0 · ~2d · ⬜
 - `npm i -D vitest @testing-library/react @testing-library/jest-dom`
