@@ -37,6 +37,7 @@ import { WorkOrderList } from '../pages/wli/crm/WorkOrderList';
 import { WorkOrderDetail } from '../pages/wli/crm/WorkOrderDetail';
 import { SalesDashboard } from '../pages/wli/crm/SalesDashboard';
 import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
+import { Profitability } from '../pages/wli/reports/Profitability';
 import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
 import { NewFuelRequest } from '../pages/wli/fuel/NewFuelRequest';
 import { FuelRequestDetail } from '../pages/wli/fuel/FuelRequestDetail';
@@ -86,6 +87,8 @@ export const router = createBrowserRouter([
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
           { path: 'procurement/requests/new', element: <NewPurchaseRequest /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
+          // Profitability report for HQ oversight (Director / CFO) — same component as WLI
+          { path: 'reports', element: <Profitability /> },
         ],
       },
       {
@@ -122,6 +125,8 @@ export const router = createBrowserRouter([
           { path: 'crm/work-orders/:id', element: <WorkOrderDetail /> },
           { path: 'crm/sales', element: <SalesDashboard /> },
           { path: 'crm/finance', element: <FinanceDashboard /> },
+          // Profitability report — revenue vs repair (shared with Holding)
+          { path: 'reports', element: <Profitability /> },
           // Fuel & Water
           { path: 'fuel/requests', element: <FuelRequestList /> },
           { path: 'fuel/requests/new', element: <NewFuelRequest /> },

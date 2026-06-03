@@ -2,7 +2,7 @@ import {
   LayoutDashboard, Ticket, ShoppingCart, Package, TrendingUp, Banknote, Contact,
   Briefcase, ClipboardList, Droplets, Warehouse, Boxes, ArrowLeftRight, Truck,
   FolderOpen, MapPin, UserCog, Store, Map as MapIcon, Building2, Fuel, Wrench,
-  Users, HardHat, ClipboardCheck, type LucideIcon,
+  Users, HardHat, ClipboardCheck, BarChart3, type LucideIcon,
 } from 'lucide-react';
 import { ROLES } from '../../lib/permissions/roles';
 import { canAccessModule, visibleFor, type ModuleKey } from '../../lib/permissions/scope';
@@ -47,6 +47,7 @@ export const WLI_NAV: ModuleNav = {
         { to: '/wli/crm/work-orders', label: 'Work Orders', icon: ClipboardList, allow: [SALES_STAFF, OPS_STAFF, FINANCE_WLI] },
       ],
     },
+    { title: 'Reports', items: [{ to: '/wli/reports', label: 'Revenue vs Repair', icon: BarChart3, allow: [FINANCE_WLI] }] },
     { title: 'Fuel & Water', items: [{ to: '/wli/fuel/requests', label: 'Fuel Requests', icon: Droplets, allow: [OPERATOR, SUPERVISOR, INVENTORY_STAFF] }] },
     {
       title: 'Warehouse', allow: [INVENTORY_STAFF, PROC_STAFF], items: [
@@ -75,6 +76,7 @@ export const HQ_NAV: ModuleNav = {
   groups: [
     { items: [{ to: '/holding', label: 'Group Overview', icon: Building2, end: true }] },
     { title: 'Finance', items: [{ to: '/holding/approvals', label: 'Payment Approvals', icon: Banknote, allow: [ROLES.ANTRAC_FINANCE, ROLES.CFO, ROLES.DIRECTOR] }] },
+    { title: 'Reports', items: [{ to: '/holding/reports', label: 'WLI Revenue vs Repair', icon: BarChart3, allow: [ROLES.DIRECTOR, ROLES.CFO] }] },
     { title: 'Procurement', items: [{ to: '/holding/procurement/requests', label: 'Purchase Requests', icon: ShoppingCart, allow: [ROLES.DIRECTOR, ROLES.CFO, ROLES.ANTRAC_FINANCE, ROLES.HOLDING_HR] }] },
     { title: 'Registers', items: [{ to: '/holding/staff', label: 'Holding Staff', icon: UserCog, allow: [ROLES.HOLDING_HR, ROLES.DIRECTOR, ROLES.CFO] }] },
     { title: 'Admin', allow: [ROLES.SUPER_ADMIN], items: [{ to: '/admin/users', label: 'Users', icon: Users }] },
