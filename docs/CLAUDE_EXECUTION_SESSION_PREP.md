@@ -155,17 +155,23 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 - TODO if wanted later: `npm i @sentry/react @sentry/vite-plugin`, init in main.tsx, call
   `Sentry.captureException` inside `ErrorBoundary.reportError`, source maps in prod, set DSN env.
 
-### Step 9 — Code Splitting · P1 · ~1d · ⬜
+### Step 9 — Code Splitting · P1 · ~1d · ⬜  ← **THE ONLY REMAINING STEP** (Step 10 was done first)
 - File: `src/routes/router.tsx` (note: report says `src/router.tsx` — actual path is `src/routes/router.tsx`).
 - Wrap route elements in `React.lazy()`; `Suspense` with a loading skeleton; confirm bundle drop in build output.
+- NOTE: routes use NAMED exports → lazy at a sensible grain (heavy feature modules) via
+  `lazy(() => import('...').then(m => ({ default: m.X })))`, not all ~60 routes mechanically.
 - **Accept:** initial bundle smaller (currently ~1.17MB); routes load on demand; no broken routes.
 
-### Step 10 — Offline Persistence · P1 · ~4h · ⬜
-- File: `src/lib/firebase/client.ts`
-- Add IndexedDB persistence (note: `enableIndexedDbPersistence` is deprecated in modern SDK — use
-  `initializeFirestore(app, { localCache: persistentLocalCache(...) })` instead; same outcome).
-- Handle multi-tab. Test: load, disconnect, verify cached data still loads.
-- **Accept:** app loads cached data offline; no console errors on multi-tab.
+### Step 10 — Offline Persistence · P1 · ✅ DONE + LIVE-VERIFIED (commit `4c04a5e`)
+- `client.ts`: `getFirestore` → `initializeFirestore(app, { localCache: persistentLocalCache({ tabManager:
+  persistentMultipleTabManager() }) })` (modern SDK; deprecated enableIndexedDbPersistence threw on multi-tab).
+- HMR-safe guard: initializeFirestore is NOT idempotent (throws on module re-eval — caught live), so
+  try/catch → fall back to `getFirestore(app)`. No-op in prod; fixes dev HMR + re-import.
+- Live-verified (real auth): IndexedDB cache `firestore/[DEFAULT]/antrac-erp/main` present; app authed +
+  rendering in TWO simultaneous tabs; no multi-tab persistence errors; guard confirmed (no re-init throw).
+- Did this BEFORE Step 9 (Mustarq's call — offline is the win non-tech island staff actually feel).
+- **Accept:** MET. build (tsc -b strict + vite) clean; `npm test` 95; lint-clean. Readiness ~85%.
+- ⚠️ Commit `4c04a5e`'s message overstated "ALL 10 COMPLETE" — premature. **9 of 10 done; Step 9 pending.**
 
 ---
 
