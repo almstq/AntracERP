@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Sparkles, Wrench } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { isAiConfigured, generateText } from '../../lib/services/ai';
+import { diagnosisHintPrompt } from '../../lib/services/ai.prompts';
 import { useAuth } from '../../lib/hooks/useAuth';
 
 interface Props {
@@ -26,18 +27,7 @@ export function AiDiagnosisHint({ description, assetLabel }: Props) {
 
   async function run() {
     setBusy(true); setErr(null);
-    const prompt = [
-      'You are a heavy-equipment maintenance advisor for Well Land Investment, a plant',
-      'and marine-logistics company in the Maldives. A machine has a reported fault.',
-      `Asset: ${assetLabel || 'unspecified'}.`,
-      `Operator's report: "${description}".`,
-      '',
-      'Give the mechanic a quick pre-diagnosis. Cover, briefly:',
-      '1) the 2-3 most likely causes,',
-      '2) what to check first,',
-      '3) parts/consumables likely needed.',
-      'Be concise and practical. Short labelled lines, plain text, no markdown headers.',
-    ].join('\n');
+    const prompt = diagnosisHintPrompt({ description, assetLabel });
     try { setHint(await generateText(prompt, { temperature: 0.3, maxTokens: 350 })); }
     catch (e) { setErr(e instanceof Error ? e.message : 'AI unavailable'); }
     finally { setBusy(false); }
@@ -58,7 +48,18 @@ export function AiDiagnosisHint({ description, assetLabel }: Props) {
           <Sparkles size={12} /> {busy ? 'Analysing fault…' : 'Suggest likely causes & checks'}
         </button>
       )}
-      {err && <p className="text-[11px] text-red">{err}</p>}
+      {err && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-red">{err}</p>
+          <button
+            onClick={run}
+            disabled={busy}
+            className="shrink-0 text-[11px] text-amber hover:opacity-80 disabled:opacity-40 underline font-medium"
+          >
+            {busy ? '…' : 'Retry'}
+          </button>
+        </div>
+      )}
       {hint && (
         <>
           <p className="text-[11px] text-text-secondary whitespace-pre-line leading-snug">{hint}</p>

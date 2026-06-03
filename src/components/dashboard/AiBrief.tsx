@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { Sparkles, RefreshCw, AlertTriangle, Wind, CheckCircle2 } from 'lucide-react';
 import { isAiConfigured, cachedGenerate } from '../../lib/services/ai';
+import { opsBriefPrompt } from '../../lib/services/ai.prompts';
 
 interface Props {
   openTickets: number;
@@ -24,20 +25,10 @@ export function AiBrief(props: Props) {
 
   const run = useCallback(async (force = false) => {
     setLoading(true); setErr(null);
-    const prompt = [
-      'You are the operations advisor for Well Land Investment (WLI), a heavy-equipment',
-      'rental and marine-logistics company in the Maldives, reporting to the General Manager.',
-      'Write a concise operational brief: 2-3 short sentences, max ~45 words. Be direct and',
-      'action-oriented; flag the most important risk first. Plain prose only — no markdown,',
-      'headings, or bullet points. If everything is calm, say so briefly.',
-      '',
-      'Today\'s snapshot:',
-      `- ${openTickets} open issue tickets (${criticalTickets} critical)`,
-      `- ${approvals} item(s) awaiting GM approval`,
-      `- Land fleet ${landReady}/${landTotal} operational`,
-      `- Vessel fleet ${vesselReady}/${vesselTotal} operational`,
-      `- ${sites} active sites`,
-    ].join('\n');
+    const prompt = opsBriefPrompt({
+      openTickets, criticalTickets, approvals,
+      landReady, landTotal, vesselReady, vesselTotal, sites,
+    });
 
     try {
       const sig = force ? `${signature}:${Date.now()}` : signature;
@@ -81,7 +72,10 @@ export function AiBrief(props: Props) {
           {loading && !brief
             ? 'Generating operational brief…'
             : err
-              ? <span style={{ color: 'var(--warning)' }}>{err}</span>
+              ? <span style={{ color: 'var(--warning)' }}>
+                  {err}{' '}
+                  <button onClick={() => run(true)} disabled={loading} style={{ color: 'var(--amber, #FBBF24)', textDecoration: 'underline', fontWeight: 500 }}>Retry</button>
+                </span>
               : brief || `Fleet is operational — ${ready} of ${total} assets ready across ${sites} sites.`}
         </div>
         <div className="ai-foot">
@@ -117,7 +111,16 @@ export function AiBrief(props: Props) {
           <div className="h-2 w-4/5 bg-white/10 rounded animate-pulse" />
         </div>
       ) : err ? (
-        <p className="text-[10px] text-amber/90 mt-1 leading-relaxed italic">{err}</p>
+        <div className="mt-1">
+          <p className="text-[10px] text-amber/90 leading-relaxed italic">{err}</p>
+          <button
+            onClick={() => run(true)}
+            disabled={loading}
+            className="mt-1 text-[10px] text-amber hover:opacity-80 disabled:opacity-40 underline font-medium"
+          >
+            Retry
+          </button>
+        </div>
       ) : brief ? (
         <p className="text-[11px] text-white/90 leading-relaxed font-medium">{brief}</p>
       ) : (

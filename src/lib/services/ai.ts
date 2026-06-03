@@ -39,7 +39,32 @@ interface GenerateOpts {
   signal?: AbortSignal;
 }
 
-/** One-shot text generation. Returns mock data if no key, or throws on API error. */
+// Transient statuses worth retrying: 429 (rate limit) and 503 (overloaded).
+// 4xx other than 429 are caller errors and fail fast.
+const RETRYABLE_STATUS = new Set([429, 503]);
+const MAX_RETRIES = 3;
+
+/** Exponential backoff with jitter: ~600ms, ~1.2s, ~2.4s (+ up to 250ms). */
+function backoffDelayMs(attempt: number): number {
+  return 600 * 2 ** attempt + Math.floor(Math.random() * 250);
+}
+
+/** Promise-based delay that rejects early if the abort signal fires. */
+function delay(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new DOMException('Aborted', 'AbortError'));
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(t);
+      reject(new DOMException('Aborted', 'AbortError'));
+    }, { once: true });
+  });
+}
+
+/**
+ * One-shot text generation. Returns mock data if no key, retries transient
+ * 429/503 with exponential backoff (max 3), or throws on a terminal API error.
+ */
 export async function generateText(prompt: string, opts: GenerateOpts = {}): Promise<string> {
   if (!API_KEY) {
     // Graceful fallback to demo mode
@@ -47,37 +72,50 @@ export async function generateText(prompt: string, opts: GenerateOpts = {}): Pro
     return getMockResponse(prompt);
   }
 
-  const res = await fetch(`${ENDPOINT}?key=${API_KEY}`, {  
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },       
-    signal: opts.signal,
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: opts.temperature ?? 0.4,
-        maxOutputTokens: opts.maxTokens ?? 600,
-      },
-    }),
-  });
+  let lastErr = new Error('Gemini request failed');
 
-  if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
-    const msg = errorBody?.error?.message || `Gemini error (${res.status})`;
-    throw new Error(msg);
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    const res = await fetch(`${ENDPOINT}?key=${API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: opts.signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: opts.temperature ?? 0.4,
+          maxOutputTokens: opts.maxTokens ?? 600,
+        },
+      }),
+    });
+
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}));
+      const msg = errorBody?.error?.message || `Gemini error (${res.status})`;
+      // Retry transient overload/rate-limit; everything else fails fast.
+      if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
+        lastErr = new Error(msg);
+        await delay(backoffDelayMs(attempt), opts.signal);
+        continue;
+      }
+      throw new Error(msg);
+    }
+
+    const j = await res.json();
+    const candidate = j?.candidates?.[0];
+
+    if (candidate?.finishReason === 'SAFETY') {
+      return 'I cannot provide advice on this specific query due to safety filters. Please rephrase.';
+    }
+
+    const parts = candidate?.content?.parts as { text?: string }[] | undefined;
+    const text = parts?.map((p) => p.text ?? '').join('').trim() ?? '';
+
+    if (!text) throw new Error('Gemini returned an empty response');
+    return text;
   }
 
-  const j = await res.json();
-  const candidate = j?.candidates?.[0];
-
-  if (candidate?.finishReason === 'SAFETY') {
-    return 'I cannot provide advice on this specific query due to safety filters. Please rephrase.';
-  }
-
-  const parts = candidate?.content?.parts as { text?: string }[] | undefined;
-  const text = parts?.map((p) => p.text ?? '').join('').trim() ?? '';
-
-  if (!text) throw new Error('Gemini returned an empty response');   
-  return text;
+  // Exhausted retries on a transient error.
+  throw lastErr;
 }
 
 // ─── sessionStorage cache (surgical — avoid re-calling for the same input) ──────
