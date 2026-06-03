@@ -12,7 +12,9 @@ export function IconRail() {
 
   return (
     <aside className="rail panel">
-      <div className="rail-brand">A</div>
+      <div className="rail-brand" style={{ background: 'transparent', padding: 0, overflow: 'hidden' }}>
+        <img src="/brand/antrac-mark.svg" alt="Antrac" width={36} height={36} style={{ display: 'block' }} />
+      </div>
       <div className="rail-modules">
         {modules.map((m) => {
           const Icon = m.icon;

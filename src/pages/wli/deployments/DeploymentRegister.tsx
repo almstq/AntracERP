@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Truck } from 'lucide-react';
+import { Plus, Truck, Download } from 'lucide-react';
 import { useDeployments } from '../../../lib/hooks/useReports';
 import { deploymentEarned, endDeployment, RATE_BASIS_LABEL } from '../../../lib/services/deployments';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { formatMoney } from '../../../lib/utils/money';
+import { exportCsv } from '../../../lib/utils/export';
 import { useToast } from '../../../lib/context/ToastContext';
 
 const COLS = '1.4fr 1fr 1.1fr 1fr 0.9fr 0.7fr';
@@ -44,6 +45,10 @@ export function DeploymentRegister() {
           </p>
         </div>
         <div className="head-actions">
+          <button className="btn btn-ghost" onClick={() => exportCsv('deployments', deployments.map((d) => ({
+            id: d.displayId ?? d.id, machine: d.assetCode, site: siteName(d.siteId), client: d.customerName,
+            basis: d.rateBasis, rate: d.rate, currency: d.currency, earned_to_date: Math.round(deploymentEarned(d)), status: d.status,
+          })))}><Download /> Export</button>
           <Link className="btn btn-primary" to="/wli/deployments/new"><Plus /> Deploy Machine</Link>
         </div>
       </div>

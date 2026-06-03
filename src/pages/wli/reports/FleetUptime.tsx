@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
-import { Activity, AlertTriangle, CheckCircle2, Timer, Ship, Truck, type LucideIcon } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, Timer, Ship, Truck, Download, type LucideIcon } from 'lucide-react';
 import { useAssetList, useTicketList, useSiteList } from '../../../lib/hooks/useWorkflowData';
+import { exportCsv } from '../../../lib/utils/export';
 
 const DAY = 86_400_000;
 function asDate(v: unknown): Date | null {
@@ -114,6 +115,12 @@ export function FleetUptime() {
             <span>·</span>
             <span className="num">{today}</span>
           </p>
+        </div>
+        <div className="head-actions">
+          <button className="btn btn-ghost" onClick={() => exportCsv('fleet-uptime', machineRows.map((m) => ({
+            machine: m.code, model: m.label, site: m.site, status: m.status,
+            breakdowns: m.breakdowns, open_issues: m.open, avg_turnaround_days: m.turn ?? '',
+          })))}><Download /> Export</button>
         </div>
       </div>
 

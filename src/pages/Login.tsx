@@ -50,7 +50,7 @@ export function Login() {
       <div className="hidden md:flex flex-col justify-between w-1/2 lg:w-3/5 bg-gradient-to-br from-[#0b1220] via-[#0e1830] to-[#10243f] p-10 text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.06]" style={{ backgroundImage: 'radial-gradient(circle at 20% 30%, white 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
         <div className="relative flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-blue/20 border border-blue/30 flex items-center justify-center text-xl font-bold text-blue">A</div>
+          <img src="/brand/antrac-mark.svg" alt="Antrac" className="w-11 h-11 rounded-xl" />
           <div>
             <p className="text-sm font-semibold tracking-wide">ANTRAC</p>
             <p className="text-[11px] text-white/60">Holding Group</p>
@@ -75,7 +75,7 @@ export function Login() {
       <div className="flex-1 flex items-center justify-center p-6 bg-bg-base">
         <div className="w-full max-w-sm">
           <div className="md:hidden flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 rounded-xl bg-blue/15 flex items-center justify-center text-lg font-bold text-blue">A</div>
+            <img src="/brand/antrac-mark.svg" alt="Antrac" className="w-10 h-10 rounded-xl" />
             <div><p className="text-sm font-bold text-text-primary">Antrac ERP</p></div>
           </div>
 

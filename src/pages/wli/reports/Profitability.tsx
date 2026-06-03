@@ -1,12 +1,13 @@
 import { useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
-  TrendingUp, TrendingDown, Wrench, Banknote, AlertTriangle, Plus, Ship, Truck, type LucideIcon,
+  TrendingUp, TrendingDown, Wrench, Banknote, AlertTriangle, Plus, Ship, Truck, Download, type LucideIcon,
 } from 'lucide-react';
 import { usePOList, useTicketList, usePRList, useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { useDeployments } from '../../../lib/hooks/useReports';
 import { deploymentEarned } from '../../../lib/services/deployments';
 import { formatMoney } from '../../../lib/utils/money';
+import { exportCsv } from '../../../lib/utils/export';
 
 const fm = (n: number) => formatMoney(Math.round(n), 'MVR');
 const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
@@ -117,12 +118,18 @@ export function Profitability() {
             <span className="num">{today}</span>
           </p>
         </div>
-        {inWli && (
-          <div className="head-actions">
-            <Link className="btn btn-ghost" to="/wli/deployments">Deployments</Link>
-            <Link className="btn btn-primary" to="/wli/deployments/new"><Plus /> Deploy Machine</Link>
-          </div>
-        )}
+        <div className="head-actions">
+          <button className="btn btn-ghost" onClick={() => exportCsv('revenue-vs-repair', machineRows.map((m) => ({
+            machine: m.code, model: m.label, site: m.site, status: m.status,
+            revenue: Math.round(m.rev), repair: Math.round(m.cost), net: Math.round(m.net),
+          })))}><Download /> Export</button>
+          {inWli && (
+            <>
+              <Link className="btn btn-ghost" to="/wli/deployments">Deployments</Link>
+              <Link className="btn btn-primary" to="/wli/deployments/new"><Plus /> Deploy Machine</Link>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Verdict banner */}
