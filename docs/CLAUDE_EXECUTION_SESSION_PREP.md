@@ -129,11 +129,19 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
   NOT live-tested — signup creates a real Firebase Auth account (a user action, not the agent's); verify
   in-browser at `/signup` when convenient. Readiness ~70%.
 
-### Step 7 — Tighten Firestore Rules · P1 · ~1d · 🟨 partial
-- File: `firestore.rules`
-- NOTE this session already: users self-create `role==pending` only; added `deployments`/`deploymentRevenue` rules.
-- Remaining: restrict `_sequences` writes (currently `if isAuth()`) — ideally Cloud Functions only; make `auditEvents` strictly append-only (no update/delete — already `if false` on update/delete, verify); add required-field validation on critical collections.
-- **Accept:** rules deploy; existing flows still work; sequences/audit locked down.
+### Step 7 — Tighten Firestore Rules · P1 · ✅ DONE (curated) — committed `f9c45e0`, ⏳ OWNER DEPLOYS
+- CONTEXT (Mustarq): this is his personal app, deployed to Vercel, onboarding location staff who
+  self-sign-up. So the real risk is a public-URL registrant reading all data before approval — NOT
+  org compliance. Curated to that reality; enterprise items deliberately skipped.
+- DONE: new `hasAssignedRole()` (= authed && role != 'pending'); all business-collection reads +
+  `_sequences` + the 3 loose `isAuth()` creates → `hasAssignedRole()`. Preserved: users self-read,
+  self-register(`role=='pending'`), recipient-gated notifications. Audit append-only already enforced (verified).
+- SKIPPED (intentional): Cloud Functions for `_sequences` (would break client number allocation),
+  pervasive field validation, rules-level site isolation (UI scopes via Step 3; vetted staff = lower priority).
+- ⚠️ Agent did NOT deploy (owner's security boundary). **Deploy:** `firebase deploy --only firestore:rules`
+  (validates fail-safe). Post-deploy smoke: super_admin dashboards still load; a fresh signup sees only /pending.
+- PARALLEL NOTE: `storage.rules` (file uploads) not reviewed this step — worth a glance if the vault is used publicly.
+- **Accept:** rules written + committed; deploy + smoke-test pending on owner. Readiness ~72%.
 
 ### Step 8 — Add Sentry Monitoring · P1 · ~1d · ⬜
 - `@sentry/react` + `@sentry/vite-plugin`; init in `main.tsx`; error boundary around the router; source maps in prod.
