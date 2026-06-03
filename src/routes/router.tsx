@@ -38,6 +38,7 @@ import { WorkOrderDetail } from '../pages/wli/crm/WorkOrderDetail';
 import { SalesDashboard } from '../pages/wli/crm/SalesDashboard';
 import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
 import { Profitability } from '../pages/wli/reports/Profitability';
+import { FleetUptime } from '../pages/wli/reports/FleetUptime';
 import { DeploymentRegister } from '../pages/wli/deployments/DeploymentRegister';
 import { NewDeployment } from '../pages/wli/deployments/NewDeployment';
 import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
@@ -89,8 +90,9 @@ export const router = createBrowserRouter([
           { path: 'procurement/requests', element: <PurchaseRequestList /> },
           { path: 'procurement/requests/new', element: <NewPurchaseRequest /> },
           { path: 'procurement/requests/:id', element: <PurchaseRequestDetail /> },
-          // Profitability report for HQ oversight (Director / CFO) — same component as WLI
+          // Profitability + uptime reports for HQ oversight (Director / CFO) — same components as WLI
           { path: 'reports', element: <Profitability /> },
+          { path: 'reports/uptime', element: <FleetUptime /> },
         ],
       },
       {
@@ -129,6 +131,7 @@ export const router = createBrowserRouter([
           { path: 'crm/finance', element: <FinanceDashboard /> },
           // Profitability report — revenue vs repair (shared with Holding)
           { path: 'reports', element: <Profitability /> },
+          { path: 'reports/uptime', element: <FleetUptime /> },
           // Deployments — machine-on-hire revenue capture
           { path: 'deployments', element: <DeploymentRegister /> },
           { path: 'deployments/new', element: <NewDeployment /> },

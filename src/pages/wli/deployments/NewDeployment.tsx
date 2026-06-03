@@ -9,6 +9,7 @@ import { InputTextarea } from '../../../components/shared/InputTextarea';
 import { PageContainer } from '../../../components/shared/PageContainer';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
+import { useCustomerList } from '../../../lib/hooks/useCrmData';
 import { createDeployment } from '../../../lib/services/deployments';
 import { assetLabel } from '../../../types/asset';
 import type { RateBasis } from '../../../types/reports';
@@ -21,12 +22,13 @@ export function NewDeployment() {
   const navigate = useNavigate();
   const { data: assets } = useAssetList();
   const { data: sites } = useSiteList();
+  const { data: customers } = useCustomerList();
   const { toast } = useToast();
   const [params] = useSearchParams();
 
   const [assetId, setAssetId] = useState(params.get('asset') ?? '');
   const [siteId, setSiteId] = useState('');
-  const [customerName, setCustomerName] = useState('');
+  const [customerId, setCustomerId] = useState('');
   const [agreementRef, setAgreementRef] = useState('');
   const [rateBasis, setRateBasis] = useState<RateBasis>('monthly');
   const [rate, setRate] = useState('');
@@ -43,13 +45,15 @@ export function NewDeployment() {
     if (!user) return;
     if (!selectedAsset) { setErr('Select the machine being deployed.'); return; }
     if (!siteId) { setErr('Select the project / site.'); return; }
+    const customer = customers.find((c) => c.id === customerId);
+    if (!customer) { setErr('Select the client from the customer register.'); return; }
     if (!rate || Number(rate) <= 0) { setErr('Enter the agreed rate — revenue is mandatory for a deployment.'); return; }
     setBusy(true); setErr(null);
     try {
       await createDeployment(
         {
           assetId: selectedAsset.id, assetCode: selectedAsset.code, assetLabel: assetLabel(selectedAsset),
-          siteId, customerName: customerName || undefined, agreementRef: agreementRef || undefined,
+          siteId, customerId: customer.id, customerName: customer.name, agreementRef: agreementRef || undefined,
           rateBasis, rate: Number(rate), currency, startDate: new Date(startDate), note: note || undefined,
         },
         { id: user.uid, role: effectiveRole, name: user.displayName },
@@ -88,8 +92,14 @@ export function NewDeployment() {
               </InputSelect>
             </div>
             <div>
-              <label className="text-xs text-text-muted">Client (optional)</label>
-              <Input className="mt-1" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Client / project owner" />
+              <label className="text-xs text-text-muted">Client *</label>
+              <InputSelect className="mt-1" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
+                <option value="">{customers.length ? 'Select client…' : 'No customers — add one first'}</option>
+                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </InputSelect>
+              {customers.length === 0 && (
+                <Link to="/wli/crm/customers" className="text-[10px] text-blue mt-1 inline-block">+ Add a customer in the register</Link>
+              )}
             </div>
           </div>
 

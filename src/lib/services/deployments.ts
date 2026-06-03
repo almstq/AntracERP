@@ -19,7 +19,8 @@ export interface NewDeploymentInput {
   assetCode: string;
   assetLabel?: string;
   siteId: string;
-  customerName?: string;
+  customerId: string;
+  customerName: string;
   agreementRef?: string;
   rateBasis: RateBasis;
   rate: number;
@@ -39,7 +40,8 @@ export async function createDeployment(input: NewDeploymentInput, actor: Workflo
     assetCode: input.assetCode,
     assetLabel: input.assetLabel ?? null,
     siteId: input.siteId,
-    customerName: input.customerName ?? null,
+    customerId: input.customerId,
+    customerName: input.customerName,
     agreementRef: input.agreementRef ?? null,
     rateBasis: input.rateBasis,
     rate: input.rate,

@@ -36,7 +36,8 @@ export interface Deployment {
   assetCode: string;
   assetLabel?: string;
   siteId: string;
-  customerName?: string;
+  customerId: string;        // from the customer register (required)
+  customerName: string;      // denormalised for display
   agreementRef?: string;
   rateBasis: RateBasis;
   rate: number;              // per-month / per-day amount, or the lump total
