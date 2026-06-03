@@ -45,6 +45,7 @@ export const WLI_NAV: ModuleNav = {
         { to: '/wli/crm/customers', label: 'Customers', icon: Contact, allow: [SALES_STAFF, OPS_STAFF] },
         { to: '/wli/crm/enquiries', label: 'Enquiries', icon: Briefcase, allow: [SALES_STAFF, OPS_STAFF] },
         { to: '/wli/crm/work-orders', label: 'Work Orders', icon: ClipboardList, allow: [SALES_STAFF, OPS_STAFF, FINANCE_WLI] },
+        { to: '/wli/deployments', label: 'Deployments', icon: Truck, allow: [SALES_STAFF, OPS_STAFF] },
       ],
     },
     { title: 'Reports', items: [{ to: '/wli/reports', label: 'Revenue vs Repair', icon: BarChart3, allow: [FINANCE_WLI] }] },

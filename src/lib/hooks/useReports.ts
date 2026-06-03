@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listDeploymentRevenue } from '../services/reports';
-import type { DeploymentRevenue } from '../../types/reports';
+import { listDeployments } from '../services/deployments';
+import type { DeploymentRevenue, Deployment } from '../../types/reports';
 
 interface Loadable<T> { data: T; loading: boolean; error: string | null; refresh: () => void }
 
@@ -13,6 +14,21 @@ export function useDeploymentRevenue(sbuId = 'sbu-wli'): Loadable<(DeploymentRev
     listDeploymentRevenue(sbuId)
       .then((rows) => { setData(rows); setError(null); })
       .catch((e) => setError(e?.message ?? 'Failed to load revenue'))
+      .finally(() => setLoading(false));
+  }, [sbuId]);
+  useEffect(load, [load]);
+  return { data, loading, error, refresh: load };
+}
+
+export function useDeployments(sbuId = 'sbu-wli'): Loadable<(Deployment & { id: string })[]> {
+  const [data, setData] = useState<(Deployment & { id: string })[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const load = useCallback(() => {
+    setLoading(true);
+    listDeployments(sbuId)
+      .then((rows) => { setData(rows); setError(null); })
+      .catch((e) => setError(e?.message ?? 'Failed to load deployments'))
       .finally(() => setLoading(false));
   }, [sbuId]);
   useEffect(load, [load]);

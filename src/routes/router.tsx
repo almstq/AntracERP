@@ -38,6 +38,8 @@ import { WorkOrderDetail } from '../pages/wli/crm/WorkOrderDetail';
 import { SalesDashboard } from '../pages/wli/crm/SalesDashboard';
 import { FinanceDashboard } from '../pages/wli/crm/FinanceDashboard';
 import { Profitability } from '../pages/wli/reports/Profitability';
+import { DeploymentRegister } from '../pages/wli/deployments/DeploymentRegister';
+import { NewDeployment } from '../pages/wli/deployments/NewDeployment';
 import { FuelRequestList } from '../pages/wli/fuel/FuelRequestList';
 import { NewFuelRequest } from '../pages/wli/fuel/NewFuelRequest';
 import { FuelRequestDetail } from '../pages/wli/fuel/FuelRequestDetail';
@@ -127,6 +129,9 @@ export const router = createBrowserRouter([
           { path: 'crm/finance', element: <FinanceDashboard /> },
           // Profitability report — revenue vs repair (shared with Holding)
           { path: 'reports', element: <Profitability /> },
+          // Deployments — machine-on-hire revenue capture
+          { path: 'deployments', element: <DeploymentRegister /> },
+          { path: 'deployments/new', element: <NewDeployment /> },
           // Fuel & Water
           { path: 'fuel/requests', element: <FuelRequestList /> },
           { path: 'fuel/requests/new', element: <NewFuelRequest /> },

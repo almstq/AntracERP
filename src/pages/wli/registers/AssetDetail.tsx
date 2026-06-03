@@ -278,6 +278,11 @@ export function AssetDetail() {
             </button>
           )}
           {!editing && <button className="btn btn-ghost" onClick={startEdit}><Pencil /> Edit</button>}
+          {!editing && canManageAssets && asset.commercialStatus !== 'deployed' && (
+            <Link className="btn btn-primary" to={`/wli/deployments/new?asset=${asset.id}`} title="Deploy to a project + record revenue">
+              <Truck size={14} /> Deploy
+            </Link>
+          )}
           {!editing && canManageAssets && asset.currentSiteId && (
             <button className="btn btn-ghost" onClick={handleUnassign} disabled={busy} title="Unassign from site">
               <X size={14} /> Unassign

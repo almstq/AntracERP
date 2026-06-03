@@ -1,47 +1,44 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   TrendingUp, TrendingDown, Wrench, Banknote, AlertTriangle, Plus, Ship, Truck, type LucideIcon,
 } from 'lucide-react';
 import { usePOList, useTicketList, usePRList, useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
-import { useDeploymentRevenue } from '../../../lib/hooks/useReports';
-import { useAuth } from '../../../lib/hooks/useAuth';
-import { createDeploymentRevenue } from '../../../lib/services/reports';
-import { useToast } from '../../../lib/context/ToastContext';
+import { useDeployments } from '../../../lib/hooks/useReports';
+import { deploymentEarned } from '../../../lib/services/deployments';
 import { formatMoney } from '../../../lib/utils/money';
 
-const fm = (n: number) => formatMoney(n, 'MVR');
+const fm = (n: number) => formatMoney(Math.round(n), 'MVR');
 const pct = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
 
 /**
  * Revenue vs Repair — the profitability view. Repair spend is computed live from
- * the procurement chain (PO → ticket/PR → machine + site). Revenue is the
- * deployment-revenue figures entered from Finance/CFO. Honest about gaps: a site
- * with repair cost but no recorded revenue is flagged, never shown as a false 0.
+ * the procurement chain (PO → ticket/PR → machine + site). Revenue is computed
+ * from deployment records (rate × time on hire) — mandatory at deployment, so
+ * every deployed machine has a real revenue figure. Honest about gaps: a machine
+ * or site with repair cost but no deployment revenue is flagged, never faked to 0.
  */
 export function Profitability() {
-  const { user, effectiveRole } = useAuth();
-  const { toast } = useToast();
+  const { pathname } = useLocation();
+  const inWli = pathname.startsWith('/wli');
   const { data: pos } = usePOList();
   const { data: tickets } = useTicketList();
   const { data: prs } = usePRList();
   const { data: assets } = useAssetList();
   const { data: sites } = useSiteList();
-  const { data: revenue, refresh: refreshRevenue } = useDeploymentRevenue();
-
-  const canRecord = ['gm', 'finance_wli', 'cfo', 'director', 'super_admin'].includes(effectiveRole);
+  const { data: deployments } = useDeployments();
 
   const ticketById = useMemo(() => new Map(tickets.map((t) => [t.id, t])), [tickets]);
   const prById = useMemo(() => new Map(prs.map((p) => [p.id, p])), [prs]);
   const assetById = useMemo(() => new Map(assets.map((a) => [a.id, a])), [assets]);
   const fieldSites = useMemo(() => sites.filter((s) => s.type !== 'hq'), [sites]);
 
-  // ── Repair spend: resolve each PO to a machine + site via its ticket (or PR) ──
   const calc = useMemo(() => {
+    // ── Repair spend: resolve each PO to a machine + site via its ticket (or PR) ──
     const repairBySite = new Map<string, number>();
     const repairByAsset = new Map<string, { cost: number; tickets: Set<string> }>();
     let machineRepair = 0;
     let generalSpend = 0;
-
     for (const po of pos) {
       const total = Number(po.total) || 0;
       if (total <= 0) continue;
@@ -57,20 +54,23 @@ export function Profitability() {
         if (t?.id) cur.tickets.add(t.id);
         repairByAsset.set(assetId, cur);
       } else {
-        generalSpend += total; // direct/office PRs — not machine repair
+        generalSpend += total;
       }
     }
 
+    // ── Revenue: deployment rate × time on hire ──
     const revenueBySite = new Map<string, number>();
+    const revenueByAsset = new Map<string, number>();
     let totalRevenue = 0;
-    for (const r of revenue) {
-      const amt = Number(r.amount) || 0;
-      totalRevenue += amt;
-      revenueBySite.set(r.siteId, (revenueBySite.get(r.siteId) ?? 0) + amt);
+    for (const d of deployments) {
+      const earned = deploymentEarned(d);
+      totalRevenue += earned;
+      revenueBySite.set(d.siteId, (revenueBySite.get(d.siteId) ?? 0) + earned);
+      revenueByAsset.set(d.assetId, (revenueByAsset.get(d.assetId) ?? 0) + earned);
     }
 
-    return { repairBySite, repairByAsset, machineRepair, generalSpend, revenueBySite, totalRevenue };
-  }, [pos, ticketById, prById, revenue]);
+    return { repairBySite, repairByAsset, machineRepair, generalSpend, revenueBySite, revenueByAsset, totalRevenue };
+  }, [pos, ticketById, prById, deployments]);
 
   const net = calc.totalRevenue - calc.machineRepair;
   const profitable = net >= 0;
@@ -79,51 +79,29 @@ export function Profitability() {
     const rev = calc.revenueBySite.get(s.id) ?? 0;
     const cost = calc.repairBySite.get(s.id) ?? 0;
     return { id: s.id, name: s.name, rev, cost, net: rev - cost, noRevenue: cost > 0 && rev === 0 };
-  }).sort((a, b) => a.net - b.net); // worst first — the bleed shows at the top
+  }).sort((a, b) => a.net - b.net);
 
-  const machineRows = [...calc.repairByAsset.entries()]
-    .map(([assetId, v]) => {
+  const machineRows = useMemo(() => {
+    const ids = new Set<string>([...calc.repairByAsset.keys(), ...calc.revenueByAsset.keys()]);
+    return [...ids].map((assetId) => {
       const a = assetById.get(assetId);
       const site = a ? sites.find((s) => s.id === a.currentSiteId) : undefined;
+      const rev = calc.revenueByAsset.get(assetId) ?? 0;
+      const cost = calc.repairByAsset.get(assetId)?.cost ?? 0;
       return {
         id: assetId, code: a?.code ?? assetId, label: a ? `${a.make} ${a.model}` : '—',
         cls: a?.assetClass, site: site?.name ?? a?.currentSiteId ?? '—',
-        status: a?.operationalStatus ?? '—', cost: v.cost, tickets: v.tickets.size,
+        status: a?.operationalStatus ?? '—', rev, cost, net: rev - cost,
+        tickets: calc.repairByAsset.get(assetId)?.tickets.size ?? 0,
       };
-    })
-    .sort((a, b) => b.cost - a.cost);
+    }).sort((x, y) => x.net - y.net); // worst (biggest loss) first
+  }, [calc, assetById, sites]);
 
   const metrics: { label: string; value: string; tint: string; icon: LucideIcon }[] = [
     { label: 'Deployment Revenue', value: fm(calc.totalRevenue), tint: 'tint-pos', icon: Banknote },
     { label: 'Repair Spend', value: fm(calc.machineRepair), tint: 'tint-danger', icon: Wrench },
     { label: profitable ? 'Net Profit' : 'Net Loss', value: fm(Math.abs(net)), tint: profitable ? 'tint-pos' : 'tint-danger', icon: profitable ? TrendingUp : TrendingDown },
   ];
-
-  // ── Inline "record revenue" form ──
-  const [addOpen, setAddOpen] = useState(false);
-  const [siteId, setSiteId] = useState('');
-  const [period, setPeriod] = useState(() => new Date().toISOString().slice(0, 7));
-  const [amount, setAmount] = useState('');
-  const [contractRef, setContractRef] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function saveRevenue() {
-    if (!user) return;
-    if (!siteId) { toast('error', 'Pick a site.'); return; }
-    if (!amount || Number(amount) <= 0) { toast('error', 'Enter an amount.'); return; }
-    setBusy(true);
-    try {
-      await createDeploymentRevenue(
-        { siteId, period, amount: Number(amount), currency: 'MVR', contractRef: contractRef || undefined },
-        { id: user.uid, role: effectiveRole, name: user.displayName },
-      );
-      toast('success', 'Revenue recorded');
-      setAddOpen(false); setAmount(''); setContractRef('');
-      refreshRevenue();
-    } catch (e) {
-      toast('error', e instanceof Error ? e.message : 'Failed to record');
-    } finally { setBusy(false); }
-  }
 
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -139,9 +117,10 @@ export function Profitability() {
             <span className="num">{today}</span>
           </p>
         </div>
-        {canRecord && (
+        {inWli && (
           <div className="head-actions">
-            <button className="btn btn-primary" onClick={() => setAddOpen((v) => !v)}><Plus /> Record Revenue</button>
+            <Link className="btn btn-ghost" to="/wli/deployments">Deployments</Link>
+            <Link className="btn btn-primary" to="/wli/deployments/new"><Plus /> Deploy Machine</Link>
           </div>
         )}
       </div>
@@ -152,47 +131,16 @@ export function Profitability() {
           {profitable ? <TrendingUp style={{ color: 'var(--positive)' }} /> : <AlertTriangle style={{ color: 'var(--danger)' }} />}
           <strong style={{ fontSize: 15 }}>
             {calc.totalRevenue === 0
-              ? 'No deployment revenue recorded yet — enter the figures from Finance/CFO to see the full picture.'
+              ? 'No deployment revenue recorded yet — deploy machines with their agreed rates to see the full picture.'
               : profitable
                 ? `WLI is in profit by ${fm(net)} on recorded figures.`
                 : `WLI is running at a loss of ${fm(Math.abs(net))} on recorded figures.`}
           </strong>
         </div>
-        <p className="text-muted" style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 6 }}>
-          Repair spend is computed live from the procurement chain. Revenue is what's been recorded so far — sites with cost but no revenue are flagged below. Amounts in MVR (mixed currency not FX-converted).
+        <p style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 6 }}>
+          Repair spend is live from the procurement chain. Revenue = deployment rate × time on hire. Machines/sites with repair cost but no deployment revenue are flagged below. Amounts in MVR (mixed currency not FX-converted).
         </p>
       </div>
-
-      {/* Inline revenue entry */}
-      {addOpen && (
-        <div className="card" style={{ padding: 16, marginBottom: 18 }}>
-          <div className="kv" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, alignItems: 'end' }}>
-            <div>
-              <div className="k">Site</div>
-              <select className="side-foot-sel" style={{ marginTop: 4 }} value={siteId} onChange={(e) => setSiteId(e.target.value)}>
-                <option value="">Select…</option>
-                {fieldSites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <div className="k">Month</div>
-              <input type="month" className="side-foot-sel" style={{ marginTop: 4 }} value={period} onChange={(e) => setPeriod(e.target.value)} />
-            </div>
-            <div>
-              <div className="k">Amount (MVR)</div>
-              <input type="number" min="0" className="side-foot-sel" style={{ marginTop: 4 }} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="e.g. 250000" />
-            </div>
-            <div>
-              <div className="k">Contract ref (optional)</div>
-              <input className="side-foot-sel" style={{ marginTop: 4 }} value={contractRef} onChange={(e) => setContractRef(e.target.value)} placeholder="client / contract" />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-            <button className="btn btn-primary" onClick={saveRevenue} disabled={busy}>{busy ? 'Saving…' : 'Save'}</button>
-            <button className="btn btn-ghost" onClick={() => setAddOpen(false)}>Cancel</button>
-          </div>
-        </div>
-      )}
 
       {/* Headline metrics */}
       <div className="metrics" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
@@ -231,25 +179,26 @@ export function Profitability() {
         </div>
       </div>
 
-      {/* Per-machine repair ranking — the money pits */}
+      {/* Per-machine: revenue vs repair = net (earners vs bleeders) */}
       <div className="section">
-        <div className="section-head"><h2>Repair Spend by Machine <span className="hint">highest first</span></h2></div>
+        <div className="section-head"><h2>By Machine <span className="hint">earning or bleeding</span></h2></div>
         <div className="tbl">
-          <div className="tbl-head" style={{ gridTemplateColumns: '1.4fr 1fr 0.9fr 1fr 0.7fr' }}>
-            <span>Machine</span><span>Site</span><span>Status</span><span>Repair Spend</span><span>Tickets</span>
+          <div className="tbl-head" style={{ gridTemplateColumns: '1.5fr 0.9fr 0.9fr 1fr 1fr 1fr' }}>
+            <span>Machine</span><span>Site</span><span>Status</span><span>Revenue</span><span>Repair</span><span>Net</span>
           </div>
           {machineRows.length === 0 ? (
-            <div className="tbl-empty">No repair POs recorded yet.</div>
+            <div className="tbl-empty">No deployment or repair data yet.</div>
           ) : machineRows.map((m) => {
             const Icon = m.cls === 'vessel' ? Ship : Truck;
             const down = m.status === 'down' || m.status === 'maintenance';
             return (
-              <div className="tbl-row" style={{ gridTemplateColumns: '1.4fr 1fr 0.9fr 1fr 0.7fr', cursor: 'default' }} key={m.id}>
+              <div className="tbl-row" style={{ gridTemplateColumns: '1.5fr 0.9fr 0.9fr 1fr 1fr 1fr', cursor: 'default' }} key={m.id}>
                 <div className="tc-id" style={{ display: 'flex', alignItems: 'center', gap: 7 }}><Icon size={14} style={{ color: 'var(--text-muted)' }} />{m.code} <span className="tc-desc" style={{ marginTop: 0 }}>{m.label}</span></div>
                 <div className="tc-txt">{m.site}</div>
                 <div><span className={`badge ${down ? 'b-danger' : 'b-pos'}`}><span className="bdot" />{m.status}</span></div>
-                <div className="tc-txt" style={{ fontWeight: 600 }}>{fm(m.cost)}</div>
-                <div className="tc-txt">{m.tickets}</div>
+                <div className="tc-txt">{m.rev > 0 ? fm(m.rev) : '—'}</div>
+                <div className="tc-txt">{m.cost > 0 ? fm(m.cost) : '—'}</div>
+                <div className="tc-txt" style={{ color: m.net >= 0 ? 'var(--positive)' : 'var(--danger)', fontWeight: 600 }}>{fm(m.net)}</div>
               </div>
             );
           })}

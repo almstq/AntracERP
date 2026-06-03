@@ -19,3 +19,34 @@ export interface DeploymentRevenue {
   createdAt: Date;
   updatedAt: Date;
 }
+
+/** How a deployment is billed. */
+export type RateBasis = 'monthly' | 'daily' | 'lump';
+
+/**
+ * A machine on hire to a project. Recording one is mandatory to mark a machine
+ * deployed — it pins the agreed revenue terms to the asset so the profit report
+ * has a real, enforced revenue figure per machine and per site.
+ */
+export interface Deployment {
+  id: string;
+  displayId?: string;        // DEP-YYYYMM-###
+  sbuId: string;             // 'sbu-wli'
+  assetId: string;
+  assetCode: string;
+  assetLabel?: string;
+  siteId: string;
+  customerName?: string;
+  agreementRef?: string;
+  rateBasis: RateBasis;
+  rate: number;              // per-month / per-day amount, or the lump total
+  currency: 'MVR' | 'USD';
+  startDate: Date;           // backdatable
+  endDate?: Date | null;     // null/absent = still on hire
+  status: 'active' | 'ended';
+  note?: string;
+  recordedById: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
