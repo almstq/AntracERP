@@ -4,7 +4,7 @@ import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 import type { FirebaseStorage } from 'firebase/storage';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
@@ -33,7 +33,19 @@ export function initFirebase() {
   if (!app) {
     app = initializeApp(firebaseConfig);
     authInstance = getAuth(app);
-    dbInstance = getFirestore(app);
+    // Offline-first cache. Persists Firestore data in IndexedDB so the app keeps
+    // showing data when the connection drops (common at remote island sites) instead
+    // of erroring. persistentMultipleTabManager makes it safe across multiple tabs —
+    // the old enableIndexedDbPersistence threw a "only one tab" error here.
+    // initializeFirestore is NOT idempotent: a module re-eval (Vite HMR / re-import)
+    // would throw "already initialized", so fall back to the existing instance.
+    try {
+      dbInstance = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      });
+    } catch {
+      dbInstance = getFirestore(app);
+    }
     storageInstance = getStorage(app);
   }
   return { app, auth: authInstance!, db: dbInstance!, storage: storageInstance! };
