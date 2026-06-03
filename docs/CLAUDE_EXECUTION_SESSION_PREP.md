@@ -115,11 +115,19 @@ Rule 7 (avoid regressions), these are flagged for confirmation — NOT silently 
 - `tsconfig.app.json` → `"strict": true`. No `any` removal / null-guarding needed.
 - **Accept:** MET. `tsc -b + vite` clean under strict; `npm test` 95 passed; no behavioural change. Readiness ~65%.
 
-### Step 6 — Create Signup Flow · P1 · ~1d · 🟨 partial (Google self-register exists)
-- NOTE: Google sign-ups already self-register as `role: 'pending'` (AuthContext) + SA assigns roles. This step adds the EMAIL/PASSWORD path.
-- Create `src/pages/Signup.tsx` (mirror Login); add `signup()` to AuthContext; wire `registerWithEmail`.
-- On signup: create user doc `role: 'pending'` → redirect to `PendingApproval`. Add password validation (min 8 + complexity).
-- **Accept:** email signup creates a pending user; lands on Pending; SA can assign.
+### Step 6 — Create Signup Flow · P1 · ~1d · ✅ DONE (commit `2518253`)
+- New `src/pages/Signup.tsx` (mirrors Login): email + password + confirm; password validation
+  (min 8, ≥1 letter, ≥1 number); friendly Firebase error mapping; `isProcessing` button state;
+  effect-on-user navigation.
+- DEVIATION from prep (intentional, matches existing pattern): did NOT add `signup()` to AuthContext.
+  Login calls `loginWithEmail`/`loginWithGoogle` from `auth.ts` directly (context `login()` is dev-mode-only),
+  so Signup calls `registerWithEmail` directly too. The pending doc + redirect are ALREADY handled centrally:
+  `registerWithEmail` signs the user in → AuthContext `onAuthStateChanged` writes `role:'pending'` →
+  `ProtectedRoute` forwards pending→`/pending`. No new pending logic, no `PendingApproval` change.
+- router: `{ path: '/signup' }`. Login ↔ Signup cross-links added.
+- **Accept:** MET (by construction + build). `tsc -b strict + vite` clean; `npm test` 95; lint-clean.
+  NOT live-tested — signup creates a real Firebase Auth account (a user action, not the agent's); verify
+  in-browser at `/signup` when convenient. Readiness ~70%.
 
 ### Step 7 — Tighten Firestore Rules · P1 · ~1d · 🟨 partial
 - File: `firestore.rules`
