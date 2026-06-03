@@ -90,6 +90,12 @@ export async function generateText(prompt: string, opts: GenerateOpts = {}): Pro
         generationConfig: {
           temperature: opts.temperature ?? 0.4,
           maxOutputTokens: opts.maxTokens ?? 600,
+          // Disable "thinking": these are short advisory outputs. On 2.5 models
+          // thinking is on by default and its tokens eat the maxOutputTokens
+          // budget — verified live to truncate the brief at ~200 tokens. Setting
+          // budget 0 restores clean, full responses. (Requires a 2.5+ model; our
+          // default and every free-tier-verified option qualifies.)
+          thinkingConfig: { thinkingBudget: 0 },
         },
       }),
     });
