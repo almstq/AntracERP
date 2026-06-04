@@ -32,11 +32,19 @@ export const ticketWorkflow: WorkflowDefinition<TicketStatus> = {
     rejected: 'Rejected',
   },
   transitions: [
-    // Stage 1 — operator raises
+    // Stage 1a — operator raises; mechanic diagnosis required
     {
       from: 'draft', to: 'submitted', action: 'submit',
       label: 'Submit Issue', allowedRoles: ['operator', 'super_admin'],
       notify: ['mechanic'],
+    },
+    // Stage 1b — supervisor raises directly with materials; skips mechanic diagnosis
+    // PR is spawned on_hold immediately so GM approval activates it in one step.
+    {
+      from: 'draft', to: 'supervisor_checked', action: 'supervisor_submit',
+      label: 'Submit with Materials', allowedRoles: ['supervisor', 'super_admin'],
+      sideEffects: ['CREATE_PR_ON_HOLD'],
+      notify: ['gm'],
     },
     // Stage 2 — mechanic diagnoses; PR auto-spawns on_hold if materials/services needed
     {

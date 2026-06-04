@@ -62,6 +62,8 @@ export interface Ticket {
   siteId: string;
   location?: string;
   raisedById: string;
+  raisedByName?: string;   // display name stored at creation time
+  raisedByRole?: string;   // role at creation time; drives workflow branching (supervisor vs operator)
   /** Actual date the issue was reported — may be backdated. Distinct from createdAt (system write time). */
   reportedAt?: Date;
   status: TicketStatus;

@@ -5,23 +5,36 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
 import { InputTextarea } from '../../../components/shared/InputTextarea';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { createTicket } from '../../../lib/services/tickets';
 import { assetLabel } from '../../../types/asset';
-import type { Urgency } from '../../../types/workflow-entities';
+import type { Urgency, RequiredMaterial } from '../../../types/workflow-entities';
 import { PageContainer } from '../../../components/shared/PageContainer';
 import { useToast } from '../../../lib/context/ToastContext';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
+const UOMS = ['pcs', 'set', 'kg', 'L', 'm', 'roll', 'box', 'hr', 'other'];
+
+interface MaterialRow {
+  description: string;
+  quantity: string;
+  uom: string;
+}
+
+function emptyRow(): MaterialRow {
+  return { description: '', quantity: '1', uom: 'pcs' };
+}
 
 export function NewTicket() {
   const { user, effectiveRole } = useAuth();
   const navigate = useNavigate();
   const { data: assets, loading: assetsLoading } = useAssetList();
   const { toast } = useToast();
+
+  const isSupervisor = effectiveRole === 'supervisor' || effectiveRole === 'super_admin';
 
   const [assetId, setAssetId] = useState('');
   const [siteId, setSiteId] = useState('');
@@ -30,16 +43,28 @@ export function NewTicket() {
   const [urgency, setUrgency] = useState<Urgency>('routine');
   const [recommendation, setRecommendation] = useState('');
   const [reportedDate, setReportedDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [materials, setMaterials] = useState<MaterialRow[]>([emptyRow()]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   const selectedAsset = assets.find((a) => a.id === assetId);
-  // Site auto-follows the asset's current deployment unless the user overrides it.
   const effectiveSite = siteTouched ? siteId : (selectedAsset?.currentSiteId ?? '');
 
   function onAssetChange(id: string) {
     setAssetId(id);
-    setSiteTouched(false); // re-sync site to the new asset's location
+    setSiteTouched(false);
+  }
+
+  function addMaterialRow() {
+    setMaterials((prev) => [...prev, emptyRow()]);
+  }
+
+  function removeMaterialRow(index: number) {
+    setMaterials((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateMaterialRow(index: number, field: keyof MaterialRow, value: string) {
+    setMaterials((prev) => prev.map((row, i) => i === index ? { ...row, [field]: value } : row));
   }
 
   async function submit() {
@@ -47,19 +72,42 @@ export function NewTicket() {
     if (!selectedAsset) { setErr('Select the machine this issue is about.'); return; }
     if (!effectiveSite) { setErr('Select a location.'); return; }
     if (!description.trim()) { setErr('Describe the issue.'); return; }
+
+    // Supervisor must have at least one valid material row
+    if (isSupervisor) {
+      const filled = materials.filter((m) => m.description.trim());
+      if (filled.length === 0) { setErr('Add at least one material or part required.'); return; }
+    }
+
     setBusy(true); setErr(null);
     try {
       const reportedAt = new Date(reportedDate);
+
+      // Build typed materials for supervisor path
+      const parsedMaterials: RequiredMaterial[] = isSupervisor
+        ? materials
+            .filter((m) => m.description.trim())
+            .map((m) => ({
+              description: m.description.trim(),
+              quantity: Math.max(1, parseFloat(m.quantity) || 1),
+              uom: m.uom,
+              category: 'parts' as const,
+            }))
+        : [];
+
       const id = await createTicket(
         {
           description, siteId: effectiveSite, assetId: selectedAsset.id,
           assetCode: selectedAsset.code, assetLabel: assetLabel(selectedAsset),
-          urgency, operatorRecommendation: recommendation || undefined,
+          urgency,
+          operatorRecommendation: !isSupervisor && recommendation ? recommendation : undefined,
           reportedAt,
+          raisedByRole: effectiveRole,
+          materials: isSupervisor ? parsedMaterials : undefined,
         },
-        { id: user.uid, role: effectiveRole, name: user.displayName },
+        { id: user.uid, role: effectiveRole, name: user.displayName ?? undefined },
       );
-      toast('success', 'Issue ticket created');
+      toast('success', isSupervisor ? 'Ticket submitted — GM notified' : 'Issue ticket created');
       navigate(`/wli/tickets/${id}`);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed to create ticket';
@@ -120,13 +168,68 @@ export function NewTicket() {
             <label className="text-xs text-text-muted">Issue description *</label>
             <InputTextarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What's wrong with the machine?" />
           </div>
-          <div>
-            <label className="text-xs text-text-muted">Your recommendation (optional)</label>
-            <Input value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
-          </div>
+
+          {/* Operator only — recommendation field */}
+          {!isSupervisor && (
+            <div>
+              <label className="text-xs text-text-muted">Your recommendation (optional)</label>
+              <Input value={recommendation} onChange={(e) => setRecommendation(e.target.value)} />
+            </div>
+          )}
+
+          {/* Supervisor only — materials required */}
+          {isSupervisor && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-medium text-text-primary">Materials / Parts Required *</label>
+                <button
+                  type="button"
+                  onClick={addMaterialRow}
+                  className="flex items-center gap-1 text-xs text-accent hover:text-accent/80 transition-colors"
+                >
+                  <Plus size={12} /> Add row
+                </button>
+              </div>
+              <div className="space-y-2">
+                {materials.map((row, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_80px_72px_28px] gap-2 items-center">
+                    <Input
+                      placeholder="Description (e.g. brake pad, hydraulic hose)"
+                      value={row.description}
+                      onChange={(e) => updateMaterialRow(i, 'description', e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      min="0.01"
+                      step="any"
+                      placeholder="Qty"
+                      value={row.quantity}
+                      onChange={(e) => updateMaterialRow(i, 'quantity', e.target.value)}
+                    />
+                    <InputSelect value={row.uom} onChange={(e) => updateMaterialRow(i, 'uom', e.target.value)}>
+                      {UOMS.map((u) => <option key={u} value={u}>{u}</option>)}
+                    </InputSelect>
+                    <button
+                      type="button"
+                      onClick={() => removeMaterialRow(i)}
+                      disabled={materials.length === 1}
+                      className="flex items-center justify-center text-text-muted hover:text-danger disabled:opacity-30 transition-colors"
+                      title="Remove row"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[10px] text-text-muted">
+                This ticket will go directly to the GM for approval. A Purchase Request will be raised automatically.
+              </p>
+            </div>
+          )}
+
           {err && <p className="text-xs text-red">{err}</p>}
           <Button variant="primary" size="sm" onClick={submit} disabled={busy}>
-            {busy ? 'Submitting…' : 'Submit Issue'}
+            {busy ? 'Submitting…' : isSupervisor ? 'Submit with Materials' : 'Submit Issue'}
           </Button>
         </div>
       </Card>

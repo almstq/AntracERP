@@ -111,7 +111,7 @@ export function TicketDetail() {
                 <div><div className="k">Asset</div><div className="v"><span className="mono">{ticket.assetLabel || ticket.assetCode || '—'}</span></div></div>
                 <div><div className="k">Site</div><div className="v">{ticket.siteId || '—'}</div></div>
                 <div><div className="k">Urgency</div><div className="v">{ticket.urgency}</div></div>
-                <div><div className="k">Raised by</div><div className="v">{ticket.raisedById || '—'}</div></div>
+                <div><div className="k">Raised by</div><div className="v">{(ticket as { raisedByName?: string }).raisedByName || ticket.raisedById || '—'}</div></div>
                 <div style={{ gridColumn: '1 / -1' }}>
                   <div className="k" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <CalendarDays size={11} /> Date Reported

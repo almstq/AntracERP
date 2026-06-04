@@ -20,6 +20,14 @@ export interface NewTicketInput {
   operatorRecommendation?: string;
   /** Actual date reported — may be backdated. Defaults to now if omitted. */
   reportedAt?: Date;
+  /**
+   * Supervisor path: role of the person raising the ticket.
+   * When 'supervisor' + materials supplied, ticket transitions directly to
+   * supervisor_checked (skipping mechanic diagnosis) and a PR is spawned on_hold.
+   */
+  raisedByRole?: string;
+  /** Materials pre-specified by supervisor (supervisor path only). */
+  materials?: RequiredMaterial[];
 }
 
 async function nextTicketDisplayId(reportedAt: Date): Promise<string> {
@@ -60,6 +68,10 @@ export async function adminUpdateTicket(ticketId: string, patch: AdminTicketPatc
 export async function createTicket(input: NewTicketInput, actor: WorkflowActor): Promise<string> {
   const reportedAt = input.reportedAt ?? new Date();
   const displayId = await nextTicketDisplayId(reportedAt);
+
+  // Supervisor path: they know what's needed → skip mechanic, go straight to GM desk.
+  const isSupervisorPath = input.raisedByRole === 'supervisor' && (input.materials?.length ?? 0) > 0;
+
   const ticketId = await createAuto('tickets', {
     displayId,
     orgId: 'antrac-holding',
@@ -70,20 +82,27 @@ export async function createTicket(input: NewTicketInput, actor: WorkflowActor):
     assetLabel: input.assetLabel,
     location: input.location ?? null,
     raisedById: actor.id,
+    raisedByName: actor.name ?? null,
+    raisedByRole: input.raisedByRole ?? null,
     reportedAt: Timestamp.fromDate(reportedAt),
     status: 'draft',
     urgency: input.urgency,
     description: input.description,
     operatorRecommendation: input.operatorRecommendation ?? null,
-    materialRequired: false,
+    materialRequired: isSupervisorPath,
     serviceRequired: false,
-    materials: [] as RequiredMaterial[],
+    materials: isSupervisorPath ? (input.materials ?? []) : ([] as RequiredMaterial[]),
     services: [] as RequiredService[],
     documents: [],
   });
 
+  // Supervisor path → supervisor_checked (PR spawns on_hold, GM desk notified).
+  // Operator path  → submitted (mechanic diagnoses next).
   await executeTransition({
-    workflowId: 'ticket', entityId: ticketId, to: 'submitted', actor,
+    workflowId: 'ticket',
+    entityId: ticketId,
+    to: isSupervisorPath ? 'supervisor_checked' : 'submitted',
+    actor,
   });
 
   return ticketId;
