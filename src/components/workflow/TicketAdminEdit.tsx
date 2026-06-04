@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShieldAlert } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -6,7 +7,7 @@ import { Input } from '../shared/Input';
 import { InputSelect } from '../shared/InputSelect';
 import { InputTextarea } from '../shared/InputTextarea';
 import { ticketWorkflow } from '../../lib/workflow/definitions';
-import { adminUpdateTicket } from '../../lib/services/tickets';
+import { adminUpdateTicket, deleteTicket } from '../../lib/services/tickets';
 import { useToast } from '../../lib/context/ToastContext';
 import type { Ticket, TicketStatus, Urgency } from '../../types/workflow-entities';
 
@@ -18,7 +19,10 @@ const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
  */
 export function TicketAdminEdit({ ticket, onSaved }: { ticket: Ticket & { id: string }; onSaved: () => void }) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [description, setDescription] = useState(ticket.description ?? '');
   const [urgency, setUrgency] = useState<Urgency>(ticket.urgency);
   const [status, setStatus] = useState<TicketStatus>(ticket.status);
@@ -48,12 +52,41 @@ export function TicketAdminEdit({ ticket, onSaved }: { ticket: Ticket & { id: st
     }
   }
 
+  async function handleDelete() {
+    setDeleting(true);
+    try {
+      await deleteTicket(ticket.id);
+      toast('success', `${ticket.displayId} deleted`);
+      navigate('/wli/tickets');
+    } catch (e) {
+      toast('error', e instanceof Error ? e.message : 'Delete failed');
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
+  }
+
   return (
     <Card header={<span className="text-sm font-medium flex items-center gap-1.5"><ShieldAlert size={14} className="text-amber" /> Admin Override</span>}>
       {!open ? (
         <div className="space-y-2">
           <p className="text-xs text-text-muted">Super-admin only — edit fields and set the real status directly to backfill a past event.</p>
           <Button variant="secondary" size="sm" className="w-full" onClick={() => setOpen(true)}>Edit ticket</Button>
+          {ticket.status === 'draft' && !confirmDelete && (
+            <Button variant="secondary" size="sm" className="w-full !text-danger hover:!border-danger" onClick={() => setConfirmDelete(true)}>
+              Delete ticket
+            </Button>
+          )}
+          {ticket.status === 'draft' && confirmDelete && (
+            <div className="space-y-2">
+              <p className="text-xs text-danger">Delete {ticket.displayId}? This cannot be undone.</p>
+              <div className="flex gap-2">
+                <Button variant="primary" size="sm" className="flex-1 !bg-danger" onClick={handleDelete} disabled={deleting}>
+                  {deleting ? 'Deleting…' : 'Yes, delete'}
+                </Button>
+                <Button variant="secondary" size="sm" onClick={() => setConfirmDelete(false)} disabled={deleting}>Cancel</Button>
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="space-y-3">

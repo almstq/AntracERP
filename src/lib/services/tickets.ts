@@ -3,7 +3,7 @@
  * transitioned to `submitted` via the engine so the Stage-1 timeline event and
  * the mechanic notification fire through the normal workflow path.
  */
-import { createAuto, listAll, updateFields } from '../firebase/db';
+import { createAuto, listAll, updateFields, deleteDocument } from '../firebase/db';
 import { Timestamp } from 'firebase/firestore';
 import { executeTransition } from '../workflow/executor';
 import type { WorkflowActor } from '../workflow/types';
@@ -34,6 +34,15 @@ async function nextTicketDisplayId(reportedAt: Date): Promise<string> {
   const ym = `${reportedAt.getFullYear()}${String(reportedAt.getMonth() + 1).padStart(2, '0')}`;
   const all = await listAll('tickets');
   return `TKT-${ym}-${String(all.length + 1).padStart(3, '0')}`;
+}
+
+/**
+ * Hard-delete a ticket. Super-admin only; only allowed while still in draft
+ * (no workflow history, no linked PR/PO). The caller is responsible for the
+ * status guard — this function deletes unconditionally.
+ */
+export async function deleteTicket(ticketId: string): Promise<void> {
+  await deleteDocument('tickets', ticketId);
 }
 
 export async function updateTicketReportedAt(ticketId: string, reportedAt: Date): Promise<void> {
