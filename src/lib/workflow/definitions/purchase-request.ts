@@ -80,10 +80,12 @@ export const purchaseRequestWorkflow: WorkflowDefinition<PRStatus> = {
       sideEffects: ['CREATE_PO_PER_SUPPLIER'],
       notify: ['finance_wli', 'inventory_staff', 'gm'],
     },
-    // Closed once all linked POs are closed
+    // Auto-closed by system once ALL linked POs reach po_closed.
+    // Triggered by CHECK_AND_CLOSE_PR side effect on each PO's close_po transition.
+    // proc_staff cannot close manually — items must be received and payment complete first.
     {
       from: 'po_raised', to: 'closed', action: 'close_pr',
-      label: 'Close PR', allowedRoles: ['proc_staff', 'system', 'super_admin'],
+      label: 'Close PR', allowedRoles: ['system', 'super_admin'],
       notify: ['gm'],
     },
   ],

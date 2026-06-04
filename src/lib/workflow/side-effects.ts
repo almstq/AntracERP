@@ -305,6 +305,28 @@ const handlers: Record<SideEffectTag, Handler> = {
     }
   },
 
+  // PO po_closed → check if every PO on the parent PR is also po_closed;
+  // if yes, auto-close the PR via the system actor.
+  // This is the ONLY way a PR closes — proc_staff cannot close it manually.
+  CHECK_AND_CLOSE_PR: async ({ entityId, actor, execute }) => {
+    const po = await getById<PurchaseOrder>('purchaseOrders', entityId);
+    if (!po?.purchaseRequestId) return;
+    const pr = await getById<PurchaseRequest>('purchaseRequests', po.purchaseRequestId);
+    if (!pr || pr.status === 'closed') return;
+
+    // Load all sibling POs and verify every one is po_closed
+    const siblingIds: string[] = pr.purchaseOrderIds ?? [];
+    if (!siblingIds.length) return;
+    const siblings = await Promise.all(siblingIds.map((id) => getById<PurchaseOrder>('purchaseOrders', id)));
+    const allClosed = siblings.every((s) => s?.status === 'po_closed');
+    if (!allClosed) return;
+
+    await execute({
+      workflowId: 'purchase_request', entityId: pr.id, to: 'closed',
+      actor: systemActor(actor),
+    });
+  },
+
   // Fuel request closed → deduct WLI inventory balance.
   DEDUCT_INVENTORY_BALANCE: async ({ entityId }) => {
     const fr = await getById<FuelRequest>('fuelRequests', entityId);

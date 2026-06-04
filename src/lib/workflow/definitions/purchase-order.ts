@@ -98,11 +98,12 @@ export const purchaseOrderWorkflow: WorkflowDefinition<POStatus> = {
       sideEffects: ['RECEIVE_INTO_INVENTORY'],
       notify: ['proc_staff', 'gm'],
     },
-    // Proc closes the PO → triggers delivery to the requestee
+    // Proc closes the PO after items are collected → triggers delivery to site,
+    // then CHECK_AND_CLOSE_PR auto-closes the parent PR if all sibling POs are done.
     {
       from: 'items_collected', to: 'po_closed', action: 'close_po',
       label: 'Close PO', allowedRoles: ['proc_staff', 'super_admin'],
-      sideEffects: ['TRIGGER_DELIVERY'],
+      sideEffects: ['TRIGGER_DELIVERY', 'CHECK_AND_CLOSE_PR'],
       notify: ['gm', 'inventory_staff'],
     },
   ],
