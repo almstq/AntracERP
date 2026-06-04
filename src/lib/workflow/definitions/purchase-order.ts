@@ -34,16 +34,19 @@ export const purchaseOrderWorkflow: WorkflowDefinition<POStatus> = {
     po_closed: 'Closed',
   },
   transitions: [
-    // Supplier confirms availability (payment runs against the PO total)
+    // Proc or finance_wli confirms the supplier has acknowledged the PO.
+    // By the time a PO is raised the supplier was already selected from the quote,
+    // so finance_wli can pick this up directly and proceed to payment without
+    // waiting for proc to act first.
     {
       from: 'raised', to: 'supplier_confirmed', action: 'confirm_supplier',
-      label: 'Supplier Confirmed', allowedRoles: ['proc_staff', 'inventory_staff', 'super_admin'],
+      label: 'Supplier Confirmed', allowedRoles: ['proc_staff', 'finance_wli', 'super_admin'],
       notify: ['finance_wli'],
     },
-    // WLI finance packages the payment request to HQ
+    // WLI finance packages the payment request to HQ Antrac Finance
     {
       from: 'supplier_confirmed', to: 'payment_request_sent', action: 'send_payment_request',
-      label: 'Send Payment Request', allowedRoles: ['finance_wli', 'super_admin'],
+      label: 'Send Payment Request to HQ', allowedRoles: ['finance_wli', 'super_admin'],
       notify: ['antrac_finance'],
     },
     // HQ approval chain: Antrac Finance → CFO → Director
