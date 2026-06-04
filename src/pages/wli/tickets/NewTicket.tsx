@@ -16,7 +16,7 @@ import { useToast } from '../../../lib/context/ToastContext';
 
 const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq'];
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
-const UOMS = ['pcs', 'set', 'kg', 'L', 'm', 'roll', 'box', 'hr', 'other'];
+const UOMS = ['pcs', 'set', 'm', 'm²', 'ft', 'kg', 'g', 'L', 'ml', 'sheet', 'board', 'plank', 'roll', 'box', 'bag', 'hr', 'other'];
 
 interface MaterialRow {
   description: string;
@@ -192,32 +192,43 @@ export function NewTicket() {
               </div>
               <div className="space-y-2">
                 {materials.map((row, i) => (
-                  <div key={i} className="grid grid-cols-[1fr_80px_72px_28px] gap-2 items-center">
-                    <Input
-                      placeholder="Description (e.g. brake pad, hydraulic hose)"
-                      value={row.description}
-                      onChange={(e) => updateMaterialRow(i, 'description', e.target.value)}
-                    />
-                    <Input
-                      type="number"
-                      min="0.01"
-                      step="any"
-                      placeholder="Qty"
-                      value={row.quantity}
-                      onChange={(e) => updateMaterialRow(i, 'quantity', e.target.value)}
-                    />
-                    <InputSelect value={row.uom} onChange={(e) => updateMaterialRow(i, 'uom', e.target.value)}>
-                      {UOMS.map((u) => <option key={u} value={u}>{u}</option>)}
-                    </InputSelect>
-                    <button
-                      type="button"
-                      onClick={() => removeMaterialRow(i)}
-                      disabled={materials.length === 1}
-                      className="flex items-center justify-center text-text-muted hover:text-danger disabled:opacity-30 transition-colors"
-                      title="Remove row"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+                  <div key={i} className="flex flex-col gap-1.5 p-2 rounded-lg border border-border-soft bg-surface-0">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        placeholder="Description (e.g. hydraulic hose, marine plywood 18mm)"
+                        value={row.description}
+                        onChange={(e) => updateMaterialRow(i, 'description', e.target.value)}
+                        className="flex-1"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeMaterialRow(i)}
+                        disabled={materials.length === 1}
+                        className="flex items-center justify-center text-text-muted hover:text-danger disabled:opacity-30 transition-colors shrink-0"
+                        title="Remove row"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-text-muted">Quantity</label>
+                        <Input
+                          type="number"
+                          min="0.01"
+                          step="any"
+                          placeholder="e.g. 4"
+                          value={row.quantity}
+                          onChange={(e) => updateMaterialRow(i, 'quantity', e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-text-muted">Unit (UOM)</label>
+                        <InputSelect value={row.uom} onChange={(e) => updateMaterialRow(i, 'uom', e.target.value)}>
+                          {UOMS.map((u) => <option key={u} value={u}>{u}</option>)}
+                        </InputSelect>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
