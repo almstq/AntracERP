@@ -83,34 +83,37 @@ export const ticketWorkflow: WorkflowDefinition<TicketStatus> = {
       label: 'Request Info', allowedRoles: ['gm', 'super_admin'],
       requiresNotes: true, isReject: true, notify: ['mechanic'],
     },
-    // System-only: TRIGGER_DELIVERY side effect advances the ticket once items
-    // have been dispatched from the receiving store to the requestee site.
-    // This is what unlocks "Confirm Items Received" — procurement must complete first.
+    // Inventory staff dispatches items from HQ store to the requestee site after
+    // procurement completes. TRIGGER_DELIVERY side effect fires this automatically
+    // when a PO closes; inventory_staff can also trigger it manually.
+    // SA must act-as inventory_staff — super_admin is intentionally excluded.
     {
       from: 'gm_approved', to: 'awaiting_delivery', action: 'mark_dispatched',
-      label: 'Items Dispatched', allowedRoles: ['system', 'super_admin'],
+      label: 'Items Dispatched to Site', allowedRoles: ['inventory_staff', 'system'],
+      notify: ['supervisor'],
     },
-    // Stage 13 — requestee confirms receipt of delivered items (unlocked by delivery dispatch)
+    // No-PR path: mechanic/supervisor resolved the issue without materials
+    // (diagnosis found no parts needed, or work was purely labour).
+    {
+      from: 'gm_approved', to: 'resolved', action: 'close_no_parts',
+      label: 'Mark Resolved (No Parts Needed)', allowedRoles: ['mechanic', 'supervisor', 'gm', 'super_admin'],
+      requiresNotes: true, notify: ['gm'],
+    },
+    // Stage 13 — supervisor at the site confirms items arrived (unlocked only after dispatch)
     {
       from: 'awaiting_delivery', to: 'items_delivered', action: 'confirm_receipt',
-      label: 'Confirm Items Received', allowedRoles: ['operator', 'mechanic', 'supervisor', 'super_admin'],
+      label: 'Confirm Items Received', allowedRoles: ['supervisor', 'super_admin'],
       notify: ['gm', 'inventory_staff'],
     },
-    // No PR path (no materials needed) — ticket can be confirmed directly from gm_approved
-    {
-      from: 'gm_approved', to: 'items_delivered', action: 'confirm_receipt_direct',
-      label: 'Confirm Resolved (No Parts)', allowedRoles: ['gm', 'super_admin'],
-      notify: ['gm'],
-    },
-    // Stage 14 — resolution
+    // Stage 14 — resolution (supervisor or mechanic confirms work is done)
     {
       from: 'items_delivered', to: 'resolved', action: 'mark_resolved',
-      label: 'Mark Resolved', allowedRoles: ['operator', 'mechanic', 'super_admin'],
+      label: 'Mark Resolved', allowedRoles: ['supervisor', 'mechanic', 'super_admin'],
       requiresNotes: true,
     },
     {
       from: 'items_delivered', to: 'persists', action: 'mark_persists',
-      label: 'Issue Persists', allowedRoles: ['operator', 'mechanic', 'super_admin'],
+      label: 'Issue Persists', allowedRoles: ['supervisor', 'mechanic', 'super_admin'],
       requiresNotes: true, isReject: true,
       sideEffects: ['SPAWN_CHILD_TICKET'],
     },

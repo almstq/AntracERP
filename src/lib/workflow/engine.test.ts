@@ -76,8 +76,14 @@ describe('workflow definitions — structural integrity', () => {
         }
       });
 
-      it('super_admin can perform every transition (solo-testable)', () => {
+      it('super_admin can perform every transition except role-gated ops', () => {
+        // Some transitions are intentionally restricted to specific operational roles
+        // (e.g. inventory_staff dispatches items — SA must act-as that role).
+        // System-only transitions are also excluded.
+        const roleGatedActions = new Set(['mark_dispatched']);
         for (const t of def.transitions) {
+          if (roleGatedActions.has(t.action)) continue;
+          if (t.allowedRoles.length === 1 && t.allowedRoles[0] === 'system') continue;
           expect(t.allowedRoles, `${t.action} is missing super_admin`).toContain('super_admin');
         }
       });
@@ -282,9 +288,9 @@ describe('Issue-to-Closure happy path', () => {
       ['submitted', 'diagnosed', 'mechanic', { notes: 'hydraulic seal failure' }],
       ['diagnosed', 'supervisor_checked', 'supervisor'],
       ['supervisor_checked', 'gm_approved', 'gm'],
-      ['gm_approved', 'awaiting_delivery', 'super_admin'],   // TRIGGER_DELIVERY fires this via system; SA can also do it manually
-      ['awaiting_delivery', 'items_delivered', 'operator'],
-      ['items_delivered', 'resolved', 'operator', { notes: 'back in service' }],
+      ['gm_approved', 'awaiting_delivery', 'system'],         // TRIGGER_DELIVERY fires this automatically when PO closes
+      ['awaiting_delivery', 'items_delivered', 'supervisor'], // supervisor confirms items received at site
+      ['items_delivered', 'resolved', 'supervisor', { notes: 'deck repaired, back in service' }],
       ['resolved', 'closed', 'gm'],
     ];
     assertWalk(ticketWorkflow, path);
