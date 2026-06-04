@@ -29,6 +29,7 @@ export type TicketStatus =
   | 'diagnosed'
   | 'supervisor_checked'
   | 'gm_approved'
+  | 'awaiting_delivery'
   | 'items_delivered'
   | 'resolved'
   | 'persists'

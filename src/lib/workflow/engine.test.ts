@@ -282,7 +282,8 @@ describe('Issue-to-Closure happy path', () => {
       ['submitted', 'diagnosed', 'mechanic', { notes: 'hydraulic seal failure' }],
       ['diagnosed', 'supervisor_checked', 'supervisor'],
       ['supervisor_checked', 'gm_approved', 'gm'],
-      ['gm_approved', 'items_delivered', 'operator'],
+      ['gm_approved', 'awaiting_delivery', 'super_admin'],   // TRIGGER_DELIVERY fires this via system; SA can also do it manually
+      ['awaiting_delivery', 'items_delivered', 'operator'],
       ['items_delivered', 'resolved', 'operator', { notes: 'back in service' }],
       ['resolved', 'closed', 'gm'],
     ];

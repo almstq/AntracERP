@@ -135,7 +135,9 @@ const handlers: Record<SideEffectTag, Handler> = {
   },
 
   // PO closed → create a StockTransfer from the receiving store to the requestee site's store.
-  TRIGGER_DELIVERY: async ({ entityId, actor }) => {
+  // Also advances the parent ticket gm_approved → awaiting_delivery so "Confirm Items Received"
+  // only unlocks after procurement actually completes.
+  TRIGGER_DELIVERY: async ({ entityId, actor, execute }) => {
     const po = await getById<PurchaseOrder & {
       inventoryReceipt?: { receivedStoreId: string; receivedStoreName: string; lines: PoReceiptLine[] };
     }>('purchaseOrders', entityId);
@@ -155,6 +157,14 @@ const handlers: Record<SideEffectTag, Handler> = {
     );
     if (transferId) {
       console.info(`[side-effect] TRIGGER_DELIVERY: transfer ${transferId} created for PO ${entityId}`);
+    }
+    // Advance parent ticket to awaiting_delivery so the supervisor/operator can
+    // confirm receipt — only valid if ticket is still in gm_approved.
+    if (ticket?.id && ticket.status === 'gm_approved') {
+      await execute({
+        workflowId: 'ticket', entityId: ticket.id, to: 'awaiting_delivery',
+        actor: systemActor(actor),
+      }).catch((e) => console.warn('[side-effect] TRIGGER_DELIVERY: could not advance ticket:', e));
     }
   },
 

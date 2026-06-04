@@ -16,7 +16,7 @@ export const ticketWorkflow: WorkflowDefinition<TicketStatus> = {
   initialState: 'draft',
   states: [
     'draft', 'submitted', 'diagnosed', 'supervisor_checked', 'gm_approved',
-    'items_delivered', 'resolved', 'persists', 'closed', 'rejected',
+    'awaiting_delivery', 'items_delivered', 'resolved', 'persists', 'closed', 'rejected',
   ],
   terminalStates: ['closed'],
   statusLabels: {
@@ -25,6 +25,7 @@ export const ticketWorkflow: WorkflowDefinition<TicketStatus> = {
     diagnosed: 'Diagnosed',
     supervisor_checked: 'Supervisor Checked',
     gm_approved: 'GM Approved',
+    awaiting_delivery: 'Awaiting Delivery',
     items_delivered: 'Items Delivered',
     resolved: 'Resolved',
     persists: 'Issue Persists',
@@ -82,11 +83,24 @@ export const ticketWorkflow: WorkflowDefinition<TicketStatus> = {
       label: 'Request Info', allowedRoles: ['gm', 'super_admin'],
       requiresNotes: true, isReject: true, notify: ['mechanic'],
     },
-    // Stage 13 — requestee confirms receipt of delivered items
+    // System-only: TRIGGER_DELIVERY side effect advances the ticket once items
+    // have been dispatched from the receiving store to the requestee site.
+    // This is what unlocks "Confirm Items Received" — procurement must complete first.
     {
-      from: 'gm_approved', to: 'items_delivered', action: 'confirm_receipt',
-      label: 'Confirm Items Received', allowedRoles: ['operator', 'mechanic', 'super_admin'],
+      from: 'gm_approved', to: 'awaiting_delivery', action: 'mark_dispatched',
+      label: 'Items Dispatched', allowedRoles: ['system', 'super_admin'],
+    },
+    // Stage 13 — requestee confirms receipt of delivered items (unlocked by delivery dispatch)
+    {
+      from: 'awaiting_delivery', to: 'items_delivered', action: 'confirm_receipt',
+      label: 'Confirm Items Received', allowedRoles: ['operator', 'mechanic', 'supervisor', 'super_admin'],
       notify: ['gm', 'inventory_staff'],
+    },
+    // No PR path (no materials needed) — ticket can be confirmed directly from gm_approved
+    {
+      from: 'gm_approved', to: 'items_delivered', action: 'confirm_receipt_direct',
+      label: 'Confirm Resolved (No Parts)', allowedRoles: ['gm', 'super_admin'],
+      notify: ['gm'],
     },
     // Stage 14 — resolution
     {

@@ -21,6 +21,7 @@ function statusBadge(s: string): string {
   if (s === 'closed') return 'b-muted';
   if (s === 'rejected') return 'b-danger';
   if (s === 'gm_approved' || s === 'resolved' || s === 'items_delivered') return 'b-pos';
+  if (s === 'awaiting_delivery') return 'b-accent';
   if (s === 'supervisor_checked') return 'b-accent';
   if (s === 'submitted' || s === 'diagnosed') return 'b-warn';
   return 'b-info';
