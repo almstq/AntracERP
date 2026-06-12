@@ -34,7 +34,8 @@ async function nextSeq(key: string): Promise<number> {
   let n = 0;
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
-    n = (snap.exists() ? (snap.data().n as number) : 0) + 1;
+    const data = snap.data() as { n?: number } | undefined;
+    n = ((data?.n ?? 0) + 1);
     tx.set(ref, { n });
   });
   return n;
@@ -147,7 +148,8 @@ async function postMovementTx(
   let newQty = 0;
   await runTransaction(db, async (tx) => {
     const balSnap = await tx.get(balRef);
-    const current = balSnap.exists() ? (balSnap.data().qtyOnHand as number) : 0;
+    const balData = balSnap.data() as { qtyOnHand?: number } | undefined;
+    const current = balData?.qtyOnHand ?? 0;
     const delta = type === 'transfer_out' || type === 'consumption' ? -qty : qty;
     newQty = Math.max(0, current + delta);
 
