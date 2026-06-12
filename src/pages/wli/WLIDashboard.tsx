@@ -64,6 +64,24 @@ export function WLIDashboard({ scopeSiteIds }: { scopeSiteIds?: string[] } = {})
   const landF = fleet(land);
   const vesselF = fleet(vessels);
 
+  // ── Open repair counts per fleet group ───────────────────────────────────
+  // Count open tickets (not closed/rejected) linked to assets in each group.
+  const openExcl = new Set(['closed', 'rejected']);
+  const assetOpenRepairs = (assetIds: Set<string>) =>
+    tickets.filter((t) => {
+      if (openExcl.has(t.status)) return false;
+      if (t.assetId && assetIds.has(t.assetId)) return true;
+      if (t.assetCode) {
+        // match by code within current fleet assets
+        return assets.some((a) => a.code === t.assetCode && assetIds.has(a.id));
+      }
+      return false;
+    }).length;
+  const landIds = new Set(land.map((a) => a.id));
+  const vesselIds = new Set(vessels.map((a) => a.id));
+  const landOpenRepairs = assetOpenRepairs(landIds);
+  const vesselOpenRepairs = assetOpenRepairs(vesselIds);
+
   // Crewing gaps — vessels and vehicles with no staff assigned (excludes down assets)
   const assignedAssetIds = new Set(staff.map((s) => s.assignedAssetId).filter(Boolean));
   const crewingGaps = assets.filter(
@@ -178,11 +196,14 @@ export function WLIDashboard({ scopeSiteIds }: { scopeSiteIds?: string[] } = {})
       <div className="section">
         <div className="section-head">
           <h2>Fleet Readiness</h2>
-          <Link className="section-link" to="/wli/assets">Asset register <ChevronRight /></Link>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link className="section-link" to="/wli/map">Fleet Map <ChevronRight /></Link>
+            <Link className="section-link" to="/wli/reports/uptime">Fleet Uptime <ChevronRight /></Link>
+          </div>
         </div>
         <div className="duo">
-          <FleetCard title="Land Fleet" icon={Truck} tint="tint-pos" color="var(--positive)" f={landF} />
-          <FleetCard title="Vessel Fleet" icon={Ship} tint="tint-info" color="var(--info)" f={vesselF} />
+          <FleetCard title="Land Fleet" icon={Truck} tint="tint-pos" color="var(--positive)" f={landF} openRepairs={landOpenRepairs} />
+          <FleetCard title="Vessel Fleet" icon={Ship} tint="tint-info" color="var(--info)" f={vesselF} openRepairs={vesselOpenRepairs} />
         </div>
       </div>
 
@@ -237,13 +258,14 @@ export function WLIDashboard({ scopeSiteIds }: { scopeSiteIds?: string[] } = {})
   );
 }
 
-function FleetCard({ title, icon: Icon, tint, color, f }: {
+function FleetCard({ title, icon: Icon, tint, color, f, openRepairs }: {
   title: string; icon: LucideIcon; tint: string; color: string;
   f: { ready: number; total: number; dep: number; idle: number; down: number; pct: number };
+  openRepairs: number;
 }) {
   const advisory = f.down > 0;
   return (
-    <div className="card fleet-card">
+    <div className="card fleet-card" style={{ cursor: 'pointer' }} onClick={() => (window.location.href = '/wli/map')}>
       <div className="fleet-top">
         <div className="ft-l">
           <div className={`ft-ic ${tint}`}><Icon /></div>
@@ -263,6 +285,12 @@ function FleetCard({ title, icon: Icon, tint, color, f }: {
         <span className="minitag"><i style={{ background: 'var(--positive)' }} /> {f.dep} deployed</span>
         <span className="minitag"><i style={{ background: 'var(--info)' }} /> {f.idle} idle</span>
         <span className="minitag"><i style={{ background: 'var(--danger)' }} /> {f.down} maintenance</span>
+        {openRepairs > 0 && (
+          <span className="minitag"><i style={{ background: 'var(--warning)' }} /> {openRepairs} open repair{openRepairs !== 1 ? 's' : ''}</span>
+        )}
+      </div>
+      <div style={{ marginTop: 8, fontSize: 10, color: 'var(--text-muted)' }}>
+        Click to view fleet map →
       </div>
     </div>
   );
