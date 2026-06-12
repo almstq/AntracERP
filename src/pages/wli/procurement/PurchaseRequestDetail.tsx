@@ -232,57 +232,109 @@ export function PurchaseRequestDetail() {
                 {cols.length === 0 ? (
                   <p className="text-xs text-text-muted">Add a supplier to start issuing RFQs for these items.</p>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-[11px] border-collapse">
-                      <thead>
-                        <tr className="text-text-muted">
-                          <th className="text-left p-1.5">Item</th>
-                          <th className="p-1.5 whitespace-nowrap">Req. qty</th>
-                          {cols.map((sid) => (
-                            <th key={sid} className="p-1.5 text-center min-w-[100px]">
-                              <div className="text-text-primary">{supName(sid)}</div>
-                              {union.includes(sid)
-                                ? <button onClick={() => downloadRfq(sid)} className="text-blue text-[10px]">RFQ ↓</button>
-                                : <span className="text-[9px] text-text-muted">not solicited</span>}
-                            </th>
+                  <>
+                    {/* Desktop: table layout */}
+                    <div className="overflow-x-auto d-md">
+                      <table className="w-full text-[11px] border-collapse">
+                        <thead>
+                          <tr className="text-text-muted">
+                            <th className="text-left p-1.5">Item</th>
+                            <th className="p-1.5 whitespace-nowrap">Req. qty</th>
+                            {cols.map((sid) => (
+                              <th key={sid} className="p-1.5 text-center min-w-[100px]">
+                                <div className="text-text-primary">{supName(sid)}</div>
+                                {union.includes(sid)
+                                  ? <button onClick={() => downloadRfq(sid)} className="text-blue text-[10px]">RFQ ↓</button>
+                                  : <span className="text-[9px] text-text-muted">not solicited</span>}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pr.lineItems.map((li) => (
+                            <tr key={li.ref} className="border-t border-border">
+                              <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
+                              <td className="p-1.5 text-center text-text-secondary whitespace-nowrap">{li.quantity} {li.uom}</td>
+                              {cols.map((sid) => {
+                                const assigned = (li.assignedSupplierIds ?? []).includes(sid);
+                                if (!assigned) return (
+                                  <td key={sid} className="p-1 text-center">
+                                    <button onClick={() => assignSupplier(li.ref, sid)} disabled={busy}
+                                      className="text-[10px] px-2 py-1 rounded border border-dashed border-border text-text-muted hover:text-blue hover:border-blue">+ RFQ</button>
+                                  </td>
+                                );
+                                return (
+                                  <td key={sid} className="p-1">
+                                    <input type="number" min="0" step="0.01" placeholder="price"
+                                      className="w-full text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary text-right"
+                                      value={quoteDraft[sid]?.[li.ref] ?? ''}
+                                      onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
+                                  </td>
+                                );
+                              })}
+                            </tr>
                           ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {pr.lineItems.map((li) => (
-                          <tr key={li.ref} className="border-t border-border">
-                            <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
-                            <td className="p-1.5 text-center text-text-secondary whitespace-nowrap">{li.quantity} {li.uom}</td>
+                          <tr className="border-t border-border font-medium">
+                            <td className="p-1.5 text-text-muted" colSpan={2}>Quote total (MVR)</td>
+                            {cols.map((sid) => {
+                              const total = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid))
+                                .reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
+                              return <td key={sid} className="p-1.5 text-center text-text-secondary">{total ? total.toLocaleString() : '—'}</td>;
+                            })}
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Mobile: card-per-item layout */}
+                    <div className="d-sm space-y-3">
+                      {pr.lineItems.map((li) => (
+                        <div key={li.ref} className="rounded-lg border border-border bg-bg-surface p-3">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <div className="text-xs font-medium text-text-primary">{li.ref}. {li.description}</div>
+                              <div className="text-[10px] text-text-muted mt-0.5">Qty: {li.quantity} {li.uom}</div>
+                            </div>
+                          </div>
+                          <div className="space-y-1.5">
                             {cols.map((sid) => {
                               const assigned = (li.assignedSupplierIds ?? []).includes(sid);
                               if (!assigned) return (
-                                <td key={sid} className="p-1 text-center">
+                                <div key={sid} className="flex items-center justify-between">
+                                  <span className="text-[10px] text-text-muted">{supName(sid)}</span>
                                   <button onClick={() => assignSupplier(li.ref, sid)} disabled={busy}
                                     className="text-[10px] px-2 py-1 rounded border border-dashed border-border text-text-muted hover:text-blue hover:border-blue">+ RFQ</button>
-                                </td>
+                                </div>
                               );
                               return (
-                                <td key={sid} className="p-1">
+                                <div key={sid} className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] text-text-muted flex-1">{supName(sid)}</span>
                                   <input type="number" min="0" step="0.01" placeholder="price"
-                                    className="w-full text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary text-right"
+                                    className="w-24 text-[11px] p-1 rounded bg-bg-base border border-border text-text-primary text-right"
                                     value={quoteDraft[sid]?.[li.ref] ?? ''}
                                     onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
-                                </td>
+                                </div>
                               );
                             })}
-                          </tr>
-                        ))}
-                        <tr className="border-t border-border font-medium">
-                          <td className="p-1.5 text-text-muted" colSpan={2}>Quote total (MVR)</td>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="rounded-lg border border-border-soft bg-bg-surface p-3">
+                        <div className="text-[10px] font-medium text-text-muted mb-1">Quote Totals (MVR)</div>
+                        <div className="space-y-1">
                           {cols.map((sid) => {
                             const total = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid))
                               .reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
-                            return <td key={sid} className="p-1.5 text-center text-text-secondary">{total ? total.toLocaleString() : '—'}</td>;
+                            return (
+                              <div key={sid} className="flex justify-between text-[11px]">
+                                <span className="text-text-muted">{supName(sid)}</span>
+                                <span className="text-text-secondary">{total ? total.toLocaleString() : '—'}</span>
+                              </div>
+                            );
                           })}
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
+                        </div>
+                      </div>
+                    </div>
+                  </>
                 )}
                 <p className="text-[10px] text-text-muted mt-2">Each column is a supplier. <b>+ RFQ</b> issues an RFQ for that item; enter the quoted unit price when received. Qty is fixed from the request.</p>
                 {err && <p className="text-xs text-red mt-2">{err}</p>}

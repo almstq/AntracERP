@@ -597,6 +597,24 @@
   .side-modbtn svg { width: 18px; height: 18px; }
   .side-modbtn:hover { background: var(--bg-hover); color: var(--text-primary); }
   .side-modbtn.active { background: var(--accent-soft); color: var(--accent); }
+
+  /* Inner-page responsive: detail grid stacks, tables become cards */
+  .detail { grid-template-columns: 1fr; }
+  .tbl-head { display: none; }
+  .tbl-row { grid-template-columns: 1fr; gap: 6px; padding: 12px 16px; }
+  .tbl .col-md { display: none; }
+  /* Quote/comparison tables — scrollable wrapper kept, font bumped */
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+  .overflow-x-auto table { font-size: 10px; }
+  /* Sumbar chips: 2 cols on mobile */
+  .sumchip { min-width: calc(50% - 8px); }
+
+  /* Responsive visibility helpers */
+  .d-md { display: none; }
+}
+@media (max-width: 860px) {
+  .d-md { display: block; }
+  .d-sm { display: none; }
 }
 
 /* ============================================================
