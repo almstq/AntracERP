@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { UserCog, ShieldCheck } from 'lucide-react';
+import { UserCog, ShieldCheck, ChevronDown, Search, Check, MapPin, Building2 } from 'lucide-react';
 import { useUsers } from '../../lib/hooks/useUsers';
 import { useSiteList } from '../../lib/hooks/useWorkflowData';
 import { assignAccess, type AppUser } from '../../lib/services/users';
@@ -8,8 +8,142 @@ import { useRoleRegistry, getRole, roleScope, type RoleDef } from '../../lib/per
 import { useAuth } from '../../lib/hooks/useAuth';
 import { logActivity } from '../../lib/services/activityLog';
 import { useToast } from '../../lib/context/ToastContext';
+import { ROLE_LABELS } from '../../lib/permissions/roles';
 
 const labelForRole = (r: string) => getRole(r)?.label ?? r;
+
+function RoleOption({ role, selected, onPick }: { role: RoleDef; selected: boolean; onPick: () => void }) {
+  const fnCount = Object.values(role.permissions).filter((l) => l !== 'none').length;
+  const workflow = role.workflowActors.map((a) => ROLE_LABELS[a] ?? a).join(', ');
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className="dcard"
+      style={{
+        width: '100%', padding: 10, textAlign: 'left', borderColor: selected ? 'var(--accent)' : 'var(--border)',
+        background: selected ? 'var(--accent-soft)' : 'var(--bg-card)', cursor: 'pointer',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+        <div
+          className="avatar"
+          style={{
+            width: 28, height: 28, fontSize: 11,
+            background: role.builtin ? 'var(--info-soft)' : 'var(--accent-soft)',
+            color: role.builtin ? 'var(--info)' : 'var(--accent)',
+          }}
+        >
+          {role.label.charAt(0).toUpperCase()}
+        </div>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div className="row-id" style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            {role.label}
+            <span className={`badge ${role.builtin ? 'b-info' : 'b-accent'}`}>{role.builtin ? 'SEEDED' : 'SA CREATED'}</span>
+            <span className="badge b-muted">{role.scope === 'own_territory' ? 'territory' : 'all sites'}</span>
+          </div>
+          <div className="row-sub">
+            {role.modules.map((m) => m.toUpperCase()).join(' · ') || 'no module'} · {fnCount} functions
+            {workflow ? ` · workflow: ${workflow}` : ''}
+          </div>
+        </div>
+        {selected && <Check size={15} style={{ color: 'var(--accent)' }} />}
+      </div>
+    </button>
+  );
+}
+
+function RegistryRolePicker({ roles, value, onChange }: { roles: RoleDef[]; value: string; onChange: (roleId: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const selected = roles.find((r) => r.id === value) ?? getRole(value);
+  const q = query.trim().toLowerCase();
+  const filtered = roles.filter((r) => {
+    if (!q) return true;
+    const haystack = `${r.label} ${r.id} ${r.modules.join(' ')} ${r.workflowActors.map((a) => ROLE_LABELS[a] ?? a).join(' ')}`.toLowerCase();
+    return haystack.includes(q);
+  });
+  const seeded = filtered.filter((r) => r.builtin);
+  const created = filtered.filter((r) => !r.builtin);
+  const roleGroups = ([
+    ['SA-created roles', created],
+    ['Seeded roles', seeded],
+  ] as [string, RoleDef[]][]).filter(([, rows]) => rows.length > 0);
+
+  return (
+    <div style={{ flex: '0 1 420px', minWidth: 280 }}>
+      <button
+        type="button"
+        className="side-foot-sel"
+        onClick={() => setOpen((v) => !v)}
+        style={{ width: '100%', minHeight: 46, textAlign: 'left', display: 'flex', alignItems: 'center', gap: 9, padding: '7px 10px' }}
+      >
+        <span
+          className="avatar"
+          style={{
+            width: 26, height: 26, fontSize: 11,
+            background: selected?.builtin ? 'var(--info-soft)' : 'var(--accent-soft)',
+            color: selected?.builtin ? 'var(--info)' : 'var(--accent)',
+          }}
+        >
+          {(selected?.label ?? value).charAt(0).toUpperCase()}
+        </span>
+        <span style={{ minWidth: 0, flex: 1 }}>
+          <span className="tc-id" style={{ display: 'block' }}>{selected?.label ?? value}</span>
+          <span className="tc-desc" style={{ display: 'block' }}>
+            {selected ? `${selected.modules.map((m) => m.toUpperCase()).join(' · ') || 'no module'} · ${selected.scope === 'own_territory' ? 'territory' : 'all sites'}` : 'Unknown role'}
+          </span>
+        </span>
+        <ChevronDown size={15} style={{ opacity: 0.65 }} />
+      </button>
+
+      {open && (
+        <div
+          className="dcard"
+          style={{
+            marginTop: 8, padding: 10, position: 'relative', zIndex: 20,
+            borderColor: 'var(--accent)', boxShadow: 'var(--shadow-lg, 0 20px 45px rgba(0,0,0,0.32))',
+          }}
+        >
+          <label
+            className="side-foot-sel"
+            style={{ display: 'flex', alignItems: 'center', gap: 7, width: '100%', marginBottom: 10, padding: '7px 9px' }}
+          >
+            <Search size={14} style={{ opacity: 0.65 }} />
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search role, module, workflow authority..."
+              style={{ background: 'transparent', border: 0, outline: 0, color: 'var(--text-primary)', width: '100%', fontSize: 12 }}
+            />
+          </label>
+          <div style={{ maxHeight: 360, overflow: 'auto', display: 'grid', gap: 10 }}>
+            {roleGroups.map(([title, rows]) => (
+              <div key={title}>
+                <div className="k" style={{ fontSize: 10, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {title === 'SA-created roles' ? <ShieldCheck size={11} /> : <Building2 size={11} />}
+                  {title} · {rows.length}
+                </div>
+                <div style={{ display: 'grid', gap: 6 }}>
+                  {rows.map((r) => (
+                    <RoleOption
+                      key={r.id}
+                      role={r}
+                      selected={r.id === value}
+                      onPick={() => { onChange(r.id); setOpen(false); setQuery(''); }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+            {filtered.length === 0 && <div className="tbl-empty">No registry role matches this search.</div>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function UserRow({ user, sites, roles, onSaved }: {
   user: AppUser;
@@ -26,6 +160,8 @@ function UserRow({ user, sites, roles, onSaved }: {
 
   const toggleSite = (id: string) =>
     setSiteIds((cur) => (cur.includes(id) ? cur.filter((s) => s !== id) : [...cur, id]));
+  const selectedRole = roles.find((r) => r.id === role);
+  const selectedFnCount = selectedRole ? Object.values(selectedRole.permissions).filter((l) => l !== 'none').length : 0;
 
   async function save() {
     setBusy(true);
@@ -53,13 +189,27 @@ function UserRow({ user, sites, roles, onSaved }: {
           <div className="row-id">{user.displayName || '—'} {user.role === 'pending' && <span className="badge b-warn">NEW · pending</span>}</div>
           <div className="row-sub">{user.email}</div>
         </div>
-        <select className="side-foot-sel" style={{ width: 'auto', minWidth: 190 }} value={role} onChange={(e) => setRole(e.target.value)}>
-          {roles.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
-        </select>
+        <RegistryRolePicker roles={roles} value={role} onChange={setRole} />
         <button className="btn btn-primary" onClick={save} disabled={busy || !dirty} style={{ opacity: dirty ? 1 : 0.5 }}>
           {busy ? 'Saving…' : 'Assign'}
         </button>
       </div>
+      {selectedRole && (
+        <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className="badge b-muted"><ShieldCheck size={11} /> {selectedRole.builtin ? 'seeded role' : 'SA-created role'}</span>
+          <span className="badge b-muted">{selectedFnCount} functions</span>
+          <span className="badge b-muted">
+            {selectedRole.scope === 'own_territory' ? <MapPin size={11} /> : <Building2 size={11} />}
+            {selectedRole.scope === 'own_territory' ? 'requires site assignment' : 'all-site role'}
+          </span>
+          {selectedRole.workflowActors.length > 0 && (
+            <span className="badge b-muted">
+              <ShieldCheck size={11} />
+              {selectedRole.workflowActors.map((a) => ROLE_LABELS[a] ?? a).join(', ')}
+            </span>
+          )}
+        </div>
+      )}
       {roleScope(role) === 'own_territory' && (
         <div style={{ marginTop: 10, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span className="k">Sites:</span>
