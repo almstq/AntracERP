@@ -8,7 +8,7 @@
  * 4. After commit, run side-effect handlers (which may create/advance linked entities).
  */
 import {
-  getById, newBatch, batchUpdate, batchAddSub, serverTimestamp,
+  getById, newBatch, batchUpdate, batchAddSub, batchAddTop, serverTimestamp,
 } from '../firebase/db';
 import { getWorkflow } from './definitions';
 import { getTransition, validateTransition } from './engine';
@@ -47,11 +47,31 @@ export async function executeTransition(opts: ExecuteOptions): Promise<ExecuteRe
     actorId: actor.id,
     actorRole: actor.role,
     actorName: actor.name ?? null,
+    // Proxy governance: capture that a super_admin acted on behalf of this role.
+    adminOverride: actor.adminOverride ?? false,
+    performedByRole: actor.realRole ?? null,
     notes: notes ?? null,
     timestamp: serverTimestamp(),
   });
 
   queueNotifications(batch, def, transition, { id: entityId, displayId: entity.displayId }, actor.name);
+
+  // Live system-log capture — one global, append-only record of this activity.
+  batchAddTop(batch, 'activityLog', {
+    category: 'workflow',
+    action: transition.action,
+    summary: `${def.label} ${entity.displayId ?? entityId}: ${from} → ${to}`,
+    actorId: actor.id,
+    actorName: actor.name ?? null,
+    actorRole: actor.role,
+    adminOverride: actor.adminOverride ?? false,
+    performedByRole: actor.realRole ?? null,
+    entityType: workflowId,
+    entityId,
+    entityDisplayId: entity.displayId ?? null,
+    manual: false,
+    occurredAt: serverTimestamp(),
+  });
 
   await batch.commit();
 

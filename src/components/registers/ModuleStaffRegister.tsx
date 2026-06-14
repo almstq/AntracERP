@@ -9,9 +9,9 @@ import { createStaff, deleteStaff, updateStaff } from '../../lib/services/regist
 import { useAuth } from '../../lib/hooks/useAuth';
 import { ROLE_LABELS } from '../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType, type Staff } from '../../types/org';
-import { PageContainer } from '../shared/PageContainer';
-import { PageHeader } from '../shared/PageHeader';
 import { useToast } from '../../lib/context/ToastContext';
+
+const COLS = '2fr 1.2fr 72px';
 
 interface Props {
   /** SBU bucket these staff live under (e.g. 'antrac-hq', 'sbu-mpl'). */
@@ -108,11 +108,19 @@ export function ModuleStaffRegister({
   }
 
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
-        <PageHeader title={title} subtitle={loading ? 'Loading…' : (subtitle ?? `${staff.length} staff`)} />
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">{title}</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : (subtitle ?? `${staff.length} staff`)}</span>
+          </p>
+        </div>
         {canManage && (
-          <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Staff</Button>
+          <div className="head-actions">
+            <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Staff</Button>
+          </div>
         )}
       </div>
 
@@ -134,59 +142,54 @@ export function ModuleStaffRegister({
         </Card>
       )}
 
-      <Card>
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Staff</span><span>Role</span><span />
+        </div>
         {staff.length === 0 ? (
-          <p className="text-xs text-text-muted p-3">{emptyNote ?? 'No staff yet.'}</p>
+          <div className="tbl-empty">{emptyNote ?? 'No staff yet.'}</div>
         ) : (
-          <div className="space-y-1">
-            {staff.map((p) => editingId === p.id ? (
-              <div key={p.id} className="p-3 rounded-lg bg-bg-surface">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                  <Input placeholder="Name" value={editForm.name} onChange={(e) => setE('name', e.target.value)} />
-                  <Input placeholder="Designation" value={editForm.designation} onChange={(e) => setE('designation', e.target.value)} />
-                  <InputSelect value={editForm.staffType} onChange={(e) => setE('staffType', e.target.value)} title="Staff type">
-                    <option value="">— none —</option>
-                    {STAFF_TYPES.map((t) => <option key={t} value={t}>{STAFF_TYPE_LABEL[t]}</option>)}
-                  </InputSelect>
-                  <InputSelect value={editForm.role} onChange={(e) => setE('role', e.target.value)} title="System role">
-                    {roleOptions.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
-                  </InputSelect>
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <Button variant="primary" size="sm" onClick={saveEdit} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
-                  <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
-                  <span className="text-[10px] text-text-muted self-center ml-1">{p.displayId}</span>
+          staff.map((p) => editingId === p.id ? (
+            <div key={p.id} className="tbl-row" style={{ gridTemplateColumns: '1fr', cursor: 'default', padding: 12 }}>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <Input placeholder="Name" value={editForm.name} onChange={(e) => setE('name', e.target.value)} />
+                <Input placeholder="Designation" value={editForm.designation} onChange={(e) => setE('designation', e.target.value)} />
+                <InputSelect value={editForm.staffType} onChange={(e) => setE('staffType', e.target.value)} title="Staff type">
+                  <option value="">— none —</option>
+                  {STAFF_TYPES.map((t) => <option key={t} value={t}>{STAFF_TYPE_LABEL[t]}</option>)}
+                </InputSelect>
+                <InputSelect value={editForm.role} onChange={(e) => setE('role', e.target.value)} title="System role">
+                  {roleOptions.map((r) => <option key={r} value={r}>{ROLE_LABELS[r] ?? r}</option>)}
+                </InputSelect>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <Button variant="primary" size="sm" onClick={saveEdit} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
+                <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
+                <span className="text-[10px] text-text-muted self-center ml-1">{p.displayId}</span>
+              </div>
+            </div>
+          ) : (
+            <div key={p.id} className="tbl-row" style={{ gridTemplateColumns: COLS, cursor: 'default' }}>
+              <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                <UserCog size={15} className="text-text-muted" />
+                <div style={{ minWidth: 0 }}>
+                  <div className="tc-id">{p.name}</div>
+                  <div className="tc-desc">{p.displayId} · {p.designation || (p.staffType ? STAFF_TYPE_LABEL[p.staffType] : ROLE_LABELS[p.role] ?? p.role)}</div>
                 </div>
               </div>
-            ) : (
-              <div key={p.id} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface gap-3">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <UserCog size={16} className="text-text-muted shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-text-primary truncate">{p.name}</p>
-                    <p className="text-[10px] text-text-muted">
-                      {p.displayId} · {p.designation || (p.staffType ? STAFF_TYPE_LABEL[p.staffType] : ROLE_LABELS[p.role] ?? p.role)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {renderExtra?.(p)}
-                  {canManage && (
-                    <button className="p-1 rounded text-text-muted hover:text-blue" title="Edit" onClick={() => startEdit(p)}>
-                      <Pencil size={13} />
-                    </button>
-                  )}
-                  {canManage && (
-                    <button className="p-1 rounded text-text-muted hover:text-red" title="Delete" onClick={() => remove(p.id, p.name)}>
-                      <Trash2 size={13} />
-                    </button>
-                  )}
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>{renderExtra?.(p)}</div>
+              <div style={{ justifySelf: 'end', display: 'flex', gap: 2 }}>
+                {canManage && (
+                  <button className="btn btn-ghost" style={{ padding: 4 }} title="Edit" onClick={() => startEdit(p)}><Pencil size={13} /></button>
+                )}
+                {canManage && (
+                  <button className="btn btn-ghost" style={{ padding: 4 }} title="Delete" onClick={() => remove(p.id, p.name)}><Trash2 size={13} /></button>
+                )}
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
-      </Card>
-    </PageContainer>
+      </div>
+    </div>
   );
 }

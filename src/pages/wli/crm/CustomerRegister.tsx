@@ -4,14 +4,14 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
-import { Users, Plus, Search, ChevronRight, TrendingUp, AlertCircle } from 'lucide-react';
+import { Plus, Search, ChevronRight, TrendingUp, AlertCircle } from 'lucide-react';
 import { listCustomers, createCustomer } from '../../../lib/services/crm';
 import { useAuth } from '../../../lib/hooks/useAuth';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Customer, CreditTerms } from '../../../types/crm';
-import { PageContainer } from '../../../components/shared/PageContainer';
-import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 import { useToast } from '../../../lib/context/ToastContext';
+
+const COLS = '1.8fr 1fr 1fr 0.8fr 24px';
 
 const CREDIT_TERMS: { value: CreditTerms; label: string }[] = [
   { value: 'cod', label: 'COD' },
@@ -90,15 +90,18 @@ export function CustomerRegister() {
   );
 
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
+    <div className="page">
+      <div className="page-head">
         <div>
-          <h1 className="text-lg font-bold text-text-primary">Customer Register</h1>
-          <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${customers.length} customers`}</p>
+          <h1 className="page-title">Customer Register</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${customers.length} customers`}</span>
+          </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setAdding(v => !v)}>
-          <Plus size={14} /> Add Customer
-        </Button>
+        <div className="head-actions">
+          <Button variant="primary" size="sm" onClick={() => setAdding(v => !v)}><Plus size={14} /> Add Customer</Button>
+        </div>
       </div>
 
       {adding && (
@@ -131,62 +134,43 @@ export function CustomerRegister() {
         </Card>
       )}
 
-      <div className="relative mb-3">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
-          placeholder="Search customers…"
-          value={search} onChange={e => setSearch(e.target.value)}
-        />
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search customers, contacts…" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
       </div>
 
-      <Card>
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Customer</span><span>Outstanding</span><span>Lifetime</span><span>Active WO</span><span />
+        </div>
         {loading ? (
-          <LoadingSpinner text="Loading…" />
+          <div className="tbl-empty">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="py-8 text-center">
-            <Users size={28} className="mx-auto text-text-muted mb-2" />
-            <p className="text-xs text-text-muted">{search ? 'No customers match.' : 'No customers yet. Add your first one.'}</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {filtered.map(c => (
-              <Link key={c.id} to={`/wli/crm/customers/${c.id}`}
-                className="flex items-center justify-between p-3 hover:bg-bg-surface transition-colors group">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-blue/10 flex items-center justify-center flex-shrink-0">
-                    <span className="text-[11px] font-bold text-blue">{c.name.charAt(0)}</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-text-primary truncate">{c.name}</p>
-                    <p className="text-[10px] text-text-muted">{c.contactPerson} · {CREDIT_TERMS.find(t => t.value === c.creditTerms)?.label ?? c.creditTerms}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-4 flex-shrink-0">
-                  {c.outstandingBalance > 0 && (
-                    <div className="text-right hidden md:block">
-                      <p className="text-[9px] text-text-muted uppercase tracking-wide">Outstanding</p>
-                      <p className="text-xs font-medium text-amber">{formatMoney(c.outstandingBalance, c.currency as 'MVR' | 'USD')}</p>
-                    </div>
-                  )}
-                  {c.lifetimeRevenue > 0 && (
-                    <div className="text-right hidden md:block">
-                      <p className="text-[9px] text-text-muted uppercase tracking-wide">Lifetime</p>
-                      <p className="text-xs font-medium text-teal flex items-center gap-1">
-                        <TrendingUp size={10} />{formatMoney(c.lifetimeRevenue, c.currency as 'MVR' | 'USD')}
-                      </p>
-                    </div>
-                  )}
-                  {c.activeWorkOrders > 0 && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue/10 text-blue">{c.activeWorkOrders} active WO</span>
-                  )}
-                  <ChevronRight size={14} className="text-text-muted group-hover:text-text-primary" />
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </Card>
+          <div className="tbl-empty">{search ? 'No customers match.' : 'No customers yet. Add your first one.'}</div>
+        ) : filtered.map(c => (
+          <Link key={c.id} to={`/wli/crm/customers/${c.id}`} className="tbl-row" style={{ gridTemplateColumns: COLS }}>
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div className="avatar" style={{ width: 28, height: 28, flexShrink: 0 }}>{c.name.charAt(0)}</div>
+              <div style={{ minWidth: 0 }}>
+                <div className="tc-id">{c.name}</div>
+                <div className="tc-desc">{c.contactPerson} · {CREDIT_TERMS.find(t => t.value === c.creditTerms)?.label ?? c.creditTerms}</div>
+              </div>
+            </div>
+            <div className="tc-txt mono" style={{ color: c.outstandingBalance > 0 ? 'var(--warning)' : undefined }}>
+              {c.outstandingBalance > 0 ? formatMoney(c.outstandingBalance, c.currency as 'MVR' | 'USD') : '—'}
+            </div>
+            <div className="tc-txt mono" style={{ color: c.lifetimeRevenue > 0 ? 'var(--positive)' : undefined }}>
+              {c.lifetimeRevenue > 0 ? (
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><TrendingUp size={11} />{formatMoney(c.lifetimeRevenue, c.currency as 'MVR' | 'USD')}</span>
+              ) : '—'}
+            </div>
+            <div>{c.activeWorkOrders > 0 ? <span className="badge b-info"><span className="bdot" />{c.activeWorkOrders} WO</span> : <span className="tc-sub">—</span>}</div>
+            <ChevronRight className="tc-chev" />
+          </Link>
+        ))}
+      </div>
 
       {customers.some(c => c.outstandingBalance > c.creditLimit && c.creditLimit > 0) && (
         <div className="mt-3 flex items-center gap-2 text-xs text-amber p-3 rounded-lg bg-amber/5 border border-amber/20">
@@ -194,6 +178,6 @@ export function CustomerRegister() {
           <span>Some customers are over their credit limit. Review outstanding balances.</span>
         </div>
       )}
-    </PageContainer>
+    </div>
   );
 }

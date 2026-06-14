@@ -7,6 +7,7 @@
  */
 
 import type { WorkflowDefinition, WorkflowTransition } from './types';
+import { roleWorkflowActors } from '../permissions/roleRegistry';
 
 /** Transitions available from `currentStatus` for `role` (excludes system-only). */
 export function getAvailableTransitions<S extends string>(
@@ -14,10 +15,11 @@ export function getAvailableTransitions<S extends string>(
   currentStatus: S,
   role: string,
 ): WorkflowTransition<S>[] {
+  const actors = roleWorkflowActors(role);
   return def.transitions.filter(
     (t) =>
       t.from === currentStatus &&
-      t.allowedRoles.includes(role) &&
+      actors.some((actor) => t.allowedRoles.includes(actor)) &&
       !t.allowedRoles.every((r) => r === 'system'),
   );
 }
@@ -46,11 +48,12 @@ export function canTransition<S extends string>(
   to: S,
   role: string,
 ): boolean {
+  const actors = roleWorkflowActors(role);
   return def.transitions.some(
     (t) =>
       t.from === from &&
       t.to === to &&
-      (t.allowedRoles.includes(role) || t.allowedRoles.includes('system')),
+      (actors.some((actor) => t.allowedRoles.includes(actor)) || t.allowedRoles.includes('system')),
   );
 }
 
@@ -83,7 +86,8 @@ export function validateTransition<S extends string>(
   if (!transition) {
     return `No transition from "${from}" to "${to}" in ${def.label}.`;
   }
-  if (!transition.allowedRoles.includes(role) && !transition.allowedRoles.includes('system')) {
+  const actors = roleWorkflowActors(role);
+  if (!actors.some((actor) => transition.allowedRoles.includes(actor)) && !transition.allowedRoles.includes('system')) {
     return `Role "${role}" cannot perform "${transition.label}".`;
   }
   if (transition.requiresNotes && !payload.notes?.trim()) {

@@ -4,6 +4,11 @@
  */
 import { listAll, updateFields } from '../firebase/db';
 import { HOLDING_ROLES, WLI_ROLES, MPL_ROLES, EMS_ROLES } from '../permissions/roles';
+import { roleModules } from '../permissions/roleRegistry';
+
+const ORG_FOR_MODULE: Record<string, string> = {
+  holding: 'antrac-holding', wli: 'sbu-wli', mpl: 'sbu-mpl', ems: 'sbu-ems',
+};
 
 export interface AppUser {
   id: string;               // == uid
@@ -17,6 +22,8 @@ export interface AppUser {
 
 /** Which org a role belongs to (super_admin resolves to Holding via the first match). */
 export function orgIdForRole(role: string): string {
+  const firstRegistryModule = roleModules(role)[0];
+  if (firstRegistryModule) return ORG_FOR_MODULE[firstRegistryModule] ?? '';
   if ((HOLDING_ROLES as readonly string[]).includes(role)) return 'antrac-holding';
   if ((WLI_ROLES as readonly string[]).includes(role)) return 'sbu-wli';
   if ((MPL_ROLES as readonly string[]).includes(role)) return 'sbu-mpl';

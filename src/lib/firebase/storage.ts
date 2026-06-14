@@ -1,4 +1,5 @@
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
+import type { UploadTaskSnapshot } from 'firebase/storage';
 import { doc, updateDoc, addDoc, deleteDoc, arrayUnion, arrayRemove, collection } from 'firebase/firestore';
 import { getStorageInstance, getDbInstance } from './client';
 
@@ -116,11 +117,18 @@ export function uploadEntityFile(
     const uuid = crypto.randomUUID();
     const storagePath = `${col}/${entityId}/${uuid}_${file.name}`;
     const fileRef = ref(storage(), storagePath);
-    const task = uploadBytesResumable(fileRef, file, { contentType: file.type });
+    const task = uploadBytesResumable(fileRef, file, {
+      contentType: file.type,
+      customMetadata: {
+        uploadedById: uploader.uid,
+        entityCollection: col,
+        entityId,
+      },
+    });
 
     task.on(
       'state_changed',
-      (snap: any) => {
+      (snap: UploadTaskSnapshot) => {
         if (onProgress) onProgress(Math.round((snap.bytesTransferred / snap.totalBytes) * 100));
       },
       (err: Error) => reject(err),

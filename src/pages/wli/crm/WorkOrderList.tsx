@@ -1,33 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '../../../components/ui/Card';
-import { Briefcase, Search } from 'lucide-react';
+import { Search, ChevronRight } from 'lucide-react';
 import { listWorkOrders } from '../../../lib/services/crm';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import type { WorkOrder } from '../../../types/crm';
-import { PageContainer } from '../../../components/shared/PageContainer';
-import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
 
-const STATUS_STYLE: Record<string, string> = {
-  active:          'bg-blue/10 text-blue',
-  in_progress:     'bg-violet/10 text-violet',
-  completed:       'bg-amber/10 text-amber',
-  invoiced:        'bg-amber/15 text-amber',
-  partially_paid:  'bg-teal/10 text-teal',
-  fully_paid:      'bg-teal/20 text-teal',
-  closed:          'bg-border text-text-muted',
-};
+const COLS = '1.6fr 1fr 1.1fr 1fr 24px';
 
 const STATUS_LABELS: Record<string, string> = {
-  active:         'Active',
-  in_progress:    'In Progress',
-  completed:      'Completed',
-  invoiced:       'Invoiced',
-  partially_paid: 'Partially Paid',
-  fully_paid:     'Fully Paid',
-  closed:         'Closed',
+  active: 'Active', in_progress: 'In Progress', completed: 'Completed', invoiced: 'Invoiced',
+  partially_paid: 'Partially Paid', fully_paid: 'Fully Paid', closed: 'Closed',
 };
+
+function badge(status: string): string {
+  if (status === 'closed') return 'b-muted';
+  if (status === 'fully_paid') return 'b-pos';
+  if (status === 'partially_paid') return 'b-accent';
+  if (['completed', 'invoiced'].includes(status)) return 'b-warn';
+  return 'b-info';
+}
 
 export function WorkOrderList() {
   const [wos, setWos] = useState<WorkOrder[]>([]);
@@ -46,64 +38,45 @@ export function WorkOrderList() {
     : wos.filter(wo => wo.displayId.toLowerCase().includes(search.toLowerCase()) || wo.customerName.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <PageContainer>
-      <div className="mb-4">
-        <h1 className="text-lg font-bold text-text-primary">Work Orders</h1>
-        <p className="text-xs text-text-muted">
-          {loading ? 'Loading…' : `${open.length} active · ${closed.length} closed`}
-        </p>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Work Orders</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${open.length} active · ${closed.length} closed`}</span>
+          </p>
+        </div>
       </div>
 
-      <div className="relative mb-3">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-        <input
-          className="w-full pl-8 pr-3 py-2 text-xs rounded-lg bg-bg-surface border border-border text-text-primary"
-          placeholder="Search…"
-          value={search} onChange={e => setSearch(e.target.value)}
-        />
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search work orders, customers…" value={search} onChange={e => setSearch(e.target.value)} />
+        </div>
       </div>
 
-      <Card>
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Work Order</span><span>Status</span><span>Period</span><span>Contract</span><span />
+        </div>
         {loading ? (
-          <LoadingSpinner text="Loading…" />
+          <div className="tbl-empty">Loading…</div>
         ) : filtered.length === 0 ? (
-          <div className="py-10 text-center">
-            <Briefcase size={28} className="mx-auto text-text-muted mb-2" />
-            <p className="text-xs text-text-muted">{search ? 'No results match your search.' : 'No work orders yet.'}</p>
-            <p className="text-[10px] text-text-muted mt-1">Work orders are auto-created when a quotation is accepted.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-border">
-            {filtered.map(wo => (
-              <Link key={wo.id} to={`/wli/crm/work-orders/${wo.id}`}
-                className="flex items-center justify-between p-3 hover:bg-bg-surface transition-colors group">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-medium text-text-primary">{wo.displayId}</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${STATUS_STYLE[wo.status] ?? 'bg-border text-text-muted'}`}>
-                      {STATUS_LABELS[wo.status] ?? wo.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-text-secondary truncate">{wo.customerName}</p>
-                  <p className="text-[10px] text-text-muted">
-                    From {formatDate(wo.startDate)}
-                    {wo.endDate ? ` → ${formatDate(wo.endDate)}` : ''}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 flex-shrink-0 ml-4">
-                  <div className="text-right hidden md:block">
-                    <p className="text-[9px] text-text-muted uppercase tracking-wide">Contract</p>
-                    <p className="text-xs font-medium text-text-primary">
-                      {formatMoney(wo.contractValue, wo.currency as 'MVR' | 'USD')}
-                    </p>
-                  </div>
-                  <span className="text-[10px] text-text-muted group-hover:text-text-primary">→</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </Card>
-    </PageContainer>
+          <div className="tbl-empty">{search ? 'No results match your search.' : 'No work orders yet. They are auto-created when a quotation is accepted.'}</div>
+        ) : filtered.map(wo => (
+          <Link key={wo.id} to={`/wli/crm/work-orders/${wo.id}`} className="tbl-row" style={{ gridTemplateColumns: COLS }}>
+            <div style={{ minWidth: 0 }}>
+              <div className="tc-id">{wo.displayId}</div>
+              <div className="tc-desc">{wo.customerName}</div>
+            </div>
+            <div><span className={`badge ${badge(wo.status)}`}><span className="bdot" />{STATUS_LABELS[wo.status] ?? wo.status}</span></div>
+            <div className="tc-txt">{formatDate(wo.startDate)}{wo.endDate ? ` → ${formatDate(wo.endDate)}` : ''}</div>
+            <div className="tc-txt mono">{formatMoney(wo.contractValue, wo.currency as 'MVR' | 'USD')}</div>
+            <ChevronRight className="tc-chev" />
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

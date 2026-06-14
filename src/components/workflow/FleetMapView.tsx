@@ -51,9 +51,10 @@ interface Props {
   assets: (Asset & { id: string })[];
   staff: (Staff & { id: string })[];
   height?: string;
+  focusSiteIds?: string[];
 }
 
-export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
+export function FleetMapView({ sites, assets, staff, height = '60vh', focusSiteIds = [] }: Props) {
   const mapEl = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -75,13 +76,17 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
   if (!ready || !mapEl.current || sites.length === 0) return;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gmaps = (window.google as any).maps;
+  const focus = new Set(focusSiteIds);
   const withCoords = sites.filter((s) => s.location);
+  const focusSites = focus.size > 0 ? withCoords.filter((s) => focus.has(s.id)) : withCoords;
+  const boundsSites = focusSites.length > 0 ? focusSites : withCoords;
   if (withCoords.length === 0) return;
+  const isTerritoryView = focus.size > 0 && focusSites.length > 0;
   const c = colorsFor(dark);
 
   const map = new gmaps.Map(mapEl.current, {
-    center: withCoords[0].location!,
-    zoom: 10,
+    center: boundsSites[0].location!,
+    zoom: isTerritoryView ? 15 : 10,
     mapTypeId: 'roadmap',
     disableDefaultUI: false,
     gestureHandling: 'cooperative',
@@ -90,9 +95,14 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
   });
 
   const bounds = new gmaps.LatLngBounds();
-  for (const site of withCoords) bounds.extend(site.location!);
+  for (const site of boundsSites) bounds.extend(site.location!);
   map.fitBounds(bounds);
-  gmaps.event.addListenerOnce(map, 'idle', () => { if (map.getZoom() > 13) map.setZoom(13); });
+  gmaps.event.addListenerOnce(map, 'idle', () => {
+    const maxZoom = isTerritoryView ? (boundsSites.length === 1 ? 16 : 14) : 13;
+    const minZoom = isTerritoryView ? 13 : 8;
+    if (map.getZoom() > maxZoom) map.setZoom(maxZoom);
+    if (map.getZoom() < minZoom) map.setZoom(minZoom);
+  });
 
   const dot = (fill: string, scale = 6) => ({
     path: gmaps.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: c.infoBg, strokeWeight: 2,
@@ -126,7 +136,7 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
       ...siteAssets.map((a) => ({ kind: 'asset' as const, a })),
       ...siteStaff.map((p) => ({ kind: 'staff' as const, p })),
     ];
-    const R = 0.0055; // ~600m
+    const R = isTerritoryView ? 0.0028 : 0.0055; // tighter ground spread for site users
     ring.forEach((item, i) => {
       const ang = (2 * Math.PI * i) / Math.max(ring.length, 1);
       const pos = { lat: site.location!.lat + R * Math.cos(ang), lng: site.location!.lng + R * Math.sin(ang) };
@@ -149,7 +159,7 @@ export function FleetMapView({ sites, assets, staff, height = '60vh' }: Props) {
       }
     });
   }
-  }, [ready, sites, assets, staff, dark]);
+  }, [ready, sites, assets, staff, dark, focusSiteIds]);
 
   if (!MAPS_KEY) {
     // No Google Maps key — show a useful fleet list instead of blocking setup screen.

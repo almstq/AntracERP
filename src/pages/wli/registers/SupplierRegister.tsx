@@ -3,15 +3,17 @@ import { Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
-import { Store, Plus } from 'lucide-react';
+import { Store, Plus, Search, ChevronRight } from 'lucide-react';
 import { useSupplierList } from '../../../lib/hooks/useWorkflowData';
 import { createSupplier } from '../../../lib/services/registry';
-import { PageContainer } from '../../../components/shared/PageContainer';
 import { useToast } from '../../../lib/context/ToastContext';
+
+const COLS = '2fr 0.7fr 24px';
 
 export function SupplierRegister() {
   const { data: suppliers, loading, refresh } = useSupplierList();
   const [adding, setAdding] = useState(false);
+  const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', country: '', contactEmail: '', categories: '' });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -38,14 +40,22 @@ export function SupplierRegister() {
     finally { setBusy(false); }
   }
 
+  const q = search.trim().toLowerCase();
+  const filtered = suppliers.filter((s) => !q || `${s.name} ${s.country ?? ''} ${s.categories?.join(' ') ?? ''}`.toLowerCase().includes(q));
+
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
+    <div className="page">
+      <div className="page-head">
         <div>
-          <h1 className="text-lg font-bold text-text-primary">Supplier Register</h1>
-          <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${suppliers.length} suppliers`}</p>
+          <h1 className="page-title">Supplier Register</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${suppliers.length} suppliers`}</span>
+          </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Supplier</Button>
+        <div className="head-actions">
+          <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Supplier</Button>
+        </div>
       </div>
 
       {adding && (
@@ -61,22 +71,37 @@ export function SupplierRegister() {
         </Card>
       )}
 
-      <Card>
-        <div className="space-y-1">
-          {suppliers.map((s) => (
-            <Link key={s.id} to={`/wli/suppliers/${s.id}`} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface group">
-              <div className="flex items-center gap-3">
-                <Store size={16} className="text-text-muted" />
-                <div>
-                  <p className="text-xs font-medium text-text-primary group-hover:text-blue">{s.name}</p>
-                  <p className="text-[10px] text-text-muted">{s.country || '—'} · {s.categories?.join(', ') || 'no categories'}</p>
-                </div>
-              </div>
-              <span className="text-[10px] px-2 py-1 rounded-full bg-bg-surface text-text-secondary">{s.active ? 'active' : 'inactive'}</span>
-            </Link>
-          ))}
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search suppliers…" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-      </Card>
-    </PageContainer>
+      </div>
+
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Supplier</span><span>Status</span><span />
+        </div>
+        {loading ? (
+          <div className="tbl-empty">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="tbl-empty">{search ? 'No suppliers match.' : 'No suppliers yet. Add your first one.'}</div>
+        ) : filtered.map((s) => (
+          <Link key={s.id} to={`/wli/suppliers/${s.id}`} className="tbl-row" style={{ gridTemplateColumns: COLS }}>
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Store size={15} className="text-text-muted" />
+              <div style={{ minWidth: 0 }}>
+                <div className="tc-id">{s.name}</div>
+                <div className="tc-desc">{s.country || '—'} · {s.categories?.join(', ') || 'no categories'}</div>
+              </div>
+            </div>
+            <div>
+              <span className={`badge ${s.active ? 'b-pos' : 'b-muted'}`}><span className="bdot" />{s.active ? 'active' : 'inactive'}</span>
+            </div>
+            <ChevronRight className="tc-chev" />
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

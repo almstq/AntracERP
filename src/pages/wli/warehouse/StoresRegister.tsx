@@ -8,10 +8,10 @@ import { useStores } from '../../../lib/hooks/useInventory';
 import { useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createStore, updateStore } from '../../../lib/services/inventory';
 import type { Store } from '../../../types/inventory';
-import { PageContainer } from '../../../components/shared/PageContainer';
 import { useToast } from '../../../lib/context/ToastContext';
 
 const STORE_TYPES: Store['type'][] = ['main', 'yard', 'site', 'transit'];
+const COLS = '2fr 0.8fr 1fr';
 
 export function StoresRegister() {
   const { data: stores, loading, refresh } = useStores();
@@ -59,25 +59,25 @@ export function StoresRegister() {
   const unassigned = stores.filter((s) => !sites.find((site) => site.id === s.siteId));
 
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
+    <div className="page">
+      <div className="page-head">
         <div>
-          <h1 className="text-lg font-bold text-text-primary">Stores Register</h1>
-          <p className="text-xs text-text-muted">
-            {loading ? 'Loading…' : `${stores.length} stores across ${sites.length} sites`}
+          <h1 className="page-title">Stores Register</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${stores.length} stores across ${sites.length} sites`}</span>
           </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}>
-          + Add Store
-        </Button>
+        <div className="head-actions">
+          <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}>+ Add Store</Button>
+        </div>
       </div>
 
       {adding && (
         <Card className="mb-4">
           <p className="text-xs font-medium text-text-primary mb-3">New Store</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Input placeholder="Store name" value={form.name}
-              onChange={(e) => set('name', e.target.value)} />
+            <Input placeholder="Store name" value={form.name} onChange={(e) => set('name', e.target.value)} />
             <InputSelect value={form.siteId} onChange={(e) => set('siteId', e.target.value)}>
               <option value="">— Site —</option>
               {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
@@ -85,62 +85,59 @@ export function StoresRegister() {
             <InputSelect value={form.type} onChange={(e) => set('type', e.target.value as Store['type'])}>
               {STORE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </InputSelect>
-            <Button variant="primary" size="sm" onClick={add} disabled={busy}>
-              {busy ? 'Saving…' : 'Save'}
-            </Button>
+            <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}
         </Card>
       )}
 
-      {/* Grouped by site */}
-      <div className="space-y-4">
-        {grouped.map(({ site, stores: siteStores }) => (
-          <Card key={site.id} header={
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-text-primary">{site.name}</span>
-              <span className="text-[10px] text-text-muted">{siteStores.length} store{siteStores.length !== 1 ? 's' : ''}</span>
+      {stores.length === 0 && !loading && (
+        <div className="tbl"><div className="tbl-empty">No stores yet. Add a store to a site to start tracking stock.</div></div>
+      )}
+
+      {grouped.map(({ site, stores: siteStores }) => (
+        <div key={site.id} style={{ marginBottom: 22 }}>
+          <div className="section-head" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <h2 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{site.name}</h2>
+            <span className="hint">· {siteStores.length} store{siteStores.length !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="tbl">
+            <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+              <span>Store</span><span>Status</span><span />
             </div>
-          }>
-            <div className="space-y-1">
-              {siteStores.map((store) => (
-                <div key={store.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface">
-                  <div className="flex items-center gap-3">
-                    <Warehouse size={16} className="text-text-muted" />
-                    <div>
-                      <p className="text-xs font-medium text-text-primary">{store.name}</p>
-                      <p className="text-[10px] text-text-muted">{store.code} · {store.type}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${store.active ? 'bg-green/10 text-green' : 'bg-bg-surface text-text-muted'}`}>
-                      {store.active ? 'active' : 'inactive'}
-                    </span>
-                    <button onClick={() => toggleActive(store)}
-                      className="text-[10px] text-text-muted hover:text-text-primary underline">
-                      {store.active ? 'Deactivate' : 'Activate'}
-                    </button>
+            {siteStores.map((store) => (
+              <div key={store.id} className="tbl-row" style={{ gridTemplateColumns: COLS, cursor: 'default' }}>
+                <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Warehouse size={15} className="text-text-muted" />
+                  <div style={{ minWidth: 0 }}>
+                    <div className="tc-id">{store.name}</div>
+                    <div className="tc-desc">{store.code} · {store.type}</div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        ))}
-
-        {unassigned.length > 0 && (
-          <Card header={<span className="text-xs font-semibold text-text-muted">Unassigned Stores</span>}>
-            {unassigned.map((store) => (
-              <div key={store.id} className="p-3 text-xs text-text-secondary">{store.name} ({store.code})</div>
+                <div><span className={`badge ${store.active ? 'b-pos' : 'b-muted'}`}><span className="bdot" />{store.active ? 'active' : 'inactive'}</span></div>
+                <div style={{ justifySelf: 'end' }}>
+                  <button onClick={() => toggleActive(store)} className="btn btn-ghost" style={{ fontSize: 11, padding: '4px 10px' }}>
+                    {store.active ? 'Deactivate' : 'Activate'}
+                  </button>
+                </div>
+              </div>
             ))}
-          </Card>
-        )}
+          </div>
+        </div>
+      ))}
 
-        {stores.length === 0 && !loading && (
-          <Card>
-            <p className="text-xs text-text-muted text-center py-4">No stores yet. Add a store to a site to start tracking stock.</p>
-          </Card>
-        )}
-      </div>
-    </PageContainer>
+      {unassigned.length > 0 && (
+        <div style={{ marginBottom: 22 }}>
+          <div className="section-head"><h2 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Unassigned Stores</h2></div>
+          <div className="tbl">
+            {unassigned.map((store) => (
+              <div key={store.id} className="tbl-row" style={{ gridTemplateColumns: '1fr', cursor: 'default' }}>
+                <div className="tc-txt">{store.name} ({store.code})</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

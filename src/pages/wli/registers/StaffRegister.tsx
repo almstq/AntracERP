@@ -4,18 +4,20 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
-import { UserCog, Plus, X } from 'lucide-react';
+import { UserCog, Plus, X, Search } from 'lucide-react';
 import { useStaffList, useSiteList, useAssetList } from '../../../lib/hooks/useWorkflowData';
 import { createStaff, assignStaffSite, assignStaffAsset, unassignStaff } from '../../../lib/services/registry';
 import { ROLES, ROLE_LABELS } from '../../../lib/permissions/roles';
 import { STAFF_TYPES, STAFF_TYPE_LABEL, type StaffType } from '../../../types/org';
-import { PageContainer } from '../../../components/shared/PageContainer';
+import { useAuth } from '../../../lib/hooks/useAuth';
+import { isTerritoryScoped, canEdit } from '../../../lib/permissions/roleRegistry';
 import { useToast } from '../../../lib/context/ToastContext';
 
 const ASSIGNABLE_ROLES = [
   ROLES.OPERATOR, ROLES.MECHANIC, ROLES.SUPERVISOR, ROLES.PROC_STAFF,
   ROLES.FINANCE_WLI, ROLES.INVENTORY_STAFF, ROLES.GM,
 ];
+const COLS = '1.7fr 1.1fr 1.3fr 32px';
 
 function nextStaffId(count: number): string {
   return `ST-${String(count + 1).padStart(3, '0')}`;
@@ -25,7 +27,12 @@ export function StaffRegister() {
   const { data: staff, loading, refresh } = useStaffList();
   const { data: sites } = useSiteList();
   const { data: assets } = useAssetList();
+  const { user, effectiveRole } = useAuth();
+  const scoped = isTerritoryScoped(effectiveRole);
+  const editable = canEdit(effectiveRole, '/wli/staff');
+  const territory = new Set(user?.siteIds ?? []);
   const [adding, setAdding] = useState(false);
+  const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', role: ROLES.OPERATOR as string, staffType: 'operator' as StaffType, designation: '', siteId: '' });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -71,14 +78,27 @@ export function StaffRegister() {
     await unassignStaff(staffId); refresh();
   }
 
+  const q = search.trim().toLowerCase();
+  const filtered = staff.filter((p) =>
+    (!q || `${p.name} ${p.displayId} ${p.designation ?? ''}`.toLowerCase().includes(q)) &&
+    (!scoped || (!!p.siteId && territory.has(p.siteId)))
+  );
+
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
+    <div className="page">
+      <div className="page-head">
         <div>
-          <h1 className="text-lg font-bold text-text-primary">Staff Register</h1>
-          <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${staff.length} staff`}</p>
+          <h1 className="page-title">Staff Register</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${staff.length} staff`}</span>
+          </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Staff</Button>
+        <div className="head-actions">
+          {editable
+            ? <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Staff</Button>
+            : <span className="badge b-muted"><span className="bdot" />view only</span>}
+        </div>
       </div>
 
       {adding && (
@@ -102,59 +122,79 @@ export function StaffRegister() {
         </Card>
       )}
 
-      <Card>
-        <div className="space-y-1">
-          {staff.map((p) => (
-            <div key={p.id} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface gap-3">
-              <Link to={`/wli/staff/${p.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
-                <UserCog size={16} className="text-text-muted" />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{p.name}</p>
-                  <p className="text-[10px] text-text-muted">{p.displayId} · {p.staffType ? STAFF_TYPE_LABEL[p.staffType] : (ROLE_LABELS[p.role] ?? p.role)}{p.designation ? ` · ${p.designation}` : ''}</p>
-                </div>
-              </Link>
-              <select
-                className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
-                value={p.siteId ?? ''}
-                onChange={(e) => reassign(p.id, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                title="Assign site"
-              >
-                <option value="">Unassigned site</option>
-                {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-              <select
-                className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary flex-shrink-0"
-                value={p.assignedAssetId ?? ''}
-                onChange={(e) => reassignAsset(p.id, e.target.value)}
-                onClick={(e) => e.stopPropagation()}
-                title="Assign vessel or vehicle"
-              >
-                <option value="">No vessel / vehicle</option>
-                <optgroup label="Vessels">
-                  {assignableAssets.filter((a) => a.assetClass === 'vessel').map((a) => (
-                    <option key={a.id} value={a.id}>{a.code} — {a.model || a.make}</option>
-                  ))}
-                </optgroup>
-                <optgroup label="Vehicles">
-                  {assignableAssets.filter((a) => a.assetClass === 'vehicle').map((a) => (
-                    <option key={a.id} value={a.id}>{a.code} — {a.make} {a.model}</option>
-                  ))}
-                </optgroup>
-              </select>
-              {(p.siteId || p.assignedAssetId) && (
-                <button
-                  className="p-1 rounded text-text-muted hover:text-red flex-shrink-0"
-                  title="Unassign from site and asset"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); unassign(p.id, p.name); }}
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search staff…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        {scoped && (
+          <span className="badge b-info" title="You see only staff at your assigned sites">
+            <span className="bdot" />your territory
+          </span>
+        )}
+      </div>
+
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>Staff</span><span>Site</span><span>Vessel / Vehicle</span><span />
+        </div>
+        {loading ? (
+          <div className="tbl-empty">Loading…</div>
+        ) : filtered.length === 0 ? (
+          <div className="tbl-empty">{search ? 'No staff match.' : 'No staff yet. Add your first one.'}</div>
+        ) : filtered.map((p) => (
+          <div key={p.id} className="tbl-row" style={{ gridTemplateColumns: COLS, cursor: 'default' }}>
+            <Link to={`/wli/staff/${p.id}`} style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <UserCog size={15} className="text-text-muted" />
+              <div style={{ minWidth: 0 }}>
+                <div className="tc-id">{p.name}</div>
+                <div className="tc-desc">{p.displayId} · {p.staffType ? STAFF_TYPE_LABEL[p.staffType] : (ROLE_LABELS[p.role] ?? p.role)}{p.designation ? ` · ${p.designation}` : ''}</div>
+              </div>
+            </Link>
+            <div>
+              {editable ? (
+                <select
+                  className="side-foot-sel" style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                  value={p.siteId ?? ''} onChange={(e) => reassign(p.id, e.target.value)} title="Assign site"
                 >
-                  <X size={13} />
-                </button>
+                  <option value="">Unassigned site</option>
+                  {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              ) : (
+                <span className="tc-txt">{sites.find((s) => s.id === p.siteId)?.name ?? 'Unassigned'}</span>
               )}
             </div>
-          ))}
-        </div>
-      </Card>
-    </PageContainer>
+            <div>
+              {editable ? (
+                <select
+                  className="side-foot-sel" style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                  value={p.assignedAssetId ?? ''} onChange={(e) => reassignAsset(p.id, e.target.value)} title="Assign vessel or vehicle"
+                >
+                  <option value="">No vessel / vehicle</option>
+                  <optgroup label="Vessels">
+                    {assignableAssets.filter((a) => a.assetClass === 'vessel').map((a) => (
+                      <option key={a.id} value={a.id}>{a.code} — {a.model || a.make}</option>
+                    ))}
+                  </optgroup>
+                  <optgroup label="Vehicles">
+                    {assignableAssets.filter((a) => a.assetClass === 'vehicle').map((a) => (
+                      <option key={a.id} value={a.id}>{a.code} — {a.make} {a.model}</option>
+                    ))}
+                  </optgroup>
+                </select>
+              ) : (
+                <span className="tc-txt">{assignableAssets.find((a) => a.id === p.assignedAssetId)?.code ?? '—'}</span>
+              )}
+            </div>
+            <div style={{ justifySelf: 'end' }}>
+              {editable && (p.siteId || p.assignedAssetId) && (
+                <button className="btn btn-ghost" style={{ padding: 4 }} title="Unassign from site and asset"
+                  onClick={() => unassign(p.id, p.name)}><X size={13} /></button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

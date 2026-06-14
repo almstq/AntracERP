@@ -95,6 +95,10 @@ export interface TimelineEvent {
   actorName?: string;
   notes?: string;
   timestamp: Date;
+  /** Proxy/governance: true when a super_admin performed this while acting as another role. */
+  adminOverride?: boolean;
+  /** The performer's REAL role when overriding (e.g. 'super_admin'). */
+  performedByRole?: string;
 }
 
 /** In-app notification (written to the top-level `notifications` collection). */
@@ -116,6 +120,10 @@ export interface WorkflowActor {
   id: string;
   role: string;
   name?: string;
+  /** The performer's REAL role, when different from `role` (super_admin acting as someone). */
+  realRole?: string;
+  /** True when a super_admin is performing this on behalf of another role. */
+  adminOverride?: boolean;
 }
 
 export interface ExecuteOptions<S extends string = string> {

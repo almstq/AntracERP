@@ -105,7 +105,10 @@ export function CollectItemsPanel({ po, onDone }: Props) {
         workflowId: 'purchase_order',
         entityId: po.id,
         to: 'items_collected',
-        actor: { id: user.uid, role: effectiveRole, name: user.displayName },
+        actor: {
+          id: user.uid, role: effectiveRole, name: user.displayName,
+          realRole: user.role, adminOverride: user.role === 'super_admin' && effectiveRole !== 'super_admin',
+        },
         fields: { taxInvoice, receivedStoreId },
       });
 
