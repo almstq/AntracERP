@@ -7,8 +7,13 @@ import { OrgProvider } from './lib/context/OrgContext';
 import { ToastProvider } from './lib/context/ToastContext';
 import { ErrorBoundary } from './components/shared/ErrorBoundary';
 import { router } from './routes/router';
+import { seedBuiltinRoles } from './lib/permissions/seedRoles';
 import './index.css';
 import './styles/shell.css';
+
+// Seed the 17 built-in roles into the role registry before first render so nav,
+// route guards, and the Roles & Permissions tab all resolve consistently.
+seedBuiltinRoles();
 
 // Apply saved theme before first paint (no flash). Default = dark.
 // Tailwind pages key off `html.light`; the Helix shell keys off `data-theme`.

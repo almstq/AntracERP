@@ -1,9 +1,11 @@
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
-import { Ticket as TicketIcon, ShoppingCart, Package } from 'lucide-react';
-import { useActionInbox } from '../../lib/hooks/useWorkflowData';
-import { ROLE_LABELS } from '../../lib/permissions/roles';
+import { Ticket as TicketIcon, ShoppingCart, Package, UserCheck, Users, MapPin, Truck, HardHat } from 'lucide-react';
+import { useActionInbox, useAssetList, useSiteList, useStaffList } from '../../lib/hooks/useWorkflowData';
+import { useUsers } from '../../lib/hooks/useUsers';
+import { getRole } from '../../lib/permissions/roleRegistry';
 import { PageContainer } from '../../components/shared/PageContainer';
+import { useAuth } from '../../lib/hooks/useAuth';
 
 const ICON = { ticket: TicketIcon, pr: ShoppingCart, po: Package };
 
@@ -11,13 +13,94 @@ const ICON = { ticket: TicketIcon, pr: ShoppingCart, po: Package };
 export function RoleInbox() {
   const { role = '' } = useParams();
   const { items, loading } = useActionInbox(role);
-  const label = ROLE_LABELS[role] ?? role;
+  const { data: users } = useUsers();
+  const { user, effectiveRole } = useAuth();
+  const { data: sites } = useSiteList();
+  const { data: assets } = useAssetList();
+  const { data: staff } = useStaffList();
+  const label = getRole(role)?.label ?? role;
+  const assigned = users.filter((u) => u.role === role);
+  const siteIds = new Set(
+    assigned.flatMap((u) => u.siteIds ?? []).concat(effectiveRole === role ? (user?.siteIds ?? []) : []),
+  );
+  const deskSites = sites.filter((s) => siteIds.size === 0 || siteIds.has(s.id));
+  const deskAssets = assets.filter((a) => siteIds.size === 0 || siteIds.has(a.currentSiteId));
+  const assetSite = new Map(assets.map((a) => [a.id, a.currentSiteId]));
+  const deskStaff = staff.filter((p) => {
+    const siteId = p.assignedAssetId ? assetSite.get(p.assignedAssetId) : p.siteId;
+    return siteIds.size === 0 || (siteId ? siteIds.has(siteId) : false);
+  });
+  const siteName = (id?: string) => sites.find((s) => s.id === id)?.name ?? id ?? 'Unassigned';
 
   return (
     <PageContainer>
       <div className="mb-4">
         <h1 className="text-lg font-bold text-text-primary">{label} Desk</h1>
-        <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${items.length} item(s) awaiting your action`}</p>
+        <p className="text-xs text-text-muted">
+          {loading ? 'Loading…' : `${items.length} action item(s) · ${deskSites.length} site(s) · ${deskAssets.length} asset(s) · ${deskStaff.length} staff`}
+        </p>
+      </div>
+
+      {/* Who actually holds this role — visible when an SA opens the desk. */}
+      <Card className="mb-4">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          {assigned.length > 0 ? (
+            <>
+              <UserCheck size={15} style={{ color: 'var(--positive)' }} />
+              <span className="text-xs text-text-muted">Assigned to:</span>
+              {assigned.map((u) => (
+                <span key={u.id} className="badge b-pos" title={u.email}>
+                  <span className="bdot" />{u.displayName || u.email}
+                  {(u.siteIds?.length ?? 0) > 0 ? ` · ${u.siteIds!.map((id) => siteName(id)).join(', ')}` : ' · all sites'}
+                </span>
+              ))}
+            </>
+          ) : (
+            <>
+              <Users size={15} style={{ color: 'var(--warning)' }} />
+              <span className="text-xs" style={{ color: 'var(--warning)' }}>
+                No user is assigned to the {label} role yet.
+              </span>
+            </>
+          )}
+        </div>
+      </Card>
+
+      <div className="grid gap-3 md:grid-cols-3 mb-4">
+        <Card>
+          <div className="flex items-center gap-2 mb-2"><MapPin size={15} className="text-text-muted" /><strong className="text-xs">Assigned Sites</strong></div>
+          <div className="space-y-1">
+            {deskSites.slice(0, 6).map((s) => (
+              <Link key={s.id} to={`/wli/locations/${s.id}`} className="block text-xs text-text-primary hover:text-blue">{s.name}</Link>
+            ))}
+            {deskSites.length === 0 && <p className="text-xs text-text-muted">No site territory assigned.</p>}
+            {deskSites.length > 6 && <p className="text-[10px] text-text-muted">+{deskSites.length - 6} more</p>}
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center gap-2 mb-2"><Truck size={15} className="text-text-muted" /><strong className="text-xs">Assets In Territory</strong></div>
+          <div className="space-y-1">
+            {deskAssets.slice(0, 6).map((a) => (
+              <Link key={a.id} to={`/wli/assets/${a.id}`} className="block text-xs text-text-primary hover:text-blue">
+                {a.code} <span className="text-text-muted">· {a.operationalStatus}</span>
+              </Link>
+            ))}
+            {deskAssets.length === 0 && <p className="text-xs text-text-muted">No assets in assigned territory.</p>}
+            {deskAssets.length > 6 && <p className="text-[10px] text-text-muted">+{deskAssets.length - 6} more</p>}
+          </div>
+        </Card>
+        <Card>
+          <div className="flex items-center gap-2 mb-2"><HardHat size={15} className="text-text-muted" /><strong className="text-xs">Staff In Territory</strong></div>
+          <div className="space-y-1">
+            {deskStaff.slice(0, 6).map((p) => (
+              <Link key={p.id} to={`/wli/staff/${p.id}`} className="block text-xs text-text-primary hover:text-blue">
+                {p.name} <span className="text-text-muted">· {p.designation || p.staffType || p.role}</span>
+              </Link>
+            ))}
+            {deskStaff.length === 0 && <p className="text-xs text-text-muted">No staff in assigned territory.</p>}
+            {deskStaff.length > 6 && <p className="text-[10px] text-text-muted">+{deskStaff.length - 6} more</p>}
+          </div>
+        </Card>
       </div>
 
       <Card>

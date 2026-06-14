@@ -7,6 +7,7 @@ import { getAuthInstance, getDbInstance } from '../firebase/client';
 import { AuthContext } from './AuthContext.context';
 import type { AuthUser } from './AuthContext.context';
 import { MOCK_USERS } from '../mock-data/tickets';
+import { hydrateFromFirestore } from '../permissions/roleRegistry';
 
 export type { AuthUser };
 
@@ -61,6 +62,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(doc(firebaseDb, 'users', fbUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data() as { role: string; orgId: string; orgName?: string; siteIds?: string[] };
+          if (data.role !== 'pending') {
+            await hydrateFromFirestore();
+          }
           setUser({
             uid: fbUser.uid,
             email: fbUser.email || '',

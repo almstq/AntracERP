@@ -1,21 +1,25 @@
 import { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ChevronsUpDown, LogOut, Sun, Moon, Settings } from 'lucide-react';
+import { ChevronDown, ChevronsUpDown, LogOut, Sun, Moon, Settings, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../lib/hooks/useAuth';
-import { ROLES, ROLE_LABELS } from '../../lib/permissions/roles';
+import { useRoleRegistry } from '../../lib/permissions/roleRegistry';
 import { accessibleModules, moduleForPath, navForRole } from './navConfig';
 import { applyTheme } from '../../lib/prefs';
-
-const TEST_ROLES = [
-  ROLES.OPERATOR, ROLES.MECHANIC, ROLES.SUPERVISOR, ROLES.GM, ROLES.PROC_STAFF,
-  ROLES.FINANCE_WLI, ROLES.INVENTORY_STAFF, ROLES.ANTRAC_FINANCE, ROLES.CFO,
-  ROLES.DIRECTOR, ROLES.MPL_MANAGER,
-];
+import { useUsers } from '../../lib/hooks/useUsers';
 
 export function ShellSidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, logout, actingRole, setActingRole, effectiveRole } = useAuth();
+  const { roles: allRoles } = useRoleRegistry();
+  const { data: users } = useUsers();
+  const actableRoles = allRoles.filter((r) => r.id !== 'super_admin' && r.id !== 'pending').sort((a, b) => a.label.localeCompare(b.label));
+  const roleLabel = (role: string) => allRoles.find((r) => r.id === role)?.label ?? role;
+  const roleAssignees = (role: string) => users.filter((u) => u.role === role).map((u) => u.displayName || u.email || u.id);
+  const actOptionLabel = (role: string) => {
+    const assignees = roleAssignees(role);
+    return assignees.length ? `Act as: ${roleLabel(role)} - ${assignees.join(', ')}` : `Act as: ${roleLabel(role)} - unassigned`;
+  };
 
   // Switching the impersonated role re-homes to that role's module via DeskRedirect,
   // so you never land on a page the new role can't open (/unauthorized).
@@ -119,20 +123,34 @@ export function ShellSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <div className="a-name" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.displayName ?? 'User'}
             </div>
-            <div className="a-role">{user ? (ROLE_LABELS[user.role] ?? user.role) : ''}</div>
+            <div className="a-role">{user ? roleLabel(user.role) : ''}</div>
           </div>
           <ChevronsUpDown className="a-chev" />
         </div>
+
+        {isSA && actingRole && (
+          <div
+            title="You are acting on behalf of another role. Actions you take are flagged as an admin override."
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6,
+              background: 'var(--warning-soft)', color: 'var(--warning)',
+              border: 'var(--hair) solid var(--warning)', borderRadius: 6,
+              padding: '5px 8px', fontSize: 10.5, fontWeight: 600,
+            }}
+          >
+            <ShieldAlert size={13} /> Admin override · acting as {roleLabel(actingRole)}
+          </div>
+        )}
 
         {isSA && (
           <select
             className="side-foot-sel"
             value={actingRole ?? ''}
             onChange={(e) => onActAs(e.target.value || null)}
-            title="Act as (test impersonation)"
+            title="Act as / open a role's desk"
           >
             <option value="">Act as: Super Admin (self)</option>
-            {TEST_ROLES.map((r) => <option key={r} value={r}>Act as: {ROLE_LABELS[r]}</option>)}
+            {actableRoles.map((r) => <option key={r.id} value={r.id}>{actOptionLabel(r.id)}</option>)}
           </select>
         )}
 

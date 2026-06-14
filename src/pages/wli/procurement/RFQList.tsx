@@ -1,54 +1,46 @@
-import { Card } from '../../../components/ui/Card';
-import { StatusBadge } from '../../../components/shared/StatusBadge';
 import { Button } from '../../../components/ui/Button';
+import { StatusBadge } from '../../../components/shared/StatusBadge';
 import { Plus, Filter, FileSearch, Eye } from 'lucide-react';
 import { MOCK_RFQS } from '../../../lib/mock-data/procurement';
-import { PageContainer } from '../../../components/shared/PageContainer';
 
 const STATUS_MAP: Record<string, string> = {
-  open: 'Open',
-  evaluating: 'Evaluating',
-  awarded: 'Awarded',
-  closed: 'Closed',
+  open: 'Open', evaluating: 'Evaluating', awarded: 'Awarded', closed: 'Closed',
 };
+const COLS = '2fr 0.9fr 0.9fr 48px';
 
 export function RFQList() {
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
+    <div className="page">
+      <div className="page-head">
         <div>
-          <h1 className="text-lg font-bold text-text-primary">Requests for Quotation</h1>
-          <p className="text-xs text-text-muted">{MOCK_RFQS.length} RFQs</p>
+          <h1 className="page-title">Requests for Quotation</h1>
+          <p className="page-sub"><span className="live"><i /> Live</span><span>{MOCK_RFQS.length} RFQs</span></p>
         </div>
-        <div className="flex gap-2">
+        <div className="head-actions" style={{ display: 'flex', gap: 8 }}>
           <Button variant="secondary" size="sm"><Filter size={14} /> Filter</Button>
           <Button variant="primary" size="sm"><Plus size={14} /> New RFQ</Button>
         </div>
       </div>
 
-      <Card>
-        <div className="space-y-2">
-          {MOCK_RFQS.map(rfq => (
-            <div
-              key={rfq.id}
-              className="flex items-center justify-between p-3 rounded-lg hover:bg-bg-surface transition-colors cursor-pointer"
-            >
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <FileSearch size={16} className="text-text-muted flex-shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-text-primary truncate">{rfq.title}</p>
-                  <p className="text-[10px] text-text-muted">{rfq.id} · {rfq.vendorCount} vendors · Due {rfq.dueDate}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                <span className="text-[10px] text-text-muted">{rfq.quotesReceived}/{rfq.vendorCount} quotes</span>
-                <StatusBadge status={STATUS_MAP[rfq.status] || rfq.status} />
-                <Button variant="ghost" size="sm"><Eye size={14} /></Button>
+      <div className="tbl">
+        <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+          <span>RFQ</span><span>Quotes</span><span>Status</span><span />
+        </div>
+        {MOCK_RFQS.map(rfq => (
+          <div key={rfq.id} className="tbl-row" style={{ gridTemplateColumns: COLS }}>
+            <div style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <FileSearch size={15} className="text-text-muted" />
+              <div style={{ minWidth: 0 }}>
+                <div className="tc-id">{rfq.title}</div>
+                <div className="tc-desc">{rfq.id} · {rfq.vendorCount} vendors · Due {rfq.dueDate}</div>
               </div>
             </div>
-          ))}
-        </div>
-      </Card>
-    </PageContainer>
+            <div className="tc-txt">{rfq.quotesReceived}/{rfq.vendorCount}</div>
+            <div><StatusBadge status={STATUS_MAP[rfq.status] || rfq.status} /></div>
+            <div style={{ justifySelf: 'end' }}><Button variant="ghost" size="sm"><Eye size={14} /></Button></div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

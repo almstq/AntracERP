@@ -4,27 +4,39 @@ import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/shared/Input';
 import { InputSelect } from '../../../components/shared/InputSelect';
-import { Truck, Ship, Wrench, Plus, X } from 'lucide-react';
+import { Truck, Ship, Wrench, Plus, X, Search, ChevronRight } from 'lucide-react';
 import { useAssetList, useSiteList } from '../../../lib/hooks/useWorkflowData';
 import { createAsset, assignAssetLocation, unassignAsset } from '../../../lib/services/registry';
 import type { Asset, AssetClass } from '../../../types/asset';
 import { ASSET_CLASSES, ASSET_CLASS_LABEL, ASSET_CLASS_PLURAL } from '../../../types/asset';
-import { PageContainer } from '../../../components/shared/PageContainer';
+import { useAuth } from '../../../lib/hooks/useAuth';
+import { isTerritoryScoped, canEdit } from '../../../lib/permissions/roleRegistry';
 import { useToast } from '../../../lib/context/ToastContext';
 
 const CLASSES = ASSET_CLASSES;
 const STATUSES: Asset['operationalStatus'][] = ['operational', 'down', 'maintenance', 'idle'];
+const COLS = '1.9fr 0.9fr 0.9fr 1.5fr 32px';
+
+const STATUS_BADGE: Record<string, string> = {
+  operational: 'b-pos', down: 'b-danger', maintenance: 'b-warn', idle: 'b-muted',
+};
 
 function ClassIcon({ c }: { c: AssetClass }) {
-  if (c === 'vessel') return <Ship size={16} className="text-text-muted" />;
-  if (c === 'vehicle') return <Truck size={16} className="text-text-muted" />;
-  return <Wrench size={16} className="text-text-muted" />;
+  if (c === 'vessel') return <Ship size={15} className="text-text-muted" />;
+  if (c === 'vehicle') return <Truck size={15} className="text-text-muted" />;
+  return <Wrench size={15} className="text-text-muted" />;
 }
 
 export function AssetRegister() {
   const { data: assets, loading, refresh } = useAssetList();
   const { data: sites } = useSiteList();
+  const { user, effectiveRole } = useAuth();
+  const scoped = isTerritoryScoped(effectiveRole);
+  const editable = canEdit(effectiveRole, '/wli/assets');
+  const territory = new Set(user?.siteIds ?? []);
+  const inTerritory = (siteId?: string) => !scoped || (!!siteId && territory.has(siteId));
   const [adding, setAdding] = useState(false);
+  const [search, setSearch] = useState('');
   const [form, setForm] = useState({ code: '', make: '', model: '', type: '', assetClass: 'equipment' as AssetClass, currentSiteId: '', operationalStatus: 'operational' as Asset['operationalStatus'], pendingDelivery: false });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -59,14 +71,24 @@ export function AssetRegister() {
     await unassignAsset(assetId); refresh();
   }
 
+  const q = search.trim().toLowerCase();
+  const matches = (a: Asset) => (!q || `${a.code} ${a.make} ${a.model} ${a.type}`.toLowerCase().includes(q)) && inTerritory(a.currentSiteId);
+
   return (
-    <PageContainer>
-      <div className="flex items-center justify-between mb-4">
+    <div className="page">
+      <div className="page-head">
         <div>
-          <h1 className="text-lg font-bold text-text-primary">Asset Register</h1>
-          <p className="text-xs text-text-muted">{loading ? 'Loading…' : `${assets.length} assets`}</p>
+          <h1 className="page-title">Asset Register</h1>
+          <p className="page-sub">
+            <span className="live"><i /> Live</span>
+            <span>{loading ? 'Loading…' : `${assets.length} assets`}</span>
+          </p>
         </div>
-        <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Asset</Button>
+        <div className="head-actions">
+          {editable
+            ? <Button variant="primary" size="sm" onClick={() => setAdding((v) => !v)}><Plus size={14} /> Add Asset</Button>
+            : <span className="badge b-muted"><span className="bdot" />view only</span>}
+        </div>
       </div>
 
       {adding && (
@@ -101,64 +123,85 @@ export function AssetRegister() {
         </Card>
       )}
 
-      <div className="space-y-6">
-        {CLASSES.map((cls) => {
-          const inClass = assets.filter((a) => a.assetClass === cls);
-          if (inClass.length === 0) return null;
-          return (
-            <div key={cls}>
-              <div className="flex items-center gap-2 mb-2 px-1">
-                <ClassIcon c={cls} />
-                <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary">{ASSET_CLASS_PLURAL[cls]}</h2>
-                <span className="text-[10px] text-text-muted">· {inClass.length}</span>
-              </div>
-              <Card>
-                <div className="space-y-1">
-                  {inClass.map((a) => (
-                    <div key={a.id} className="flex items-center justify-between flex-wrap p-3 rounded-lg hover:bg-bg-surface gap-3">
-                      <Link to={`/wli/assets/${a.id}`} className="flex items-center gap-3 min-w-0 flex-1 group">
-                        <ClassIcon c={a.assetClass} />
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-medium text-text-primary truncate group-hover:text-blue">{a.code} — {a.make} {a.model}</p>
-                            {a.pendingDelivery && <span className="badge b-warn" style={{ fontSize: 9, padding: '1px 5px' }}>Pending Delivery</span>}
-                          </div>
-                          <p className="text-[10px] text-text-muted">{a.type} · {a.operationalStatus}</p>
-                        </div>
-                      </Link>
-                      {a.pendingDelivery
-                        ? <span className="text-[10px] text-text-muted flex-shrink-0 italic">Not at site</span>
-                        : (
-                          <div className="flex items-center gap-1 flex-shrink-0">
-                            <select
-                              className="text-[10px] p-1.5 rounded bg-bg-surface border border-border text-text-secondary"
-                              value={a.currentSiteId}
-                              onChange={(e) => reassign(a.id, e.target.value)}
-                              onClick={(e) => e.stopPropagation()}
-                              title="Assign location"
-                            >
-                              <option value="">Unassigned</option>
-                              {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-                            </select>
-                            {a.currentSiteId && (
-                              <button
-                                className="p-1 rounded text-text-muted hover:text-red"
-                                title="Unassign from site"
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); unassign(a.id, a.code); }}
-                              >
-                                <X size={13} />
-                              </button>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </div>
-          );
-        })}
+      <div className="toolbar">
+        <div className="search-wrap">
+          <Search />
+          <input placeholder="Search assets, makes, models…" value={search} onChange={(e) => setSearch(e.target.value)} />
+        </div>
+        {scoped && (
+          <span className="badge b-info" title="You see only assets at your assigned sites">
+            <span className="bdot" />your territory
+          </span>
+        )}
       </div>
-    </PageContainer>
+
+      {CLASSES.map((cls) => {
+        const inClass = assets.filter((a) => a.assetClass === cls && matches(a));
+        if (inClass.length === 0) return null;
+        return (
+          <div key={cls} style={{ marginBottom: 22 }}>
+            <div className="section-head" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <ClassIcon c={cls} />
+              <h2 style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{ASSET_CLASS_PLURAL[cls]}</h2>
+              <span className="hint">· {inClass.length}</span>
+            </div>
+            <div className="tbl">
+              <div className="tbl-head" style={{ gridTemplateColumns: COLS }}>
+                <span>Asset</span><span>Type</span><span>Status</span><span>Location</span><span />
+              </div>
+              {inClass.map((a) => (
+                <div key={a.id} className="tbl-row" style={{ gridTemplateColumns: COLS, cursor: 'default' }}>
+                  <Link to={`/wli/assets/${a.id}`} style={{ minWidth: 0, display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <ClassIcon c={a.assetClass} />
+                    <div style={{ minWidth: 0 }}>
+                      <div className="tc-id" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {a.code} — {a.make} {a.model}
+                        {a.pendingDelivery && <span className="badge b-warn" style={{ fontSize: 9, padding: '1px 5px' }}>Pending</span>}
+                      </div>
+                    </div>
+                  </Link>
+                  <div className="tc-txt">{a.type || '—'}</div>
+                  <div>
+                    <span className={`badge ${STATUS_BADGE[a.operationalStatus] ?? 'b-info'}`}>
+                      <span className="bdot" />{a.operationalStatus}
+                    </span>
+                  </div>
+                  <div>
+                    {a.pendingDelivery ? (
+                      <span className="tc-sub" style={{ fontStyle: 'italic' }}>Not at site</span>
+                    ) : !editable ? (
+                      <span className="tc-txt">{sites.find((s) => s.id === a.currentSiteId)?.name ?? 'Unassigned'}</span>
+                    ) : (
+                      <select
+                        className="side-foot-sel"
+                        style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
+                        value={a.currentSiteId}
+                        onChange={(e) => reassign(a.id, e.target.value)}
+                        title="Assign location"
+                      >
+                        <option value="">Unassigned</option>
+                        {sites.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    )}
+                  </div>
+                  <div style={{ justifySelf: 'end' }}>
+                    {editable && !a.pendingDelivery && a.currentSiteId ? (
+                      <button
+                        className="btn btn-ghost"
+                        style={{ padding: 4 }}
+                        title="Unassign from site"
+                        onClick={() => unassign(a.id, a.code)}
+                      ><X size={13} /></button>
+                    ) : (
+                      <Link to={`/wli/assets/${a.id}`}><ChevronRight className="tc-chev" /></Link>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
   );
 }

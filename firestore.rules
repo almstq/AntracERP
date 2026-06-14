@@ -67,6 +67,22 @@ service cloud.firestore {
       allow write: if isSuperAdmin();
     }
 
+    // Unified role registry. All runtime role edits and SA-created roles live
+    // under /roles; /customRoles and appConfig/roleOverrides remain readable as
+    // migration fallback for older clients.
+    match /roles/{roleId} {
+      allow read: if hasAssignedRole();
+      allow create, update, delete: if isSuperAdmin();
+    }
+    match /customRoles/{roleId} {
+      allow read: if hasAssignedRole();
+      allow create, update, delete: if isSuperAdmin();
+    }
+    match /appConfig/roleOverrides {
+      allow read: if hasAssignedRole();
+      allow write: if isSuperAdmin();
+    }
+
     // Users — self read; new sign-ups self-register as 'pending'; only SA assigns roles
     match /users/{userId} {
       allow read: if isAuth() && (request.auth.uid == userId || isSuperAdmin());
@@ -189,16 +205,32 @@ service cloud.firestore {
       allow write: if isGM() || isSuperAdmin();
     }
 
-    // CRM enquiries
-    match /crmEnquiries/{enquiryId} {
+    // CRM enquiries, quotations, work orders, invoices, and payments.
+    // The app collection names are plural nouns; keep rules aligned with services/crm.ts.
+    match /enquiries/{enquiryId} {
       allow read: if hasAssignedRole();
       allow write: if isGM() || isSuperAdmin();
     }
 
-    // Jobs
-    match /jobs/{jobId} {
+    match /quotations/{quotationId} {
       allow read: if hasAssignedRole();
       allow write: if isGM() || isSuperAdmin();
+    }
+
+    match /workOrders/{workOrderId} {
+      allow read: if hasAssignedRole();
+      allow write: if isGM() || isSuperAdmin();
+    }
+
+    match /invoices/{invoiceId} {
+      allow read: if hasAssignedRole();
+      allow write: if isGM() || isFinance() || isSuperAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if hasAssignedRole();
+      allow create: if isGM() || isFinance() || isSuperAdmin();
+      allow update, delete: if isSuperAdmin();
     }
 
     // Notifications — user-specific
@@ -261,7 +293,7 @@ service cloud.firestore {
     match /documents/{docId} {
       allow read: if hasAssignedRole();
       allow create: if hasAssignedRole();
-      allow delete: if isAuth();
+      allow delete: if isSuperAdmin() || (hasAssignedRole() && resource.data.uploadedById == request.auth.uid);
       allow update: if false;
     }
 

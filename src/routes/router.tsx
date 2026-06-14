@@ -60,6 +60,7 @@ const SalesDashboard   = lazy(() => import('../pages/wli/crm/SalesDashboard').th
 const FinanceDashboard = lazy(() => import('../pages/wli/crm/FinanceDashboard').then(m => ({ default: m.FinanceDashboard })));
 
 // WLI — reports (shared with Holding)
+const ReportsCenter = lazy(() => import('../pages/wli/reports/ReportsCenter').then(m => ({ default: m.ReportsCenter })));
 const Profitability = lazy(() => import('../pages/wli/reports/Profitability').then(m => ({ default: m.Profitability })));
 const FleetUptime   = lazy(() => import('../pages/wli/reports/FleetUptime').then(m => ({ default: m.FleetUptime })));
 
@@ -97,6 +98,8 @@ const EMSDashboard = lazy(() => import('../pages/ems/EMSDashboard').then(m => ({
 
 // Admin
 const UserList = lazy(() => import('../pages/admin/UserList').then(m => ({ default: m.UserList })));
+const RoleBuilder = lazy(() => import('../pages/admin/RoleBuilder').then(m => ({ default: m.RoleBuilder })));
+const SystemLog = lazy(() => import('../pages/SystemLog').then(m => ({ default: m.SystemLog })));
 
 // Wraps a lazy component in a route-level Suspense boundary.
 function s(C: React.ComponentType) {
@@ -120,6 +123,7 @@ export const router = createBrowserRouter([
       { index: true, element: <DeskRedirect /> },
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'settings', element: <Settings /> },
+      { path: 'activity', element: s(SystemLog) },
       {
         path: 'holding',
         element: <RoleRoute allowedRoles={HOLDING_ROLES} />,
@@ -131,7 +135,8 @@ export const router = createBrowserRouter([
           { path: 'procurement/requests', element: s(PurchaseRequestList) },
           { path: 'procurement/requests/new', element: s(NewPurchaseRequest) },
           { path: 'procurement/requests/:id', element: s(PurchaseRequestDetail) },
-          { path: 'reports', element: s(Profitability) },
+          { path: 'reports', element: s(ReportsCenter) },
+          { path: 'reports/profitability', element: s(Profitability) },
           { path: 'reports/uptime', element: s(FleetUptime) },
         ],
       },
@@ -168,7 +173,8 @@ export const router = createBrowserRouter([
           { path: 'crm/work-orders/:id', element: s(WorkOrderDetail) },
           { path: 'crm/sales', element: s(SalesDashboard) },
           { path: 'crm/finance', element: s(FinanceDashboard) },
-          { path: 'reports', element: s(Profitability) },
+          { path: 'reports', element: s(ReportsCenter) },
+          { path: 'reports/profitability', element: s(Profitability) },
           { path: 'reports/uptime', element: s(FleetUptime) },
           { path: 'deployments', element: s(DeploymentRegister) },
           { path: 'deployments/new', element: s(NewDeployment) },
@@ -209,6 +215,7 @@ export const router = createBrowserRouter([
         element: <RoleRoute allowedRoles={['super_admin']} />,
         children: [
           { path: 'users', element: s(UserList) },
+          { path: 'roles', element: s(RoleBuilder) },
         ],
       },
     ],

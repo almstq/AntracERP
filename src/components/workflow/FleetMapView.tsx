@@ -3,7 +3,6 @@ import type { Site } from '../../types/org';
 import type { Asset } from '../../types/asset';
 import type { Staff } from '../../types/org';
 import { STAFF_TYPE_LABEL } from '../../types/org';
-import { followMeUrl } from '../../types/asset';
 
 const MAPS_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
 
@@ -47,18 +46,15 @@ function colorsFor(dark: boolean): ThemeColors {
     : { site: '#0C9E8D', asset: '#2E73D8', staff: '#5E920F', label: '#0C141C', infoBg: '#FFFFFF', infoText: '#0C141C', infoSub: '#788593' };
 }
 
-interface VesselPos { lat: number | null; lng: number | null; name?: string | null; speed?: number | null; heading?: number | null; online?: boolean | null }
-
 interface Props {
   sites: (Site & { id: string })[];
   assets: (Asset & { id: string })[];
   staff: (Staff & { id: string })[];
   height?: string;
-  /** FollowMe cached positions keyed by followme id (== Asset.trackingId). */
-  vesselPositions?: Record<string, VesselPos>;
+  focusSiteIds?: string[];
 }
 
-export function FleetMapView({ sites, assets, staff, height = '60vh', vesselPositions }: Props) {
+export function FleetMapView({ sites, assets, staff, height = '60vh', focusSiteIds = [] }: Props) {
   const mapEl = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -71,127 +67,146 @@ export function FleetMapView({ sites, assets, staff, height = '60vh', vesselPosi
 
   // Re-style the map when the app theme toggles.
   useEffect(() => {
-    const obs = new MutationObserver(() => setDark(document.documentElement.getAttribute('data-theme') !== 'light'));
-    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-    return () => obs.disconnect();
+  const obs = new MutationObserver(() => setDark(document.documentElement.getAttribute('data-theme') !== 'light'));
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  return () => obs.disconnect();
   }, []);
 
   useEffect(() => {
-    if (!ready || !mapEl.current || sites.length === 0) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const gmaps = (window.google as any).maps;
-    const withCoords = sites.filter((s) => s.location);
-    if (withCoords.length === 0) return;
-    const c = colorsFor(dark);
+  if (!ready || !mapEl.current || sites.length === 0) return;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const gmaps = (window.google as any).maps;
+  const focus = new Set(focusSiteIds);
+  const withCoords = sites.filter((s) => s.location);
+  const focusSites = focus.size > 0 ? withCoords.filter((s) => focus.has(s.id)) : withCoords;
+  const boundsSites = focusSites.length > 0 ? focusSites : withCoords;
+  if (withCoords.length === 0) return;
+  const isTerritoryView = focus.size > 0 && focusSites.length > 0;
+  const c = colorsFor(dark);
 
-    const map = new gmaps.Map(mapEl.current, {
-      center: withCoords[0].location!,
-      zoom: 10,
-      mapTypeId: 'roadmap',
-      disableDefaultUI: false,
-      gestureHandling: 'cooperative',   // Ctrl+scroll on desktop, 2-finger pan on mobile
-      styles: dark ? DARK_STYLE : [],
-      backgroundColor: dark ? '#0f151d' : '#E7ECF1',
+  const map = new gmaps.Map(mapEl.current, {
+    center: boundsSites[0].location!,
+    zoom: isTerritoryView ? 15 : 10,
+    mapTypeId: 'roadmap',
+    disableDefaultUI: false,
+    gestureHandling: 'cooperative',
+    styles: dark ? DARK_STYLE : [],
+    backgroundColor: dark ? '#0f151d' : '#E7ECF1',
+  });
+
+  const bounds = new gmaps.LatLngBounds();
+  for (const site of boundsSites) bounds.extend(site.location!);
+  map.fitBounds(bounds);
+  gmaps.event.addListenerOnce(map, 'idle', () => {
+    const maxZoom = isTerritoryView ? (boundsSites.length === 1 ? 16 : 14) : 13;
+    const minZoom = isTerritoryView ? 13 : 8;
+    if (map.getZoom() > maxZoom) map.setZoom(maxZoom);
+    if (map.getZoom() < minZoom) map.setZoom(minZoom);
+  });
+
+  const dot = (fill: string, scale = 6) => ({
+    path: gmaps.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: c.infoBg, strokeWeight: 2,
+  });
+  const openInfo = (marker: unknown, html: string) => {
+    const info = new gmaps.InfoWindow({ content: `<div style="color:${c.infoText};font-size:12px;min-width:170px;padding:2px 4px">${html}</div>` });
+    (marker as { addListener: (e: string, cb: () => void) => void }).addListener('click', () => info.open(map, marker));
+  };
+
+  // Staff effective site = assigned asset's site, else own site.
+  const assetById = new Map(assets.map((a) => [a.id, a]));
+  const staffSite = (p: Staff & { id: string }) =>
+    (p.assignedAssetId && assetById.get(p.assignedAssetId)?.currentSiteId) || p.siteId;
+
+  for (const site of withCoords) {
+    const siteAssets = assets.filter((a) => a.currentSiteId === site.id);
+    const siteStaff = staff.filter((p) => staffSite(p) === site.id);
+
+    // Site marker (named).
+    const siteMarker = new gmaps.Marker({
+      position: site.location, map, title: site.name,
+      label: { text: site.name, color: c.label, fontSize: '11px', fontWeight: 'bold' },
+      icon: dot(c.site, 10), zIndex: 50,
     });
+    openInfo(siteMarker,
+      `<strong style="font-size:13px">${site.name}</strong>
+       <div style="color:${c.infoSub};margin:4px 0">${siteAssets.length} asset(s) · ${siteStaff.length} staff</div>`);
 
-    // Live vessel position (FollowMe) by trackingId, when lat/lng are present.
-    const livePos = (a: Asset & { id: string }): VesselPos | undefined => {
-      if (a.assetClass !== 'vessel' || !a.trackingId) return undefined;
-      const p = vesselPositions?.[a.trackingId];
-      return p && p.lat != null && p.lng != null ? p : undefined;
-    };
-
-    const bounds = new gmaps.LatLngBounds();
-    for (const site of withCoords) bounds.extend(site.location!);
-    for (const a of assets) { const p = livePos(a); if (p) bounds.extend({ lat: p.lat!, lng: p.lng! }); }
-    map.fitBounds(bounds);
-    gmaps.event.addListenerOnce(map, 'idle', () => { if (map.getZoom() > 13) map.setZoom(13); });
-
-    const dot = (fill: string, scale = 6) => ({
-      path: gmaps.SymbolPath.CIRCLE, scale, fillColor: fill, fillOpacity: 1, strokeColor: c.infoBg, strokeWeight: 2,
+    // Ring out the assets + staff around the site so they're individually visible.
+    const ring = [
+      ...siteAssets.map((a) => ({ kind: 'asset' as const, a })),
+      ...siteStaff.map((p) => ({ kind: 'staff' as const, p })),
+    ];
+    const R = isTerritoryView ? 0.0028 : 0.0055; // tighter ground spread for site users
+    ring.forEach((item, i) => {
+      const ang = (2 * Math.PI * i) / Math.max(ring.length, 1);
+      const pos = { lat: site.location!.lat + R * Math.cos(ang), lng: site.location!.lng + R * Math.sin(ang) };
+      if (item.kind === 'asset') {
+        const m = new gmaps.Marker({ position: pos, map, title: item.a.code, icon: dot(c.asset, 6), zIndex: 20 });
+        openInfo(m, `<strong>${item.a.code}</strong> — ${item.a.make} ${item.a.model}
+          <div style="color:${c.infoSub};margin-top:2px">${item.a.type} · ${item.a.operationalStatus}</div>
+          <div style="color:${c.asset};font-size:10px;margin-top:2px">${site.name}</div>`);
+      } else {
+        const p = item.p;
+        const onAsset = p.assignedAssetId ? assetById.get(p.assignedAssetId) : undefined;
+        const type = p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role;
+        const m = new gmaps.Marker({
+          position: pos, map, title: p.name, zIndex: 20,
+          icon: { ...dot(c.staff, 5.5), path: gmaps.SymbolPath.BACKWARD_CLOSED_ARROW, scale: 4 },
+        });
+        openInfo(m, `<strong>${p.name}</strong>
+          <div style="color:${c.infoSub};margin-top:2px">${type}</div>
+          ${onAsset ? `<div style="color:${c.staff};font-size:10px;margin-top:2px">on ${onAsset.code} · ${site.name}</div>` : `<div style="color:${c.infoSub};font-size:10px;margin-top:2px">${site.name}</div>`}`);
+      }
     });
-    const openInfo = (marker: unknown, html: string) => {
-      const info = new gmaps.InfoWindow({ content: `<div style="color:${c.infoText};font-size:12px;min-width:170px;padding:2px 4px">${html}</div>` });
-      (marker as { addListener: (e: string, cb: () => void) => void }).addListener('click', () => info.open(map, marker));
-    };
-
-    // Staff effective site = assigned asset's site, else own site.
-    const assetById = new Map(assets.map((a) => [a.id, a]));
-    const staffSite = (p: Staff & { id: string }) =>
-      (p.assignedAssetId && assetById.get(p.assignedAssetId)?.currentSiteId) || p.siteId;
-
-    for (const site of withCoords) {
-      // Vessels with a live FollowMe position are plotted at their real coords below,
-      // so exclude them from the site ring to avoid double-plotting.
-      const siteAssets = assets.filter((a) => a.currentSiteId === site.id && !livePos(a));
-      const siteStaff = staff.filter((p) => staffSite(p) === site.id);
-
-      // Site marker (named).
-      const siteMarker = new gmaps.Marker({
-        position: site.location, map, title: site.name,
-        label: { text: site.name, color: c.label, fontSize: '11px', fontWeight: 'bold' },
-        icon: dot(c.site, 10), zIndex: 50,
-      });
-      openInfo(siteMarker,
-        `<strong style="font-size:13px">${site.name}</strong>
-         <div style="color:${c.infoSub};margin:4px 0">${siteAssets.length} asset(s) · ${siteStaff.length} staff</div>`);
-
-      // Ring out the assets + staff around the site so they're individually visible.
-      const ring = [
-        ...siteAssets.map((a) => ({ kind: 'asset' as const, a })),
-        ...siteStaff.map((p) => ({ kind: 'staff' as const, p })),
-      ];
-      const R = 0.0055; // ~600m
-      ring.forEach((item, i) => {
-        const ang = (2 * Math.PI * i) / Math.max(ring.length, 1);
-        const pos = { lat: site.location!.lat + R * Math.cos(ang), lng: site.location!.lng + R * Math.sin(ang) };
-        if (item.kind === 'asset') {
-          const m = new gmaps.Marker({ position: pos, map, title: item.a.code, icon: dot(c.asset, 6), zIndex: 20 });
-          const track = item.a.assetClass === 'vessel' && item.a.trackingId
-            ? `<div style="margin-top:4px"><a href="${followMeUrl(item.a.trackingId)}" target="_blank" rel="noreferrer" style="color:${c.asset};font-size:10px;font-weight:600">Track live ↗</a></div>` : '';
-          openInfo(m, `<strong>${item.a.code}</strong> — ${item.a.make} ${item.a.model}
-            <div style="color:${c.infoSub};margin-top:2px">${item.a.type} · ${item.a.operationalStatus}</div>
-            <div style="color:${c.asset};font-size:10px;margin-top:2px">${site.name}</div>${track}`);
-        } else {
-          const p = item.p;
-          const onAsset = p.assignedAssetId ? assetById.get(p.assignedAssetId) : undefined;
-          const type = p.staffType ? STAFF_TYPE_LABEL[p.staffType] : p.role;
-          const m = new gmaps.Marker({
-            position: pos, map, title: p.name, zIndex: 20,
-            icon: { ...dot(c.staff, 5.5), path: gmaps.SymbolPath.BACKWARD_CLOSED_ARROW, scale: 4 },
-          });
-          openInfo(m, `<strong>${p.name}</strong>
-            <div style="color:${c.infoSub};margin-top:2px">${type}</div>
-            ${onAsset ? `<div style="color:${c.staff};font-size:10px;margin-top:2px">on ${onAsset.code} · ${site.name}</div>` : `<div style="color:${c.infoSub};font-size:10px;margin-top:2px">${site.name}</div>`}`);
-        }
-      });
-    }
-
-    // Live vessels (FollowMe) — plotted at their real GPS coordinates.
-    for (const a of assets) {
-      const p = livePos(a);
-      if (!p) continue;
-      const m = new gmaps.Marker({
-        position: { lat: p.lat!, lng: p.lng! }, map, title: a.code, zIndex: 60,
-        icon: { ...dot(c.site, 7), path: gmaps.SymbolPath.FORWARD_CLOSED_ARROW, scale: 5, rotation: p.heading ?? 0 },
-      });
-      const track = a.trackingId
-        ? `<div style="margin-top:4px"><a href="${followMeUrl(a.trackingId)}" target="_blank" rel="noreferrer" style="color:${c.site};font-size:10px;font-weight:600">Track live ↗</a></div>` : '';
-      openInfo(m, `<strong>${a.code}</strong> — ${a.make} ${a.model}
-        <div style="color:${c.infoSub};margin-top:2px">${p.online === false ? 'offline' : 'live'} · ${p.speed ?? '—'} kn · hdg ${p.heading ?? '—'}°</div>
-        <div style="color:${c.site};font-size:10px;margin-top:2px">FollowMe live position</div>${track}`);
-    }
-  }, [ready, sites, assets, staff, dark, vesselPositions]);
+  }
+  }, [ready, sites, assets, staff, dark, focusSiteIds]);
 
   if (!MAPS_KEY) {
+    // No Google Maps key — show a useful fleet list instead of blocking setup screen.
+    const hasAssets = assets.length > 0;
     return (
-      <div className="rounded-lg bg-bg-surface border border-border p-4" style={{ minHeight: height }}>
-        <p className="text-xs text-text-secondary mb-2">Google Maps API key not configured.</p>
-        <ol className="text-xs text-text-muted list-decimal ml-4 space-y-1">
-          <li>Google Cloud Console → enable <b>Maps JavaScript API</b></li>
-          <li>Create an API key, enable <b>billing</b></li>
-          <li>Add <code>VITE_GOOGLE_MAPS_API_KEY=key</code> to <code>.env.local</code>, restart dev server</li>
-        </ol>
+      <div className="rounded-lg bg-bg-surface border border-border" style={{ minHeight: height }}>
+        <div style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span className="text-xs text-text-secondary">Fleet Overview — List View</span>
+          <span className="text-xs text-text-muted">{assets.length} assets · {sites.length} sites</span>
+        </div>
+        {!hasAssets ? (
+          <div className="empty-note" style={{ padding: 20 }}>No assets registered. Add assets in the Asset Register to see fleet data here.</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="w-full text-[11px]" style={{ borderCollapse: 'collapse' }}>
+              <thead>
+                <tr className="text-text-muted" style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Code</th>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Class</th>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Make/Model</th>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Site</th>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Operational</th>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Commercial</th>
+                  <th style={{ textAlign: 'left', padding: '6px 10px', fontWeight: 600 }}>Crew</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assets.map((a) => {
+                  const site = sites.find((s) => s.id === a.currentSiteId);
+                  const crew = staff.filter((p) => p.assignedAssetId === a.id);
+                  const opColor = a.operationalStatus === 'operational' ? 'var(--positive)' : a.operationalStatus === 'down' ? 'var(--danger)' : a.operationalStatus === 'maintenance' ? 'var(--warning)' : 'var(--info)';
+                  return (
+                    <tr key={a.id} style={{ borderBottom: '1px solid var(--border-soft)' }}>
+                      <td style={{ padding: '5px 10px', fontWeight: 600 }}>{a.code}</td>
+                      <td style={{ padding: '5px 10px', textTransform: 'capitalize' }}>{a.assetClass}</td>
+                      <td style={{ padding: '5px 10px' }}>{a.make} {a.model}</td>
+                      <td style={{ padding: '5px 10px' }}>{site?.name ?? '—'}</td>
+                      <td style={{ padding: '5px 10px', color: opColor, textTransform: 'capitalize' }}>{a.operationalStatus}</td>
+                      <td style={{ padding: '5px 10px', textTransform: 'capitalize' }}>{a.commercialStatus ?? 'available'}</td>
+                      <td style={{ padding: '5px 10px' }}>{crew.length > 0 ? crew.map((p) => p.name).join(', ') : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   }

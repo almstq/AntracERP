@@ -59,9 +59,16 @@ export function TransitionPanel({ workflowId, entityId, status, onDone }: Props)
       fields.services = serviceRequired ? services : [];
     }
 
+    // Super_admin acting as another role → flag every action as an admin override
+    // so the timeline records the real performer, not just the assumed role.
+    const adminOverride = user.role === 'super_admin' && effectiveRole !== 'super_admin';
+
     const res = await executeTransition({
       workflowId, entityId, to: active.to as string,
-      actor: { id: user.uid, role: effectiveRole, name: user.displayName },
+      actor: {
+        id: user.uid, role: effectiveRole, name: user.displayName,
+        realRole: user.role, adminOverride,
+      },
       notes: notes || undefined,
       fields: Object.keys(fields).length ? fields : undefined,
     });

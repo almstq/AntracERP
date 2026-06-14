@@ -597,6 +597,24 @@
   .side-modbtn svg { width: 18px; height: 18px; }
   .side-modbtn:hover { background: var(--bg-hover); color: var(--text-primary); }
   .side-modbtn.active { background: var(--accent-soft); color: var(--accent); }
+
+  /* Inner-page responsive: detail grid stacks, tables become cards */
+  .detail { grid-template-columns: 1fr; }
+  .tbl-head { display: none; }
+  .tbl-row { grid-template-columns: 1fr; gap: 6px; padding: 12px 16px; }
+  .tbl .col-md { display: none; }
+  /* Quote/comparison tables — scrollable wrapper kept, font bumped */
+  .overflow-x-auto { -webkit-overflow-scrolling: touch; }
+  .overflow-x-auto table { font-size: 10px; }
+  /* Sumbar chips: 2 cols on mobile */
+  .sumchip { min-width: calc(50% - 8px); }
+
+  /* Responsive visibility helpers */
+  .d-md { display: none; }
+}
+@media (max-width: 860px) {
+  .d-md { display: block; }
+  .d-sm { display: none; }
 }
 
 /* ============================================================
@@ -622,14 +640,13 @@
 .chip:hover { color: var(--text-secondary); border-color: var(--border-hover); }
 .chip.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent-line); }
 
-/* Table */
-.tbl { background: var(--bg-elevated); border: var(--hair) solid var(--border); border-radius: var(--r-card); overflow: hidden; }
+/* Table — rows are separated cards with a small gutter (not one fused block) */
+.tbl { background: transparent; border: none; border-radius: 0; overflow: visible; display: flex; flex-direction: column; gap: 6px; }
 .tbl-head, .tbl-row { display: grid; grid-template-columns: 1.8fr 1.1fr 1fr 0.9fr 1.1fr 0.85fr 24px; align-items: center; gap: 12px; padding: 0 16px; }
-.tbl-head { height: 40px; border-bottom: var(--hair) solid var(--border); background: var(--bg-surface); }
+.tbl-head { height: 34px; border: none; background: transparent; }
 .tbl-head span { font-size: 10px; font-weight: var(--label-weight); letter-spacing: var(--label-tracking); text-transform: var(--label-transform); color: var(--text-muted); }
-.tbl-row { min-height: 56px; border-bottom: var(--hair) solid var(--border-soft); cursor: pointer; width: 100%; text-align: left; background: none; }
-.tbl-row:last-child { border-bottom: none; }
-.tbl-row:hover { background: var(--bg-hover); }
+.tbl-row { min-height: 56px; border: var(--hair) solid var(--border); border-radius: var(--r-md); cursor: pointer; width: 100%; text-align: left; background: var(--bg-elevated); transition: border-color 0.12s, background 0.12s; }
+.tbl-row:hover { background: var(--bg-hover); border-color: var(--border-hover); }
 .tbl-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .tc-id { font-family: var(--font-num); font-feature-settings: var(--num-feat); font-size: 12.5px; font-weight: 600; color: var(--text-primary); }
 .tc-desc { font-size: 11px; color: var(--text-muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -741,4 +758,21 @@
 
   /* Tighter page gutters on small screens */
   .page { padding: 16px 13px 28px; }
+
+  /* Page header stacks; primary action goes full-width and thumb-friendly */
+  .page-head { flex-direction: column; align-items: stretch; gap: 12px; margin-bottom: 16px; }
+  .head-actions { width: 100%; flex-wrap: wrap; }
+  .head-actions > * { flex: 1; justify-content: center; }
+
+  /* Toolbars (search + chips) stack instead of squashing */
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .toolbar .search-wrap { width: 100%; }
+  .chips { overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+
+  /* Touch targets: comfortable min height for row controls + buttons */
+  .tbl-row .side-foot-sel, .tbl-row select { min-height: 34px; }
+  .btn { min-height: 34px; }
+
+  /* Summary chips one-per-row read better than cramped halves on very small screens */
+  .sumbar { gap: 8px; }
 }

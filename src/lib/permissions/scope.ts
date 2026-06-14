@@ -21,7 +21,10 @@ const MODULE_ROLES: Record<ModuleKey, readonly string[]> = {
 /** Roles that see every nav item inside a module they can access. */
 const SEES_ALL = new Set<string>([ROLES.SUPER_ADMIN, ROLES.GM]);
 
-/** Can this role open this module at all? */
+/**
+ * Static module access from the built-in role groups. This is the LEGACY rule,
+ * used to seed the registry. Runtime callers use roleCanAccessModule (registry-aware).
+ */
 export function canAccessModule(role: string, moduleKey: ModuleKey): boolean {
   if (role === ROLES.SUPER_ADMIN) return true;
   return MODULE_ROLES[moduleKey]?.includes(role) ?? false;

@@ -1,11 +1,35 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
-    // All authenticated users can read and write entity attachments
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return firestore.get(
+        /databases/(default)/documents/users/$(request.auth.uid)
+      ).data.role;
+    }
+
+    function hasAssignedRole() {
+      return isAuth() && getUserRole() != 'pending';
+    }
+
+    function isSuperAdmin() {
+      return isAuth() && getUserRole() == 'super_admin';
+    }
+
+    function isAllowedUpload() {
+      return request.resource != null
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('(application/pdf|image/.*|text/.*|application/vnd.openxmlformats-officedocument.*|application/vnd.ms-.*)');
+    }
+
+    // Entity attachments: pending sign-ups cannot read/write operational files.
     match /{collection}/{entityId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.resource.size < 20 * 1024 * 1024;
-      allow delete: if request.auth != null;
+      allow read: if hasAssignedRole();
+      allow create, update: if hasAssignedRole() && isAllowedUpload();
+      allow delete: if hasAssignedRole() && (isSuperAdmin() || resource.metadata.uploadedById == request.auth.uid);
     }
   }
 }

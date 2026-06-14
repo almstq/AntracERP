@@ -255,13 +255,17 @@ config, never in the client bundle.
 ### Build & deploy
 
 ```bash
-npm run build                                   # tsc + vite — 0 errors expected
-firebase deploy --only firestore:rules          # security rules
-firebase deploy --only functions                # Cloud Functions (needs billing)
+npm run lint                                    # static QA
+npm run check:prod                              # env check + tsc + vite build
+firebase deploy --only firestore:rules,storage  # security rules
+firebase deploy --only functions                # Cloud Functions (needs billing/secrets)
+firebase deploy --only hosting                  # optional Firebase Hosting target
 ```
 
-Vercel auto-builds on push to `main`. Seed scripts (firebase-admin + service account
-kept outside the repo) live under `seed/` and default to dry-run; pass `--commit` to write.
+Vercel can still auto-build on push to `main`; Firebase Hosting is also configured
+with `dist` as the public directory and an SPA rewrite. Seed scripts
+(firebase-admin + service account kept outside the repo) live under `seed/` and
+default to dry-run; pass `--commit` to write.
 
 ---
 
@@ -272,6 +276,9 @@ kept outside the repo) live under `seed/` and default to dry-run; pass `--commit
 - Role-based access enforced in the app (effective-role guards, **role-filtered
   navigation**, role-gated module switcher, module-level route gating) and in
   Firestore security rules (workflow-participant gates, per-collection rules).
+- Role registry edits are Super Admin-only in Firestore: custom roles live in
+  `customRoles`, and built-in overrides live in `appConfig/roleOverrides` with
+  localStorage as the offline cache.
 - Each role lands on a view scoped to its job; field roles are scoped to their sites
   (`siteIds`). Act-As previews any role faithfully (nav, landing, and access switch).
 - Uploads are attributed (`uploadedByName`) and integrity-hashed (SHA-256) on the client.
