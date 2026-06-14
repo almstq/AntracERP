@@ -28,7 +28,7 @@ export function SupplierDetail() {
 
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: '', country: '', contactEmail: '', contactPhone: '', categories: '', active: 'true' });
+  const [form, setForm] = useState({ name: '', country: '', contactEmail: '', contactPhone: '', categories: '', active: 'true', tin: '', address: '' });
   const setF = (k: keyof typeof form, v: string) => setForm((f) => ({ ...f, [k]: v }));
 
   function startEdit() {
@@ -37,6 +37,7 @@ export function SupplierDetail() {
       name: supplier.name, country: supplier.country ?? '', contactEmail: supplier.contactEmail ?? '',
       contactPhone: supplier.contactPhone ?? '', categories: supplier.categories?.join(', ') ?? '',
       active: String(supplier.active),
+      tin: supplier.tin ?? '', address: supplier.address ?? '',
     });
     setEditing(true);
   }
@@ -49,6 +50,8 @@ export function SupplierDetail() {
         contactPhone: form.contactPhone || undefined,
         categories: form.categories.split(',').map((c) => c.trim()).filter(Boolean),
         active: form.active === 'true',
+        tin: form.tin || undefined,
+        address: form.address || undefined,
       });
       toast('success', 'Supplier updated');
       setEditing(false);
@@ -92,16 +95,18 @@ export function SupplierDetail() {
                 <div style={{ display: 'grid', gap: 12 }}>
                   <div className="kv">
                     <div><div className="k">Name</div><Input value={form.name} onChange={(e) => setF('name', e.target.value)} placeholder="Company name" /></div>
+                    <div><div className="k">TIN</div><Input value={form.tin} onChange={(e) => setF('tin', e.target.value)} placeholder="TIN Number" /></div>
                     <div><div className="k">Country</div><Input value={form.country} onChange={(e) => setF('country', e.target.value)} placeholder="Country" /></div>
                     <div><div className="k">Email</div><Input value={form.contactEmail} onChange={(e) => setF('contactEmail', e.target.value)} placeholder="Email" /></div>
                     <div><div className="k">Phone</div><Input value={form.contactPhone} onChange={(e) => setF('contactPhone', e.target.value)} placeholder="Phone" /></div>
-                    <div style={{ gridColumn: '1 / -1' }}><div className="k">Categories (comma-separated)</div><Input value={form.categories} onChange={(e) => setF('categories', e.target.value)} placeholder="spares, hydraulics, marine" /></div>
                     <div><div className="k">Status</div>
                       <InputSelect value={form.active} onChange={(e) => setF('active', e.target.value)}>
                         <option value="true">Active</option>
                         <option value="false">Inactive</option>
                       </InputSelect>
                     </div>
+                    <div style={{ gridColumn: '1 / -1' }}><div className="k">Registered Address</div><Input value={form.address} onChange={(e) => setF('address', e.target.value)} placeholder="Registered Address" /></div>
+                    <div style={{ gridColumn: '1 / -1' }}><div className="k">Categories (comma-separated)</div><Input value={form.categories} onChange={(e) => setF('categories', e.target.value)} placeholder="spares, hydraulics, marine" /></div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <Button variant="primary" size="sm" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</Button>
@@ -110,10 +115,12 @@ export function SupplierDetail() {
                 </div>
               ) : (
                 <div className="kv">
+                  <div><div className="k">TIN</div><div className="v"><span className="mono">{supplier.tin || '—'}</span></div></div>
                   <div><div className="k">Country</div><div className="v">{supplier.country || '—'}</div></div>
                   <div><div className="k">Email</div><div className="v">{supplier.contactEmail || '—'}</div></div>
                   <div><div className="k">Phone</div><div className="v">{supplier.contactPhone || '—'}</div></div>
                   <div><div className="k">Status</div><div className="v" style={{ textTransform: 'capitalize' }}>{supplier.active ? 'active' : 'inactive'}</div></div>
+                  <div style={{ gridColumn: '1 / -1' }}><div className="k">Registered Address</div><div className="v">{supplier.address || '—'}</div></div>
                   <div style={{ gridColumn: '1 / -1' }}><div className="k">Categories</div><div className="v">{supplier.categories?.join(', ') || '—'}</div></div>
                 </div>
               )}

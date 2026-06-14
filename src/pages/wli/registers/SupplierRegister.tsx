@@ -14,7 +14,7 @@ export function SupplierRegister() {
   const { data: suppliers, loading, refresh } = useSupplierList();
   const [adding, setAdding] = useState(false);
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState({ name: '', country: '', contactEmail: '', categories: '' });
+  const [form, setForm] = useState({ name: '', country: '', contactEmail: '', categories: '', tin: '', address: '' });
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -26,11 +26,15 @@ export function SupplierRegister() {
     setBusy(true); setErr(null);
     try {
       await createSupplier({
-        name: form.name, country: form.country || undefined, contactEmail: form.contactEmail || undefined,
+        name: form.name,
+        country: form.country || undefined,
+        contactEmail: form.contactEmail || undefined,
         categories: form.categories.split(',').map((c) => c.trim()).filter(Boolean),
+        tin: form.tin || undefined,
+        address: form.address || undefined,
       });
       toast('success', 'Supplier added');
-      setForm({ name: '', country: '', contactEmail: '', categories: '' });
+      setForm({ name: '', country: '', contactEmail: '', categories: '', tin: '', address: '' });
       setAdding(false); refresh();
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Failed';
@@ -41,7 +45,7 @@ export function SupplierRegister() {
   }
 
   const q = search.trim().toLowerCase();
-  const filtered = suppliers.filter((s) => !q || `${s.name} ${s.country ?? ''} ${s.categories?.join(' ') ?? ''}`.toLowerCase().includes(q));
+  const filtered = suppliers.filter((s) => !q || `${s.name} ${s.country ?? ''} ${s.categories?.join(' ') ?? ''} ${s.tin ?? ''}`.toLowerCase().includes(q));
 
   return (
     <div className="page">
@@ -59,13 +63,18 @@ export function SupplierRegister() {
       </div>
 
       {adding && (
-        <Card className="mb-4">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <Input placeholder="Name" value={form.name} onChange={(e) => set('name', e.target.value)} />
+        <Card className="mb-4" header={<span className="text-xs font-semibold">New Supplier Profile</span>}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            <Input placeholder="Company Name *" value={form.name} onChange={(e) => set('name', e.target.value)} />
+            <Input placeholder="TIN (Tax Registration No)" value={form.tin} onChange={(e) => set('tin', e.target.value)} />
             <Input placeholder="Country" value={form.country} onChange={(e) => set('country', e.target.value)} />
             <Input placeholder="Email" value={form.contactEmail} onChange={(e) => set('contactEmail', e.target.value)} />
-            <Input placeholder="Categories (comma)" value={form.categories} onChange={(e) => set('categories', e.target.value)} />
+            <Input placeholder="Categories (comma-separated)" value={form.categories} onChange={(e) => set('categories', e.target.value)} />
+            <Input placeholder="Registered Address" value={form.address} onChange={(e) => set('address', e.target.value)} />
+          </div>
+          <div className="flex justify-end gap-2 mt-3">
             <Button variant="primary" size="sm" onClick={add} disabled={busy}>{busy ? 'Saving…' : 'Save'}</Button>
+            <Button variant="secondary" size="sm" onClick={() => setAdding(false)}>Cancel</Button>
           </div>
           {err && <p className="text-xs text-red mt-2">{err}</p>}
         </Card>

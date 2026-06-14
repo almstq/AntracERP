@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, Package, AlertCircle, Truck, Boxes, CalendarDays, Pencil, Check, X } from 'lucide-react';
+import { ArrowLeft, Package, AlertCircle, Truck, Boxes, CalendarDays, Pencil, Check, X, Camera, Download } from 'lucide-react';
 import { FileUpload } from '../../../components/shared/FileUpload';
 import { AiDiagnosisHint } from '../../../components/workflow/AiDiagnosisHint';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -13,6 +13,7 @@ import { useAuth } from '../../../lib/hooks/useAuth';
 import { updateTicketReportedAt } from '../../../lib/services/tickets';
 import { useToast } from '../../../lib/context/ToastContext';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
+import { buildTicketPrintHtml, downloadHtml, printHtml } from '../../../lib/services/rfq';
 
 const URGENCY_COLOR: Record<string, string> = {
   critical: 'var(--danger)', high: 'var(--warning)', medium: 'var(--info)', low: 'var(--text-muted)',
@@ -47,6 +48,7 @@ export function TicketDetail() {
   const [editingDate, setEditingDate] = useState(false);
   const [dateVal, setDateVal] = useState('');
   const [dateBusy, setDateBusy] = useState(false);
+
 
   if (loading) return <div className="page"><LoadingSpinner text="Loading…" /></div>;
   if (error) return <div className="page"><p className="empty-note" style={{ color: 'var(--danger)' }}>{error}</p></div>;
@@ -85,6 +87,14 @@ export function TicketDetail() {
             </span>
           </div>
         </div>
+        <div className="dhead-actions">
+          <button className="btn btn-ghost" onClick={() => printHtml(buildTicketPrintHtml(ticket), ticket.displayId)}>
+            <Camera size={14} /> Print PDF
+          </button>
+          <button className="btn btn-ghost" onClick={() => downloadHtml(`${ticket.displayId}.html`, buildTicketPrintHtml(ticket))}>
+            <Download size={14} /> Download Ticket
+          </button>
+        </div>
       </div>
 
       <div className="detail">
@@ -110,6 +120,9 @@ export function TicketDetail() {
             <div className="dcard-b">
               <div className="kv">
                 <div><div className="k">Asset</div><div className="v"><span className="mono">{ticket.assetLabel || ticket.assetCode || '—'}</span></div></div>
+                <div><div className="k">Serial / Chassis No</div><div className="v"><span className="mono">{ticket.serialNumber || '—'}</span></div></div>
+                <div><div className="k">Work Category</div><div className="v" style={{ textTransform: 'uppercase' }}>{ticket.workCategory || 'GENERAL'}</div></div>
+                <div><div className="k">Meter Reading</div><div className="v">{ticket.meterReading != null ? `${ticket.meterReading.toLocaleString()} Hours/Km` : '—'}</div></div>
                 <div><div className="k">Site</div><div className="v">{ticket.siteId || '—'}</div></div>
                 <div><div className="k">Urgency</div><div className="v">{ticket.urgency}</div></div>
                 <div><div className="k">Raised by</div><div className="v">{(ticket as { raisedByName?: string }).raisedByName || ticket.raisedById || '—'}</div></div>
@@ -185,6 +198,57 @@ export function TicketDetail() {
             </div>
           )}
 
+          {(ticket.resolutionNotes || ticket.status === 'resolved' || ticket.status === 'closed') && (
+            <div className="dcard">
+              <div className="dcard-h"><h3><Check /> Service Sheet Sign-off</h3></div>
+              <div className="dcard-b">
+                <div className="text-[10px] uppercase font-bold text-text-muted mb-2 tracking-wider">Checklist Status</div>
+                <div className="grid grid-cols-2 gap-2 text-xs mb-4">
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>{ticket.resolutionChecklist?.clean ? '☑' : '☐'}</span>
+                    <span>Visual Inspection Clean</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>{ticket.resolutionChecklist?.photos ? '☑' : '☐'}</span>
+                    <span>Before/After Photos Captured</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>{ticket.resolutionChecklist?.tools ? '☑' : '☐'}</span>
+                    <span>Tools & Spares Cleared</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span style={{ fontSize: 14 }}>{ticket.resolutionChecklist?.safety ? '☑' : '☐'}</span>
+                    <span>Mechanical Safety Passed</span>
+                  </div>
+                </div>
+
+                <div className="text-[10px] uppercase font-bold text-text-muted mb-2 tracking-wider" style={{ borderTop: '1px solid var(--border-soft)', paddingTop: 12 }}>Sign-offs</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 16px' }} className="text-xs">
+                  <div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-wider">Operator / Reporter</div>
+                    <div className="font-semibold">{ticket.signatures?.operator?.name || '—'}</div>
+                    <div className="text-[9px] text-text-muted mt-0.5">{fmtDate(ticket.signatures?.operator?.date)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-wider">Lead Mechanic</div>
+                    <div className="font-semibold">{ticket.signatures?.mechanic?.name || '—'}</div>
+                    <div className="text-[9px] text-text-muted mt-0.5">{fmtDate(ticket.signatures?.mechanic?.date)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-wider">Checked (Supervisor)</div>
+                    <div className="font-semibold">{ticket.signatures?.supervisor?.name || '—'}</div>
+                    <div className="text-[9px] text-text-muted mt-0.5">{fmtDate(ticket.signatures?.supervisor?.date)}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-text-muted uppercase tracking-wider">Approved (GM)</div>
+                    <div className="font-semibold">{ticket.signatures?.gm?.name || '—'}</div>
+                    <div className="text-[9px] text-text-muted mt-0.5">{fmtDate(ticket.signatures?.gm?.date)}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <FileUpload
             collection="tickets"
             entityId={ticket.id}
@@ -197,7 +261,7 @@ export function TicketDetail() {
 
         {/* Right column — these components carry their own card + header */}
         <div className="dcol">
-          <TransitionPanel workflowId="ticket" entityId={ticket.id} status={ticket.status} onDone={onDone} />
+          <TransitionPanel workflowId="ticket" entityId={ticket.id} status={ticket.status} onDone={onDone} signatures={ticket.signatures} />
           {effectiveRole === 'super_admin' && <TicketAdminEdit ticket={ticket} onSaved={onDone} />}
           <Timeline collection="tickets" entityId={ticket.id} />
         </div>

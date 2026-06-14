@@ -38,6 +38,7 @@ declare module 'lucide-react' {
   export const Building2: LucideIcon;
   export const Calendar: LucideIcon;
   export const CalendarDays: LucideIcon;
+  export const Camera: LucideIcon;
   export const Check: LucideIcon;
   export const CheckCheck: LucideIcon;
   export const CheckCircle: LucideIcon;

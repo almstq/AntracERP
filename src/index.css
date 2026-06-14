@@ -95,3 +95,162 @@ body {
   from { opacity: 0; transform: translateX(24px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
+/* ── Print Mode ── */
+@media print {
+  body, .app {
+    background: var(--color-bg-panel) !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .rail, .sidebar, .topbar, .shell-mobilebar, .shell-scrim, .dback, .dhead-actions, .fileupload, .transition-panel, .ticket-admin-edit, .head-actions, .toolbar {
+    display: none !important;
+  }
+  .main {
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+    padding: 20px !important;
+  }
+  .content {
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .detail {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+  .dcol {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .dcard {
+    background: var(--color-bg-surface) !important;
+    border: 1px solid var(--color-border) !important;
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+}
+
+/* ── Snapshot Mode ── */
+body.snapshot-mode, body.snapshot-mode .app {
+  background: var(--color-bg-panel) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+body.snapshot-mode .rail, 
+body.snapshot-mode .sidebar, 
+body.snapshot-mode .topbar, 
+body.snapshot-mode .shell-mobilebar, 
+body.snapshot-mode .shell-scrim, 
+body.snapshot-mode .dback, 
+body.snapshot-mode .dhead-actions, 
+body.snapshot-mode .fileupload, 
+body.snapshot-mode .transition-panel, 
+body.snapshot-mode .ticket-admin-edit, 
+body.snapshot-mode .head-actions, 
+body.snapshot-mode .toolbar {
+  display: none !important;
+}
+body.snapshot-mode .main {
+  border: none !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+  background: transparent !important;
+  padding: 20px !important;
+}
+body.snapshot-mode .content {
+  padding: 0 !important;
+  overflow: visible !important;
+}
+body.snapshot-mode .detail {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+body.snapshot-mode .dcol {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+body.snapshot-mode .dcard {
+  background: var(--color-bg-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  box-shadow: none !important;
+  page-break-inside: avoid;
+}
+
+.exit-snapshot-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-red) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  padding: 10px 16px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+  cursor: pointer !important;
+}
+
+body.snapshot-mode .exit-snapshot-btn {
+  display: flex !important;
+}
+
+@media print {
+  .exit-snapshot-btn {
+    display: none !important;
+  }
+}
+
+/* ── Mobile Layout Reordering ── */
+@media (max-width: 768px) {
+  .detail {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  /* Push the actions/transition column to the top */
+  .detail > .dcol:nth-child(2) {
+    order: -1 !important;
+  }
+}
+
+/* ── Print Adjustments ── */
+@media print {
+  /* Hide all buttons and interactive controls during printing */
+  button, 
+  .btn,
+  .dhead-actions,
+  .fileupload,
+  .timeline-add {
+    display: none !important;
+  }
+  
+  /* Ensure details collapse nicely and break clean */
+  .detail {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .dcol {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}

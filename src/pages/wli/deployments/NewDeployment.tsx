@@ -18,7 +18,7 @@ import { useToast } from '../../../lib/context/ToastContext';
 const BASIS_HINT: Record<RateBasis, string> = { monthly: 'per month', daily: 'per day', lump: 'total (lump sum)' };
 
 export function NewDeployment() {
-  const { user, effectiveRole } = useAuth();
+  const { user, actor: authActor } = useAuth();
   const navigate = useNavigate();
   const { data: assets } = useAssetList();
   const { data: sites } = useSiteList();
@@ -56,7 +56,7 @@ export function NewDeployment() {
           siteId, customerId: customer.id, customerName: customer.name, agreementRef: agreementRef || undefined,
           rateBasis, rate: Number(rate), currency, startDate: new Date(startDate), note: note || undefined,
         },
-        { id: user.uid, role: effectiveRole, name: user.displayName },
+        authActor!,
       );
       toast('success', 'Machine deployed — revenue terms recorded');
       navigate('/wli/deployments');

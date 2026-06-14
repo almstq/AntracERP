@@ -5,10 +5,10 @@
  * materials/services with a mandatory justification. PRs are SBU-tagged so the
  * same surface serves any business unit; approval routes to that SBU's GM.
  */
-import { listAll, createAuto } from '../firebase/db';
-import { getNextId } from '../utils/id';
-import type { PurchaseRequest, PRLineItem, Urgency } from '../../types/workflow-entities';
+import { createAuto } from '../firebase/db';
+import type { PRLineItem, Urgency } from '../../types/workflow-entities';
 import type { WorkflowActor } from '../workflow/types';
+import { generateSerial, indexDocument } from './registryIndex';
 
 /**
  * Procurement request pages are shared between the WLI and Holding modules.
@@ -21,26 +21,29 @@ export function procurementBase(pathname: string): string {
 
 export interface DirectPRLineInput {
   description: string;
-  kind: 'material' | 'service';
   uom: string;
   quantity: number;
+  kind: 'material' | 'service';
+  estimatedUnitPrice?: number;
 }
 
 export interface CreatePurchaseRequestInput {
+  sbuId: string;
+  siteId: string;
   title: string;
-  reason: string;            // justification — why it's needed
-  sbuId: string;             // target business unit
-  siteId: string;            // where it's needed / delivery location
+  reason: string;
   urgency: Urgency;
   lineItems: DirectPRLineInput[];
+  costCenter?: string;
+  requestedDeliveryDate?: Date;
 }
 
 export async function createPurchaseRequest(
   input: CreatePurchaseRequestInput,
   actor: WorkflowActor,
 ): Promise<string> {
-  const existing = await listAll<PurchaseRequest>('purchaseRequests');
-  const displayId = getNextId(existing.map((p) => p.displayId), 'pr');
+  // Generate monotonic serial ID
+  const { serialId: displayId, sequence, fiscalPeriod } = await generateSerial('PR', input.sbuId, input.siteId);
 
   // Build refs per kind (M1, M2… / S1, S2…) to match the ticket-spawned shape.
   let mat = 0;
@@ -52,6 +55,7 @@ export async function createPurchaseRequest(
     quantity: li.quantity,
     kind: li.kind,
     assignedSupplierIds: [],
+    estimatedUnitPrice: li.estimatedUnitPrice ?? undefined,
   }));
 
   const id = await createAuto('purchaseRequests', {
@@ -70,7 +74,27 @@ export async function createPurchaseRequest(
     lineItems,
     quotes: [],
     purchaseOrderIds: [],
+    costCenter: input.costCenter || null,
+    requestedDeliveryDate: input.requestedDeliveryDate || null,
+    signatures: {
+      requester: { name: actor.name || 'Requester', date: new Date().toISOString() }
+    },
   } as Record<string, unknown>);
+
+  // Index document in central registryIndex
+  await indexDocument({
+    id: displayId,
+    prefix: 'PR',
+    sequence,
+    fiscalPeriod,
+    sbuId: input.sbuId,
+    siteId: input.siteId,
+    status: 'on_hold',
+    createdBy: actor.id,
+    targetCollection: 'purchaseRequests',
+    targetId: id,
+    link: `${input.sbuId === 'sbu-wli' ? '/wli/procurement' : '/holding/procurement'}/requests/${id}`,
+  });
 
   return id;
 }

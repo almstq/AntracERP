@@ -13,6 +13,8 @@ export interface Store {
   type: StoreType;
   managerStaffId?: string;
   active: boolean;
+  orgId: string;
+  sbuId: string;
   createdAt: Date;
   updatedAt: Date;
 }

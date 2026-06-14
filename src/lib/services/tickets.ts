@@ -3,7 +3,7 @@
  * transitioned to `submitted` via the engine so the Stage-1 timeline event and
  * the mechanic notification fire through the normal workflow path.
  */
-import { createAuto, listAll, updateFields, deleteDocument } from '../firebase/db';
+import { createAuto, updateFields, deleteDocument } from '../firebase/db';
 import { Timestamp } from 'firebase/firestore';
 import { executeTransition } from '../workflow/executor';
 import type { WorkflowActor } from '../workflow/types';
@@ -28,13 +28,12 @@ export interface NewTicketInput {
   raisedByRole?: string;
   /** Materials pre-specified by supervisor (supervisor path only). */
   materials?: RequiredMaterial[];
+  serialNumber?: string;
+  meterReading?: number;
+  workCategory?: string;
 }
 
-async function nextTicketDisplayId(reportedAt: Date): Promise<string> {
-  const ym = `${reportedAt.getFullYear()}${String(reportedAt.getMonth() + 1).padStart(2, '0')}`;
-  const all = await listAll('tickets');
-  return `TKT-${ym}-${String(all.length + 1).padStart(3, '0')}`;
-}
+import { generateSerial, indexDocument } from './registryIndex';
 
 /**
  * Hard-delete a ticket. Super-admin only; only allowed while still in draft
@@ -76,7 +75,9 @@ export async function adminUpdateTicket(ticketId: string, patch: AdminTicketPatc
 
 export async function createTicket(input: NewTicketInput, actor: WorkflowActor): Promise<string> {
   const reportedAt = input.reportedAt ?? new Date();
-  const displayId = await nextTicketDisplayId(reportedAt);
+  
+  // Generate monotonic serial ID
+  const { serialId: displayId, sequence, fiscalPeriod } = await generateSerial('TKT', 'sbu-wli', input.siteId);
 
   // Supervisor path: they know what's needed → skip mechanic, go straight to GM desk.
   const isSupervisorPath = input.raisedByRole === 'supervisor' && (input.materials?.length ?? 0) > 0;
@@ -103,6 +104,27 @@ export async function createTicket(input: NewTicketInput, actor: WorkflowActor):
     materials: isSupervisorPath ? (input.materials ?? []) : ([] as RequiredMaterial[]),
     services: [] as RequiredService[],
     documents: [],
+    serialNumber: input.serialNumber || null,
+    meterReading: input.meterReading != null ? Number(input.meterReading) : null,
+    workCategory: input.workCategory || null,
+    signatures: isSupervisorPath || input.raisedByRole === 'supervisor' 
+      ? { supervisor: { name: actor.name || 'Supervisor', date: new Date().toISOString() } }
+      : { operator: { name: actor.name || 'Operator', date: new Date().toISOString() } },
+  });
+
+  // Index document in central registryIndex
+  await indexDocument({
+    id: displayId,
+    prefix: 'TKT',
+    sequence,
+    fiscalPeriod,
+    sbuId: 'sbu-wli',
+    siteId: input.siteId,
+    status: 'draft',
+    createdBy: actor.id,
+    targetCollection: 'tickets',
+    targetId: ticketId,
+    link: `/wli/tickets/${ticketId}`,
   });
 
   // Supervisor path → supervisor_checked (PR spawns on_hold, GM desk notified).

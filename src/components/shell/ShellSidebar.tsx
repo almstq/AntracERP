@@ -2,13 +2,13 @@ import { useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, ChevronsUpDown, LogOut, Sun, Moon, Settings, ShieldAlert } from 'lucide-react';
 import { useAuth } from '../../lib/hooks/useAuth';
-import { useRoleRegistry } from '../../lib/permissions/roleRegistry';
+import { useRoleRegistry, roleCanAccessModule, roleModules } from '../../lib/permissions/roleRegistry';
 import { accessibleModules, moduleForPath, navForRole } from './navConfig';
 import { applyTheme } from '../../lib/prefs';
 import { useUsers } from '../../lib/hooks/useUsers';
 
 export function ShellSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { pathname } = useLocation();
+  const pathname = useLocation().pathname;
   const navigate = useNavigate();
   const { user, logout, actingRole, setActingRole, effectiveRole } = useAuth();
   const { roles: allRoles } = useRoleRegistry();
@@ -21,10 +21,25 @@ export function ShellSidebar({ onNavigate }: { onNavigate?: () => void }) {
     return assignees.length ? `Act as: ${roleLabel(role)} - ${assignees.join(', ')}` : `Act as: ${roleLabel(role)} - unassigned`;
   };
 
-  // Switching the impersonated role re-homes to that role's module via DeskRedirect,
-  // so you never land on a page the new role can't open (/unauthorized).
-  const onActAs = (role: string | null) => { setActingRole(role); navigate('/'); };
+  // Switching the impersonated role stays on the current page if the target role has
+  // access to the current module, or routes directly to the new desk if on a desk view.
   const mod = moduleForPath(pathname);
+  const onActAs = (role: string | null) => {
+    setActingRole(role);
+    if (role) {
+      const isWli = roleModules(role).includes('wli');
+      if (pathname.startsWith('/wli/desk/') && isWli) {
+        navigate(`/wli/desk/${role}`);
+      } else {
+        const currentMod = moduleForPath(pathname);
+        if (!roleCanAccessModule(role, currentMod.key)) {
+          navigate('/');
+        }
+      }
+    } else {
+      navigate('/');
+    }
+  };
   const nav = navForRole(mod, effectiveRole);
   const modules = accessibleModules(effectiveRole);
   const isSA = user?.role === 'super_admin';

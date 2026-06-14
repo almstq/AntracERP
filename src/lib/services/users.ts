@@ -15,8 +15,10 @@ export interface AppUser {
   email?: string;
   displayName?: string;
   role: string;
+  roleId?: string;
   orgId?: string;
   siteIds?: string[];
+  status?: 'active' | 'pending' | 'suspended';
   createdAt?: Date;
 }
 
@@ -36,5 +38,11 @@ export async function listUsers(): Promise<AppUser[]> {
 }
 
 export async function assignAccess(uid: string, role: string, siteIds: string[]): Promise<void> {
-  await updateFields('users', uid, { role, orgId: orgIdForRole(role), siteIds });
+  await updateFields('users', uid, {
+    role,
+    roleId: role,
+    orgId: orgIdForRole(role),
+    siteIds,
+    status: 'active',
+  });
 }

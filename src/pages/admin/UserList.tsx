@@ -152,7 +152,7 @@ function UserRow({ user, sites, roles, onSaved }: {
   onSaved: () => void;
 }) {
   const { toast } = useToast();
-  const { user: actor } = useAuth();
+  const { user: actor, actor: authActor } = useAuth();
   const [role, setRole] = useState(user.role);
   const [siteIds, setSiteIds] = useState<string[]>(user.siteIds ?? []);
   const [busy, setBusy] = useState(false);
@@ -172,7 +172,11 @@ function UserRow({ user, sites, roles, onSaved }: {
       void logActivity({
         category: 'access', action: 'role_assigned',
         summary: `${user.displayName || user.email}: ${labelForRole(prev)} → ${labelForRole(role)}`,
-        actorId: actor?.uid ?? 'unknown', actorName: actor?.displayName, actorRole: actor?.role,
+        actorId: authActor?.id ?? actor?.uid ?? 'unknown',
+        actorName: authActor?.name ?? actor?.displayName,
+        actorRole: authActor?.role ?? actor?.role,
+        adminOverride: authActor?.adminOverride,
+        performedByRole: authActor?.realRole,
         entityType: 'user', entityId: user.id,
       });
       onSaved();

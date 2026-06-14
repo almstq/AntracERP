@@ -29,7 +29,7 @@ function emptyRow(): MaterialRow {
 }
 
 export function NewTicket() {
-  const { user, effectiveRole } = useAuth();
+  const { user, effectiveRole, actor: authActor } = useAuth();
   const navigate = useNavigate();
   const { data: assets, loading: assetsLoading } = useAssetList();
   const { toast } = useToast();
@@ -47,12 +47,22 @@ export function NewTicket() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [meterReading, setMeterReading] = useState('');
+  const [workCategory, setWorkCategory] = useState('mechanical');
+  const [serialNumber, setSerialNumber] = useState('');
+
   const selectedAsset = assets.find((a) => a.id === assetId);
   const effectiveSite = siteTouched ? siteId : (selectedAsset?.currentSiteId ?? '');
 
   function onAssetChange(id: string) {
     setAssetId(id);
     setSiteTouched(false);
+    const selected = assets.find((a) => a.id === id);
+    if (selected) {
+      setSerialNumber(selected.chassisNo || selected.regNo || selected.engineNo || selected.engine1Serial || '');
+    } else {
+      setSerialNumber('');
+    }
   }
 
   function addMaterialRow() {
@@ -104,8 +114,11 @@ export function NewTicket() {
           reportedAt,
           raisedByRole: effectiveRole,
           materials: isSupervisor ? parsedMaterials : undefined,
+          serialNumber: serialNumber.trim() || undefined,
+          meterReading: meterReading.trim() ? parseFloat(meterReading) : undefined,
+          workCategory: workCategory || undefined,
         },
-        { id: user.uid, role: effectiveRole, name: user.displayName ?? undefined },
+        authActor!,
       );
       toast('success', isSupervisor ? 'Ticket submitted — GM notified' : 'Issue ticket created');
       navigate(`/wli/tickets/${id}`);
@@ -161,6 +174,29 @@ export function NewTicket() {
             <div>
               <label className="text-xs text-text-muted">Date Reported</label>
               <Input type="date" value={reportedDate} onChange={(e) => setReportedDate(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-xs text-text-muted">Work Category</label>
+              <InputSelect value={workCategory} onChange={(e) => setWorkCategory(e.target.value)}>
+                <option value="mechanical">Mechanical</option>
+                <option value="electrical">Electrical</option>
+                <option value="hydraulic">Hydraulic</option>
+                <option value="fabrication">Fabrication</option>
+                <option value="engine">Engine</option>
+                <option value="pm_service">PM Service</option>
+                <option value="other">Other</option>
+              </InputSelect>
+            </div>
+            <div>
+              <label className="text-xs text-text-muted">Serial / Chassis No</label>
+              <Input placeholder="Serial number" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)} />
+            </div>
+            <div>
+              <label className="text-xs text-text-muted">Meter Reading (Hours/Km)</label>
+              <Input type="number" placeholder="e.g. 1250" value={meterReading} onChange={(e) => setMeterReading(e.target.value)} />
             </div>
           </div>
 

@@ -262,6 +262,9 @@ export function roleHasWorkflowActor(role: string, actor: string): boolean {
 /** Permission level this role has for a given function path. */
 export function permissionLevel(role: string, path: string): Level {
   if (role === 'super_admin') return 'manage';
+  if (path === '/registry') {
+    return role && role !== 'pending' ? 'view' : 'none';
+  }
   return getRole(role)?.permissions[path] ?? 'none';
 }
 

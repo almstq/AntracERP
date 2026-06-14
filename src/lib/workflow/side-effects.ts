@@ -10,7 +10,7 @@ import { getById, listAll, createAuto, updateFields, listWhere } from '../fireba
 import type { ExecuteFn, SideEffectTag, WorkflowActor } from './types';
 import type {
   Ticket, PurchaseRequest, PRLineItem, PurchaseOrder, POLineItem,
-  FuelRequest, InventoryBalance,
+  FuelRequest, InventoryBalance, Supplier,
 } from '../../types/workflow-entities';
 import type { Enquiry, Quotation, WorkOrder, Invoice, Payment } from '../../types/crm';
 import type { PoReceiptLine } from '../../types/inventory';
@@ -104,16 +104,43 @@ const handlers: Record<SideEffectTag, Handler> = {
 
     const poIds: string[] = [];
     for (const [supplierId, items] of bySupplier) {
+      const supplier = await getById<Supplier>('suppliers', supplierId);
+      const supplierName = supplier?.name ?? supplierId;
+      const supplierTin = supplier?.tin ?? null;
+      const supplierAddress = supplier?.address ?? null;
+      const supplierContact = supplier ? [supplier.contactPhone, supplier.contactEmail].filter(Boolean).join(' / ') : null;
+
       const poLines: POLineItem[] = items.map((li) => ({
         description: li.description, uom: li.uom, quantity: li.quantity,
         unitPrice: li.selectedUnitPrice ?? 0,
       }));
       const total = poLines.reduce((s, l) => s + l.unitPrice * l.quantity, 0);
       const displayId = await nextDisplayId('purchaseOrders', 'PO');
+      
+      const today = new Date();
+      const deadline = pr.requestedDeliveryDate ?? new Date(today.getTime() + 5 * 86400000);
+
       const poId = await createAuto('purchaseOrders', {
-        displayId, purchaseRequestId: pr.id, ticketId: pr.ticketId, orgId: pr.orgId,
-        sbuId: pr.sbuId, supplierId, supplierName: supplierId, deliveryAddress: pr.siteId,
-        status: 'raised', lineItems: poLines, total, currency: 'MVR', documents: [],
+        displayId,
+        purchaseRequestId: pr.id,
+        ticketId: pr.ticketId ?? null,
+        orgId: pr.orgId,
+        sbuId: pr.sbuId,
+        supplierId,
+        supplierName,
+        supplierTin,
+        supplierAddress,
+        supplierContact,
+        deliveryAddress: pr.siteId,
+        deliveryDeadline: deadline,
+        deliveryMethod: 'SUPPLIER DELIVERY',
+        buyerTin: '1007799GST501',
+        buyerAddress: "H. Bonthi, 3rd Floor, Male', Republic of Maldives",
+        status: 'raised',
+        lineItems: poLines,
+        total,
+        currency: 'MVR',
+        documents: [],
       });
       poIds.push(poId);
     }

@@ -17,7 +17,7 @@ const SITES = ['thilafushi', 'bodufinolhu', 'muthaafushi', 'goidhoo', 'male-hq']
 const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 
 export function NewFuelRequest() {
-  const { user, effectiveRole } = useAuth();
+  const { user, actor: authActor } = useAuth();
   const navigate = useNavigate();
   const { data: sites } = useSiteList();
   const { toast } = useToast();
@@ -54,7 +54,7 @@ export function NewFuelRequest() {
           urgency,
           notes: notes || undefined,
         },
-        { id: user.uid, role: effectiveRole, name: user.displayName },
+        authActor!,
       );
       toast('success', 'Fuel request created');
       navigate(`/wli/fuel/requests/${id}`);

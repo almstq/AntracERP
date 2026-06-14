@@ -172,7 +172,7 @@ function RoleCard({ role, onEdit, onDelete, onReset }: {
 
 export function RoleBuilder() {
   const { roles } = useRoleRegistry();
-  const { user } = useAuth();
+  const { user, actor: authActor } = useAuth();
   const { toast } = useToast();
   const [editing, setEditing] = useState<Draft | null>(null);
   const [filter, setFilter] = useState<'all' | 'builtin' | 'custom'>('all');
@@ -186,7 +186,13 @@ export function RoleBuilder() {
     perms: { ...r.permissions }, workflowActors: [...(r.workflowActors ?? [])],
   });
 
-  const actor = () => ({ actorId: user?.uid ?? 'unknown', actorName: user?.displayName, actorRole: user?.role });
+  const actor = () => ({
+    actorId: authActor?.id ?? user?.uid ?? 'unknown',
+    actorName: authActor?.name ?? user?.displayName,
+    actorRole: authActor?.role ?? user?.role,
+    adminOverride: authActor?.adminOverride,
+    performedByRole: authActor?.realRole,
+  });
 
   const save = () => {
     if (!editing) return;

@@ -43,6 +43,10 @@ export function RoleRoute(props: { allowedRoles?: string[] }) {
   const location = useLocation();
 
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  
+  // Real super_admin bypasses all route guards (even when acting as another role)
+  if (user.role === 'super_admin') return <Outlet />;
+
   if (props.allowedRoles?.length === 1 && props.allowedRoles[0] === 'super_admin') {
     return user.role === 'super_admin' ? <Outlet /> : <Navigate to="/unauthorized" replace />;
   }

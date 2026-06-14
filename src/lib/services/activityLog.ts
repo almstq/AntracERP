@@ -88,6 +88,8 @@ export async function addManualEntry(input: {
   actorId: string;
   actorName?: string;
   actorRole?: string;
+  adminOverride?: boolean;
+  performedByRole?: string;
 }): Promise<void> {
   await logActivity({
     category: input.category,
@@ -96,6 +98,8 @@ export async function addManualEntry(input: {
     actorId: input.actorId,
     actorName: input.actorName,
     actorRole: input.actorRole,
+    adminOverride: input.adminOverride,
+    performedByRole: input.performedByRole,
     manual: true,
     occurredAt: input.occurredAt,
   });
@@ -107,6 +111,8 @@ export async function addManualEntry(input: {
     actorId: input.actorId,
     actorName: input.actorName,
     actorRole: input.actorRole,
+    adminOverride: input.adminOverride,
+    performedByRole: input.performedByRole,
   });
 }
 

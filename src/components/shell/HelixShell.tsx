@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { IconRail } from './IconRail';
 import { ShellSidebar } from './ShellSidebar';
 import { Topbar } from './Topbar';
@@ -12,6 +12,7 @@ export function HelixShell({ banner }: { banner?: React.ReactNode }) {
   const { pathname } = useLocation();
   const [navOpen, setNavOpen] = useState(false);
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [snapshotActive, setSnapshotActive] = useState(document.body.classList.contains('snapshot-mode'));
 
   // ⌘K / Ctrl-K toggles the palette; Esc closes.
   useEffect(() => {
@@ -25,6 +26,30 @@ export function HelixShell({ banner }: { banner?: React.ReactNode }) {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // Listen for snapshot mode class changes on document.body
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setSnapshotActive(document.body.classList.contains('snapshot-mode'));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        document.body.classList.remove('snapshot-mode');
+      }
+    };
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  const exitSnapshot = () => {
+    document.body.classList.remove('snapshot-mode');
+  };
 
   // Close mobile nav on route change.
   useEffect(() => { setNavOpen(false); }, [pathname]);
@@ -52,6 +77,11 @@ export function HelixShell({ banner }: { banner?: React.ReactNode }) {
       </main>
 
       <CommandPalette open={cmdkOpen} onClose={() => setCmdkOpen(false)} />
+      {snapshotActive && (
+        <button className="exit-snapshot-btn" onClick={exitSnapshot}>
+          <X size={14} /> Exit Snapshot Mode (Esc)
+        </button>
+      )}
     </div>
   );
 }

@@ -33,7 +33,7 @@ function entityHref(e: ActivityEntry): string | null {
 }
 
 export function SystemLog() {
-  const { user, effectiveRole } = useAuth();
+  const { user, effectiveRole, actor: authActor } = useAuth();
   const { toast } = useToast();
   const [entries, setEntries] = useState<ActivityEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,11 @@ export function SystemLog() {
         occurredAt: new Date(mDate),
         category: mCat,
         summary: mSummary.trim(),
-        actorId: user.uid, actorName: user.displayName, actorRole: user.role,
+        actorId: authActor?.id ?? user.uid,
+        actorName: authActor?.name ?? user.displayName,
+        actorRole: authActor?.role ?? user.role,
+        adminOverride: authActor?.adminOverride,
+        performedByRole: authActor?.realRole,
       });
       toast('success', 'Backdated entry recorded');
       setMSummary(''); setMDate(''); setAdding(false);

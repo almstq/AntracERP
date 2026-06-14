@@ -145,6 +145,8 @@ export interface SupplierInput {
   country?: string;
   contactEmail?: string;
   categories: string[];
+  tin?: string;
+  address?: string;
 }
 
 export async function createSupplier(input: SupplierInput): Promise<string> {
@@ -155,7 +157,7 @@ export async function createSupplier(input: SupplierInput): Promise<string> {
 
 export async function updateSupplier(
   id: string,
-  patch: Partial<SupplierInput & { contactPhone: string; active: boolean }>,
+  patch: Partial<SupplierInput & { contactPhone: string; active: boolean; tin: string; address: string }>,
 ): Promise<void> {
   await updateFields('suppliers', id, patch as Record<string, unknown>);
 }

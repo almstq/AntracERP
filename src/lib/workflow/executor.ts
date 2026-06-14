@@ -3,6 +3,8 @@
  *
  * 1. Read the entity, determine its current status.
  * 2. Validate the requested transition (role, notes, required fields).
+ *    Super Admins (real role = 'super_admin') bypass the role-check only;
+ *    payload/notes requirements still apply so data quality is maintained.
  * 3. In one atomic batch: write status + supplied fields, append an immutable
  *    timeline event, and queue notifications for the transition's `notify` roles.
  * 4. After commit, run side-effect handlers (which may create/advance linked entities).
@@ -15,6 +17,7 @@ import { getTransition, validateTransition } from './engine';
 import { queueNotifications } from './notifications';
 import { runSideEffects } from './side-effects';
 import type { ExecuteOptions, ExecuteResult } from './types';
+import { updateRegistryStatus } from '../services/registryIndex';
 
 export async function executeTransition(opts: ExecuteOptions): Promise<ExecuteResult> {
   const { workflowId, entityId, to, actor, notes, fields } = opts;
@@ -26,12 +29,28 @@ export async function executeTransition(opts: ExecuteOptions): Promise<ExecuteRe
   }
   const from = entity.status as string;
 
+  // Super Admin admin-override bypass:
+  // A real SA (realRole === 'super_admin') may execute any non-system transition
+  // regardless of the role-gate. Payload requirements (notes, fields) still apply.
+  const isSuperAdminActor = actor.realRole === 'super_admin';
+
   const error = validateTransition(def, from, to, actor.role, { notes, fields });
   if (error) {
-    return { success: false, message: error, from, to };
+    // 'Role "X" cannot perform "Y"' — only bypass-able by SA.
+    if (isSuperAdminActor && error.startsWith('Role "')) {
+      // Allow: SA admin override for role-gated transitions.
+    } else {
+      return { success: false, message: error, from, to };
+    }
   }
 
-  const transition = getTransition(def, from, to)!;
+  const transition = getTransition(def, from, to);
+  if (!transition) {
+    return { success: false, message: `No transition from "${from}" to "${to}" in ${def.label}.`, from, to };
+  }
+
+  // Determine audit stamp: was this an admin override?
+  const isAdminOverride = (actor.adminOverride ?? false) || isSuperAdminActor;
 
   // ── Atomic write: status + fields + timeline + notifications ──
   const batch = newBatch();
@@ -47,8 +66,8 @@ export async function executeTransition(opts: ExecuteOptions): Promise<ExecuteRe
     actorId: actor.id,
     actorRole: actor.role,
     actorName: actor.name ?? null,
-    // Proxy governance: capture that a super_admin acted on behalf of this role.
-    adminOverride: actor.adminOverride ?? false,
+    // Proxy governance: stamp that a super_admin acted on behalf of this role.
+    adminOverride: isAdminOverride,
     performedByRole: actor.realRole ?? null,
     notes: notes ?? null,
     timestamp: serverTimestamp(),
@@ -64,7 +83,7 @@ export async function executeTransition(opts: ExecuteOptions): Promise<ExecuteRe
     actorId: actor.id,
     actorName: actor.name ?? null,
     actorRole: actor.role,
-    adminOverride: actor.adminOverride ?? false,
+    adminOverride: isAdminOverride,
     performedByRole: actor.realRole ?? null,
     entityType: workflowId,
     entityId,
@@ -74,6 +93,11 @@ export async function executeTransition(opts: ExecuteOptions): Promise<ExecuteRe
   });
 
   await batch.commit();
+
+  // Update central document registry status post-commit if displayId exists.
+  if (entity.displayId) {
+    void updateRegistryStatus(entity.displayId, to);
+  }
 
   // ── Side effects (post-commit; may create/advance linked entities) ──
   await runSideEffects(transition.sideEffects, { entityId, actor, execute: executeTransition });

@@ -3,7 +3,7 @@
  * Letterhead, actuals table, less advance/retention, GST 8%, total due, payment terms.
  */
 import type { Invoice, Customer, WorkOrder } from '../../types/crm';
-import { downloadHtml } from './rfq';
+import { downloadHtml, printHtml } from './rfq';
 
 const fmt = (n: number) => n.toLocaleString('en-MV', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -127,4 +127,8 @@ export function buildInvoiceHtml(inv: Invoice, customer: Customer, wo: WorkOrder
 
 export function downloadInvoice(inv: Invoice, customer: Customer, wo: WorkOrder): void {
   downloadHtml(`${inv.displayId}.html`, buildInvoiceHtml(inv, customer, wo));
+}
+
+export function printInvoice(inv: Invoice, customer: Customer, wo: WorkOrder): void {
+  printHtml(buildInvoiceHtml(inv, customer, wo), inv.displayId);
 }

@@ -1,6 +1,7 @@
+import { useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../components/ui/Card';
-import { Ticket as TicketIcon, ShoppingCart, Package, UserCheck, Users, MapPin, Truck, HardHat } from 'lucide-react';
+import { Ticket as TicketIcon, ShoppingCart, Package, UserCheck, Users, MapPin, Truck, HardHat, Droplets, ArrowLeftRight, Briefcase } from 'lucide-react';
 import { useActionInbox, useAssetList, useSiteList, useStaffList } from '../../lib/hooks/useWorkflowData';
 import { useUsers } from '../../lib/hooks/useUsers';
 import { getRole } from '../../lib/permissions/roleRegistry';
@@ -9,12 +10,52 @@ import { useAuth } from '../../lib/hooks/useAuth';
 
 const ICON = { ticket: TicketIcon, pr: ShoppingCart, po: Package };
 
+function getQuickActions(role: string): { label: string; to: string; icon: any }[] {
+  const actions: { label: string; to: string; icon: any }[] = [];
+
+  const canRaiseTicket = ['operator', 'mechanic', 'supervisor', 'ops_staff'].includes(role);
+  const canRaisePR = ['supervisor', 'gm', 'proc_staff', 'finance_wli', 'inventory_staff', 'director', 'cfo', 'antrac_finance', 'holding_hr'].includes(role);
+  const canRequestFuel = ['operator', 'supervisor', 'inventory_staff'].includes(role);
+  const canNewTransfer = ['inventory_staff'].includes(role);
+  const canNewEnquiry = ['sales_staff', 'ops_staff'].includes(role);
+  const canNewDeployment = ['sales_staff', 'ops_staff'].includes(role);
+
+  if (canRaiseTicket) {
+    actions.push({ label: 'Raise Issue Ticket', to: '/wli/tickets/new', icon: TicketIcon });
+  }
+  if (canRaisePR) {
+    actions.push({ label: 'Raise Purchase Request', to: '/wli/procurement/requests/new', icon: ShoppingCart });
+  }
+  if (canRequestFuel) {
+    actions.push({ label: 'Request Fuel / Water', to: '/wli/fuel/requests/new', icon: Droplets });
+  }
+  if (canNewTransfer) {
+    actions.push({ label: 'New Stock Transfer', to: '/wli/warehouse/transfers/new', icon: ArrowLeftRight });
+  }
+  if (canNewEnquiry) {
+    actions.push({ label: 'New CRM Enquiry', to: '/wli/crm/enquiries/new', icon: Briefcase });
+  }
+  if (canNewDeployment) {
+    actions.push({ label: 'New Fleet Deployment', to: '/wli/deployments/new', icon: Truck });
+  }
+
+  return actions;
+}
+
 /** Generic actor desk: everything awaiting the role in the URL across all workflows. */
 export function RoleInbox() {
   const { role = '' } = useParams();
   const { items, loading } = useActionInbox(role);
   const { data: users } = useUsers();
-  const { user, effectiveRole } = useAuth();
+  const { user, actingRole, setActingRole, effectiveRole } = useAuth();
+
+  useEffect(() => {
+    if (user?.role === 'super_admin' && role && actingRole !== role) {
+      setActingRole(role);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, user]);
+
   const { data: sites } = useSiteList();
   const { data: assets } = useAssetList();
   const { data: staff } = useStaffList();
@@ -32,6 +73,8 @@ export function RoleInbox() {
   });
   const siteName = (id?: string) => sites.find((s) => s.id === id)?.name ?? id ?? 'Unassigned';
 
+  const quickActions = getQuickActions(role);
+
   return (
     <PageContainer>
       <div className="mb-4">
@@ -40,6 +83,27 @@ export function RoleInbox() {
           {loading ? 'Loading…' : `${items.length} action item(s) · ${deskSites.length} site(s) · ${deskAssets.length} asset(s) · ${deskStaff.length} staff`}
         </p>
       </div>
+
+      {quickActions.length > 0 && (
+        <Card className="mb-4" header={<span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Quick Actions</span>}>
+          <div className="flex flex-wrap gap-2">
+            {quickActions.map((act) => {
+              const ActionIcon = act.icon;
+              return (
+                <Link
+                  key={act.to}
+                  to={act.to}
+                  className="btn btn-secondary flex items-center gap-2 text-xs"
+                  style={{ padding: '6px 12px', borderRadius: '6px' }}
+                >
+                  <ActionIcon size={14} />
+                  <span>{act.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </Card>
+      )}
 
       {/* Who actually holds this role — visible when an SA opens the desk. */}
       <Card className="mb-4">

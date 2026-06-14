@@ -199,6 +199,11 @@ service cloud.firestore {
       allow read, write: if hasAssignedRole();
     }
 
+    // Central Document Registry Index
+    match /registryIndex/{docId} {
+      allow read, write: if hasAssignedRole();
+    }
+
     // Customers
     match /customers/{customerId} {
       allow read: if hasAssignedRole();
@@ -245,6 +250,14 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // System activity log — read by GM+/SA; written by workflow engine (any assigned role);
+    // immutable (no update/delete) so it serves as a tamper-evident audit trail.
+    match /activityLog/{logId} {
+      allow read: if isGM() || isSuperAdmin();
+      allow create: if hasAssignedRole();
+      allow update, delete: if false;
+    }
+
     // FollowMe vessel-tracking cache — written ONLY by the syncFollowMe Cloud
     // Function (admin SDK bypasses rules). Clients read the cache; never write.
     match /followmeCache/{vesselId} {
@@ -281,11 +294,13 @@ service cloud.firestore {
       allow write: if isWorkflowParticipant();
     }
 
-    // Top-level workflow notifications — recipient (by role or uid) can read/mark-read
+    // Top-level workflow notifications — recipient (by role or uid) can read/mark-read.
+    // Super Admin can read/update all notifications so they can manage inboxes while
+    // impersonating other roles.
     match /notifications/{notifId} {
-      allow read: if isAuth() && (resource.data.recipientRole == getUserRole() || resource.data.recipientId == request.auth.uid);
+      allow read: if isSuperAdmin() || (isAuth() && (resource.data.recipientRole == getUserRole() || resource.data.recipientId == request.auth.uid));
       allow create: if isWorkflowParticipant();
-      allow update: if isAuth() && (resource.data.recipientRole == getUserRole() || resource.data.recipientId == request.auth.uid);
+      allow update: if isSuperAdmin() || (isAuth() && (resource.data.recipientRole == getUserRole() || resource.data.recipientId == request.auth.uid));
       allow delete: if isSuperAdmin();
     }
 

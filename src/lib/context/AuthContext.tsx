@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             await setDoc(doc(firebaseDb, 'users', fbUser.uid), {
               email: fbUser.email || '', displayName: fbUser.displayName || '',
-              role: 'pending', orgId: '', siteIds: [], createdAt: serverTimestamp(),
+              role: 'pending', roleId: 'pending', status: 'pending', orgId: '', siteIds: [], createdAt: serverTimestamp(),
             }, { merge: true });
           } catch { /* security rules may block self-write; non-fatal */ }
           setUser({ uid: fbUser.uid, email: fbUser.email || '', displayName: fbUser.displayName || '', role: 'pending', orgId: '', orgName: '', siteIds: [] });
@@ -119,9 +119,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const effectiveRole = actingRole ?? user?.role ?? 'pending';
+  const adminOverride = user?.role === 'super_admin' && effectiveRole !== 'super_admin';
+  const actor = user
+    ? {
+        id: user.uid,
+        role: effectiveRole,
+        name: user.displayName || undefined,
+        realRole: user.role,
+        adminOverride,
+      }
+    : null;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, effectiveRole, actingRole, setActingRole, isMock: !!devUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, effectiveRole, actingRole, setActingRole, isMock: !!devUser, actor }}>
       {children}
     </AuthContext.Provider>
   );

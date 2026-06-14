@@ -70,7 +70,12 @@ export const WLI_NAV: ModuleNav = {
         { to: '/wli/warehouse/transfers', label: 'Transfers', icon: Truck, allow: [INVENTORY_STAFF] },
       ],
     },
-    { title: 'Documents', items: [{ to: '/wli/documents', label: 'Document Vault', icon: FolderOpen, allow: [SUPERVISOR, PROC_STAFF, FINANCE_WLI, OPS_STAFF] }] },
+    {
+      title: 'Vault', items: [
+        { to: '/registry', label: 'Document Registry', icon: ShieldCheck },
+        { to: '/wli/documents', label: 'Document Vault', icon: FolderOpen, allow: [SUPERVISOR, PROC_STAFF, FINANCE_WLI, OPS_STAFF] },
+      ]
+    },
     {
       title: 'Registers', collapsed: true, items: [
         { to: '/wli/locations', label: 'Locations', icon: MapPin, allow: [SUPERVISOR, OPS_STAFF] },
@@ -94,6 +99,10 @@ export const HQ_NAV: ModuleNav = {
       { to: '/holding/reports/uptime', label: 'WLI Fleet Uptime', icon: Activity, allow: [ROLES.DIRECTOR, ROLES.CFO] },
     ] },
     { title: 'Procurement', items: [{ to: '/holding/procurement/requests', label: 'Purchase Requests', icon: ShoppingCart, allow: [ROLES.DIRECTOR, ROLES.CFO, ROLES.ANTRAC_FINANCE, ROLES.HOLDING_HR] }] },
+    { title: 'Vault & Registry', items: [
+      { to: '/registry', label: 'Document Registry', icon: ShieldCheck },
+      { to: '/wli/documents', label: 'WLI Document Vault', icon: FolderOpen, allow: [ROLES.DIRECTOR, ROLES.CFO, ROLES.ANTRAC_FINANCE] }
+    ] },
     { title: 'Registers', items: [{ to: '/holding/staff', label: 'Holding Staff', icon: UserCog, allow: [ROLES.HOLDING_HR, ROLES.DIRECTOR, ROLES.CFO] }] },
     { title: 'Admin', allow: [ROLES.SUPER_ADMIN], items: [
       { to: '/admin/users', label: 'Users', icon: Users },

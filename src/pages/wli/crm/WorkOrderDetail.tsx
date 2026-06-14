@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { FileUpload } from '../../../components/shared/FileUpload';
-import { ArrowLeft, Download, Plus, CreditCard, Calendar, DollarSign } from 'lucide-react';
+import { ArrowLeft, Download, Plus, CreditCard, Calendar, DollarSign, FileText } from 'lucide-react';
 import {
   getWorkOrder, getCustomer, getInvoice, createInvoice, createPayment,
   updateInvoice, updateWorkOrder, listPaymentsByInvoice,
@@ -13,7 +13,7 @@ import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { workOrderWorkflow as wf } from '../../../lib/workflow/definitions';
 import { PageContainer } from '../../../components/shared/PageContainer';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
-import { downloadInvoice } from '../../../lib/services/invoice';
+import { downloadInvoice, printInvoice } from '../../../lib/services/invoice';
 import { formatMoney } from '../../../lib/utils/money';
 import { formatDate } from '../../../lib/utils/format';
 import { useAuth } from '../../../lib/hooks/useAuth';
@@ -295,6 +295,10 @@ function InvoiceCard({ invId, wo, customer, onUpdate }: InvoiceCardProps) {
               <CreditCard size={12} /> Record Payment
             </button>
           )}
+          <button onClick={() => printInvoice(inv, customer, wo)}
+            className="flex items-center gap-1 text-[11px] text-text-primary hover:underline">
+            <FileText size={12} /> Print PDF
+          </button>
           <button onClick={() => downloadInvoice(inv, customer, wo)}
             className="flex items-center gap-1 text-[11px] text-blue hover:underline">
             <Download size={12} /> PDF

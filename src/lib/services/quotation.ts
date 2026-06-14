@@ -5,7 +5,7 @@
  */
 import type { Quotation, Customer } from '../../types/crm';
 import { GST_RATE } from '../utils/money';
-import { downloadHtml } from './rfq';
+import { downloadHtml, printHtml } from './rfq';
 
 export function buildQuotationHtml(q: Quotation, customer: Customer): string {
   const today = new Date();
@@ -143,4 +143,8 @@ function buildPaymentTermsText(q: Quotation): string {
 
 export function downloadQuotation(q: Quotation, customer: Customer): void {
   downloadHtml(`${q.displayId}.html`, buildQuotationHtml(q, customer));
+}
+
+export function printQuotation(q: Quotation, customer: Customer): void {
+  printHtml(buildQuotationHtml(q, customer), q.displayId);
 }

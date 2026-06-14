@@ -93,6 +93,27 @@ export interface Ticket {
   documents: UploadedDoc[];
   createdAt: Date;
   updatedAt: Date;
+
+  // Curated Industry Fields:
+  serialNumber?: string;
+  meterReading?: number;
+  workCategory?: string;
+  resolutionChecklist?: {
+    clean: boolean;
+    photos: boolean;
+    tools: boolean;
+    safety: boolean;
+  };
+  signatures?: {
+    operator?: { name: string; date: Date | string };
+    mechanic?: { name: string; date: Date | string };
+    supervisor?: { name: string; date: Date | string };
+    gm?: { name: string; date: Date | string };
+  };
+  breakdownAt?: Date | string;
+  repairedAt?: Date | string;
+  downtimeHours?: number;
+  partsStockIssued?: boolean;
 }
 
 // ─── Purchase Request ────────────────────────────────────────────────────
@@ -119,6 +140,7 @@ export interface PRLineItem {
   /** GM-selected supplier + price (Stage 7). */
   selectedSupplierId?: string;
   selectedUnitPrice?: number;
+  estimatedUnitPrice?: number;
 }
 
 export interface PRQuote {
@@ -154,6 +176,19 @@ export interface PurchaseRequest {
   purchaseOrderIds: string[];
   createdAt: Date;
   updatedAt: Date;
+
+  // Curated Industry Fields:
+  costCenter?: string;
+  requestedDeliveryDate?: Date;
+  signatures?: {
+    requester?: { name: string; date: Date | string };
+    verifier?: { name: string; date: Date | string };
+    gm?: { name: string; date: Date | string };
+  };
+  preferredSupplierId?: string;
+  preferredSupplierName?: string;
+  stockChecked?: boolean;
+  stockCheckedBy?: string;
 }
 
 // ─── Purchase Order ──────────────────────────────────────────────────────
@@ -195,6 +230,26 @@ export interface PurchaseOrder {
   documents: UploadedDoc[]; // PO PDF, tax invoice, payment receipt
   createdAt: Date;
   updatedAt: Date;
+
+  // Curated Compliance Fields:
+  buyerTin?: string;
+  buyerAddress?: string;
+  supplierTin?: string;
+  supplierAddress?: string;
+  supplierContact?: string;
+  deliveryDeadline?: Date;
+  deliveryMethod?: string;
+  termsAndConditions?: string;
+  signatures?: {
+    prepared?: { name: string; date: Date | string };
+    verified?: { name: string; date: Date | string };
+    approved?: { name: string; date: Date | string };
+  };
+  incoterms?: string;
+  delayPenaltyTerms?: string;
+  matchedStatus?: 'pending' | 'matched' | 'variance_flagged';
+  grnId?: string;
+  supplierInvoiceId?: string;
 }
 
 // ─── Supplier ────────────────────────────────────────────────────────────
@@ -208,6 +263,8 @@ export interface Supplier {
   categories: string[];
   active: boolean;
   createdAt: Date;
+  tin?: string;
+  address?: string;
 }
 
 // ─── Fuel / Water Request (WLI ↔ MPL) ────────────────────────────────────

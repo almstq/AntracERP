@@ -1,4 +1,5 @@
 import { createContext } from 'react';
+import type { WorkflowActor } from '../workflow/types';
 
 export interface AuthUser {
   uid: string;
@@ -23,6 +24,8 @@ export interface AuthContextType {
   setActingRole: (role: string | null) => void;
   /** True when signed in via Developer Login (mock) — no Firebase token, writes will be denied. */
   isMock: boolean;
+  /** The currently active actor details for workflows and audit logging */
+  actor: WorkflowActor | null;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -34,4 +37,5 @@ export const AuthContext = createContext<AuthContextType>({
   actingRole: null,
   setActingRole: () => {},
   isMock: false,
+  actor: null,
 });

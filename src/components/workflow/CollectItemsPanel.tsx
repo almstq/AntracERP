@@ -31,7 +31,7 @@ interface LineMapping {
 const FIELD = 'text-xs p-2 rounded-lg bg-bg-surface border border-border text-text-primary w-full';
 
 export function CollectItemsPanel({ po, onDone }: Props) {
-  const { user, effectiveRole } = useAuth();
+  const { user, effectiveRole, actor: authActor } = useAuth();
   const { data: stores } = useStores();
   const { data: items } = useInventoryItems();
 
@@ -105,10 +105,7 @@ export function CollectItemsPanel({ po, onDone }: Props) {
         workflowId: 'purchase_order',
         entityId: po.id,
         to: 'items_collected',
-        actor: {
-          id: user.uid, role: effectiveRole, name: user.displayName,
-          realRole: user.role, adminOverride: user.role === 'super_admin' && effectiveRole !== 'super_admin',
-        },
+        actor: authActor!,
         fields: { taxInvoice, receivedStoreId },
       });
 

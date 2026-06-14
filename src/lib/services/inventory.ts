@@ -69,11 +69,38 @@ export interface CreateStoreInput {
   siteName: string;
   type: Store['type'];
   managerStaffId?: string;
+  orgId?: string;
+  sbuId?: string;
 }
 
 export async function createStore(input: CreateStoreInput): Promise<string> {
   const code = await nextStoreCode();
-  return createAuto('stores', { code, ...input, active: true } as Record<string, unknown>);
+  let orgId = input.orgId;
+  let sbuId = input.sbuId;
+
+  if (!orgId || !sbuId) {
+    try {
+      const site = await getById<any>('sites', input.siteId);
+      if (site) {
+        orgId = orgId || site.orgId;
+        sbuId = sbuId || site.sbuId;
+      }
+    } catch (e) {
+      console.error('Failed to resolve site orgId/sbuId', e);
+    }
+  }
+
+  // Fallbacks if not resolved
+  orgId = orgId || 'antrac-holding';
+  sbuId = sbuId || 'sbu-wli';
+
+  return createAuto('stores', {
+    code,
+    ...input,
+    orgId,
+    sbuId,
+    active: true,
+  } as Record<string, unknown>);
 }
 
 export async function updateStore(

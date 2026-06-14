@@ -13,10 +13,11 @@ interface Props {
   entityId: string;
   status: string;
   onDone: () => void;
+  signatures?: Record<string, any>;
 }
 
-export function TransitionPanel({ workflowId, entityId, status, onDone }: Props) {
-  const { user, effectiveRole } = useAuth();
+export function TransitionPanel({ workflowId, entityId, status, onDone, signatures }: Props) {
+  const { user, effectiveRole, actor: authActor } = useAuth();
   const def = getWorkflow(workflowId);
   const role = effectiveRole;
   const available = getAvailableTransitions(def, status, role);
@@ -59,16 +60,33 @@ export function TransitionPanel({ workflowId, entityId, status, onDone }: Props)
       fields.services = serviceRequired ? services : [];
     }
 
-    // Super_admin acting as another role → flag every action as an admin override
-    // so the timeline records the real performer, not just the assumed role.
-    const adminOverride = user.role === 'super_admin' && effectiveRole !== 'super_admin';
+    // Capture compliance signatures on transitions
+    if (workflowId === 'ticket') {
+      const updatedSigs = { ...(signatures || {}) };
+      if (active.action === 'submit_diagnosis') {
+        updatedSigs.mechanic = { name: authActor!.name ?? 'Lead Mechanic', date: new Date().toISOString() };
+      } else if (active.action === 'supervisor_signoff' || active.action === 'supervisor_submit') {
+        updatedSigs.supervisor = { name: authActor!.name ?? 'Field Supervisor', date: new Date().toISOString() };
+      } else if (active.action === 'gm_approve') {
+        updatedSigs.gm = { name: authActor!.name ?? 'General Manager', date: new Date().toISOString() };
+      } else if (active.action === 'mark_resolved' || active.action === 'close_no_parts') {
+        updatedSigs.operator = { name: authActor!.name ?? 'Field Operator', date: new Date().toISOString() };
+        fields.resolutionChecklist = { clean: true, photos: true, tools: true, safety: true };
+      }
+      fields.signatures = updatedSigs;
+    } else if (workflowId === 'purchase_order') {
+      const updatedSigs = { ...(signatures || {}) };
+      if (active.action === 'antrac_accept' || active.action === 'cfo_verify') {
+        updatedSigs.verified = { name: authActor!.name ?? 'Finance Officer', date: new Date().toISOString() };
+      } else if (active.action === 'director_approve') {
+        updatedSigs.approved = { name: authActor!.name ?? 'Director', date: new Date().toISOString() };
+      }
+      fields.signatures = updatedSigs;
+    }
 
     const res = await executeTransition({
       workflowId, entityId, to: active.to as string,
-      actor: {
-        id: user.uid, role: effectiveRole, name: user.displayName,
-        realRole: user.role, adminOverride,
-      },
+      actor: authActor!,
       notes: notes || undefined,
       fields: Object.keys(fields).length ? fields : undefined,
     });

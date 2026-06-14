@@ -100,6 +100,7 @@ const EMSDashboard = lazy(() => import('../pages/ems/EMSDashboard').then(m => ({
 const UserList = lazy(() => import('../pages/admin/UserList').then(m => ({ default: m.UserList })));
 const RoleBuilder = lazy(() => import('../pages/admin/RoleBuilder').then(m => ({ default: m.RoleBuilder })));
 const SystemLog = lazy(() => import('../pages/SystemLog').then(m => ({ default: m.SystemLog })));
+const UniversalRegistry = lazy(() => import('../pages/UniversalRegistry').then(m => ({ default: m.UniversalRegistry })));
 
 // Wraps a lazy component in a route-level Suspense boundary.
 function s(C: React.ComponentType) {
@@ -124,6 +125,7 @@ export const router = createBrowserRouter([
       { path: 'dashboard', element: <Dashboard /> },
       { path: 'settings', element: <Settings /> },
       { path: 'activity', element: s(SystemLog) },
+      { path: 'registry', element: s(UniversalRegistry) },
       {
         path: 'holding',
         element: <RoleRoute allowedRoles={HOLDING_ROLES} />,

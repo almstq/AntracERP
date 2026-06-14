@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '../../../components/ui/Card';
-import { ArrowLeft, Download, MapPin, Calendar } from 'lucide-react';
+import { ArrowLeft, Download, MapPin, Calendar, FileText } from 'lucide-react';
 import { getEnquiry, getCustomer, getQuotation } from '../../../lib/services/crm';
 import { Timeline } from '../../../components/workflow/Timeline';
 import { TransitionPanel } from '../../../components/workflow/TransitionPanel';
 import { enquiryWorkflow as wf } from '../../../lib/workflow/definitions';
-import { downloadQuotation } from '../../../lib/services/quotation';
+import { downloadQuotation, printQuotation } from '../../../lib/services/quotation';
 import { formatDate } from '../../../lib/utils/format';
 import { formatMoney } from '../../../lib/utils/money';
 import type { Enquiry, Customer, Quotation } from '../../../types/crm';
@@ -134,10 +134,16 @@ export function EnquiryDetail() {
               <div className="flex items-center justify-between w-full">
                 <span className="text-sm font-medium">Quotation — {quotation.displayId}</span>
                 {customer && (
-                  <button onClick={() => downloadQuotation(quotation, customer)}
-                    className="flex items-center gap-1 text-[11px] text-blue hover:underline">
-                    <Download size={12} /> Download
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => printQuotation(quotation, customer)}
+                      className="flex items-center gap-1 text-[11px] text-text-primary hover:underline">
+                      <FileText size={12} /> Print PDF
+                    </button>
+                    <button onClick={() => downloadQuotation(quotation, customer)}
+                      className="flex items-center gap-1 text-[11px] text-blue hover:underline">
+                      <Download size={12} /> Download
+                    </button>
+                  </div>
                 )}
               </div>
             }>

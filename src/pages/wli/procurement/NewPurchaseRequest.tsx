@@ -17,10 +17,10 @@ const URGENCIES: Urgency[] = ['critical', 'urgent', 'routine'];
 // Only WLI is an active operating SBU today; MPL is an approver, EMS is planned.
 const SBUS = [{ id: 'sbu-wli', name: 'Well Land Investment' }];
 
-const emptyLine = (): DirectPRLineInput => ({ description: '', kind: 'material', uom: 'pcs', quantity: 1 });
+const emptyLine = (): DirectPRLineInput => ({ description: '', kind: 'material', uom: 'pcs', quantity: 1, estimatedUnitPrice: 0 });
 
 export function NewPurchaseRequest() {
-  const { user, effectiveRole } = useAuth();
+  const { user, actor: authActor } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const base = procurementBase(pathname);
@@ -36,6 +36,9 @@ export function NewPurchaseRequest() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const [costCenter, setCostCenter] = useState('WLI-PLANT');
+  const [requestedDeliveryDate, setRequestedDeliveryDate] = useState('');
+
   const setLine = (i: number, patch: Partial<DirectPRLineInput>) =>
     setLines((arr) => arr.map((l, j) => (j === i ? { ...l, ...patch } : l)));
   const addLine = () => setLines((arr) => [...arr, emptyLine()]);
@@ -48,14 +51,29 @@ export function NewPurchaseRequest() {
     if (!siteId) { setErr('Select where it’s needed.'); return; }
     const cleanLines = lines
       .filter((l) => l.description.trim())
-      .map((l) => ({ ...l, description: l.description.trim(), uom: l.uom.trim() || 'pcs', quantity: Number(l.quantity) > 0 ? Number(l.quantity) : 1 }));
+      .map((l) => ({ 
+        ...l, 
+        description: l.description.trim(), 
+        uom: l.uom.trim() || 'pcs', 
+        quantity: Number(l.quantity) > 0 ? Number(l.quantity) : 1,
+        estimatedUnitPrice: Number(l.estimatedUnitPrice) > 0 ? Number(l.estimatedUnitPrice) : undefined,
+      }));
     if (cleanLines.length === 0) { setErr('Add at least one line item.'); return; }
 
     setBusy(true); setErr(null);
     try {
       const id = await createPurchaseRequest(
-        { title: title.trim(), reason: reason.trim(), sbuId, siteId, urgency, lineItems: cleanLines },
-        { id: user.uid, role: effectiveRole, name: user.displayName },
+        { 
+          title: title.trim(), 
+          reason: reason.trim(), 
+          sbuId, 
+          siteId, 
+          urgency, 
+          lineItems: cleanLines,
+          costCenter: costCenter.trim() || undefined,
+          requestedDeliveryDate: requestedDeliveryDate ? new Date(requestedDeliveryDate) : undefined,
+        },
+        authActor!,
       );
       toast('success', 'Purchase request submitted for approval');
       navigate(`${base}/requests/${id}`);
@@ -105,6 +123,25 @@ export function NewPurchaseRequest() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-text-muted">Cost Center / Budget Code</label>
+              <InputSelect className="mt-1" value={costCenter} onChange={(e) => setCostCenter(e.target.value)}>
+                <option value="WLI-PLANT">WLI Plant Hire SBU</option>
+                <option value="WLI-SHIPPING">WLI Marine Shipping SBU</option>
+                <option value="WLI-HQ">WLI Male HQ Office</option>
+                <option value="PROJECT-THILAFUSHI">Thilafushi Project Site</option>
+                <option value="PROJECT-BODUFINOLHU">Bodufinolhu Resort Project</option>
+                <option value="PROJECT-MUTHAAFUSHI">Muthaafushi Project Site</option>
+                <option value="PROJECT-GOIDHOO">Goidhoo Infrastructure Project</option>
+              </InputSelect>
+            </div>
+            <div>
+              <label className="text-xs text-text-muted">Requested Delivery Date</label>
+              <Input type="date" className="mt-1" value={requestedDeliveryDate} onChange={(e) => setRequestedDeliveryDate(e.target.value)} />
+            </div>
+          </div>
+
           <div>
             <label className="text-xs text-text-muted">Urgency</label>
             <div className="flex gap-2 mt-1">
@@ -140,6 +177,8 @@ export function NewPurchaseRequest() {
                   </InputSelect>
                   <Input value={l.uom} onChange={(e) => setLine(i, { uom: e.target.value })} placeholder="uom" className="w-16" />
                   <Input type="number" min="1" value={String(l.quantity)} onChange={(e) => setLine(i, { quantity: Number(e.target.value) })} className="w-16" />
+                  <Input type="number" placeholder="est. price" value={l.estimatedUnitPrice ? String(l.estimatedUnitPrice) : ''} 
+                    onChange={(e) => setLine(i, { estimatedUnitPrice: Number(e.target.value) })} className="w-24" />
                   <button onClick={() => removeLine(i)} className="text-text-muted hover:text-red p-1" aria-label="Remove line" disabled={lines.length === 1}>
                     <Trash2 size={14} />
                   </button>

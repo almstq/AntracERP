@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
-import { Card } from '../../../components/ui/Card';
+
 import { Button } from '../../../components/ui/Button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { updateFields } from '../../../lib/firebase/db';
 import { useEntity, useSupplierList } from '../../../lib/hooks/useWorkflowData';
 import { Timeline } from '../../../components/workflow/Timeline';
@@ -11,7 +11,7 @@ import { executeTransition } from '../../../lib/workflow/executor';
 import { purchaseRequestWorkflow as prWf } from '../../../lib/workflow/definitions';
 import { getAvailableTransitions } from '../../../lib/workflow/engine';
 import { procurementBase } from '../../../lib/services/procurement';
-import { buildRfqHtml, rfqNumber, downloadHtml } from '../../../lib/services/rfq';
+import { buildRfqHtml, rfqNumber, downloadHtml, printHtml, buildPrHtml } from '../../../lib/services/rfq';
 import { isAiConfigured, generateText } from '../../../lib/services/ai';
 import { Sparkles } from 'lucide-react';
 import { LoadingSpinner } from '../../../components/shared/LoadingSpinner';
@@ -23,10 +23,9 @@ export function PurchaseRequestDetail() {
   const { pathname } = useLocation();
   const base = procurementBase(pathname);
   const inHolding = pathname.startsWith('/holding');
-  const { user, effectiveRole } = useAuth();
+  const { user, effectiveRole, actor: authActor } = useAuth();
   const { data: pr, loading, refresh } = useEntity<PurchaseRequest>('purchaseRequests', id);
   const { data: suppliers } = useSupplierList();
-
   // Quote entry: { supplierId -> { ref -> unitPrice } }
   const [quoteDraft, setQuoteDraft] = useState<Record<string, Record<string, number>>>({});
   // Stage 7 GM selection: { ref -> supplierId }
@@ -69,11 +68,24 @@ export function PurchaseRequestDetail() {
   const supName = (sid: string) => suppliers.find((s) => s.id === sid)?.name ?? sid;
 
   async function run(to: PRStatus, fields?: Record<string, unknown>, notes?: string): Promise<boolean> {
-    if (!user || !pr) return false;
+    if (!user || !pr || !authActor) return false;
     setBusy(true); setErr(null);
+
+    const updatedSigs = { ...(pr.signatures || {}) };
+    if (to === 'pr_accepted') {
+      updatedSigs.verifier = { name: authActor.name || 'Finance/Procurement Officer', date: new Date().toISOString() };
+    } else if (to === 'approved' || to === 'gm_quote_approved') {
+      updatedSigs.gm = { name: authActor.name || 'General Manager', date: new Date().toISOString() };
+    }
+
+    const mergedFields = {
+      ...fields,
+      signatures: updatedSigs,
+    };
+
     const res = await executeTransition({
       workflowId: 'purchase_request', entityId: pr.id, to,
-      actor: { id: user.uid, role: effectiveRole, name: user.displayName }, fields, notes,
+      actor: authActor, fields: mergedFields, notes,
     });
     setBusy(false);
     if (!res.success) { setErr(res.message); return false; }
@@ -158,7 +170,6 @@ export function PurchaseRequestDetail() {
     const sup = { id: sid, name: supName(sid) };
     downloadHtml(`${rfqNumber(pr!, sid)}.html`, buildRfqHtml(pr!, sup, items));
   }
-
   return (
     <div className="page">
       <Link to={`${base}/requests`} className="dback"><ArrowLeft /> Purchase Requests</Link>
@@ -176,50 +187,108 @@ export function PurchaseRequestDetail() {
             <span className="tc-sub">{pr.urgency}</span>
           </div>
         </div>
+        <div className="dhead-actions">
+          <button className="btn btn-ghost" onClick={() => printHtml(buildPrHtml(pr), pr.displayId)}>
+            <FileText size={14} /> Print PDF
+          </button>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-4">
-          {pr.origin === 'direct' && (
-            <Card header={<span className="text-sm font-medium">Request</span>}>
-              <div className="space-y-2 text-xs">
-                {pr.reason && (
-                  <div>
-                    <p className="text-[10px] uppercase tracking-wider text-text-muted mb-0.5">Justification</p>
-                    <p className="text-text-secondary leading-relaxed">{pr.reason}</p>
+      <div className="detail">
+        <div className="dcol">
+          <div className="dcard">
+            <div className="dcard-h"><h3>Request Details</h3></div>
+            <div className="dcard-b">
+              {pr.reason && (
+                <div style={{ marginBottom: 14 }}>
+                  <div className="k">Justification</div>
+                  <div className="v" style={{ display: 'block', whiteSpace: 'pre-line', lineHeight: '1.4' }}>{pr.reason}</div>
+                </div>
+              )}
+              <div className="kv">
+                <div><div className="k">Origin</div><div className="v" style={{ textTransform: 'capitalize' }}>{pr.origin || 'Direct'}</div></div>
+                <div><div className="k">Site</div><div className="v">{pr.siteId || '—'}</div></div>
+                <div><div className="k">SBU</div><div className="v">{pr.sbuId || '—'}</div></div>
+                <div><div className="k">Cost Center</div><div className="v"><span className="mono">{pr.costCenter || '—'}</span></div></div>
+                <div><div className="k">Requested Delivery</div><div className="v">{pr.requestedDeliveryDate ? new Date(pr.requestedDeliveryDate).toLocaleDateString() : '—'}</div></div>
+                <div><div className="k">Urgency</div><div className="v" style={{ textTransform: 'uppercase' }}>{pr.urgency}</div></div>
+                <div><div className="k">Stock Checked</div><div className="v">{pr.stockChecked ? 'Yes' : 'No'}</div></div>
+                <div><div className="k">Stock Checked By</div><div className="v">{pr.stockCheckedBy || '—'}</div></div>
+                {pr.preferredSupplierName && (
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <div className="k">Preferred Supplier</div>
+                    <div className="v">{pr.preferredSupplierName}</div>
                   </div>
                 )}
-                <div className="flex gap-4 pt-1 text-text-muted">
-                  <span>Site: <span className="text-text-primary">{pr.siteId}</span></span>
-                  <span>SBU: <span className="text-text-primary">{pr.sbuId}</span></span>
+              </div>
+            </div>
+          </div>
+
+          <div className="dcard">
+            <div className="dcard-h"><h3>Workflow Signatures</h3></div>
+            <div className="dcard-b">
+              <div className="kv">
+                <div>
+                  <div className="k">Requester</div>
+                  <div className="v">
+                    {pr.signatures?.requester ? (
+                      <span className="text-teal font-medium">✓ Signed: {pr.signatures.requester.name} ({new Date(pr.signatures.requester.date).toLocaleDateString()})</span>
+                    ) : (
+                      <span className="text-text-muted">—</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="k">Verifier</div>
+                  <div className="v">
+                    {pr.signatures?.verifier ? (
+                      <span className="text-teal font-medium">✓ Signed: {pr.signatures.verifier.name} ({new Date(pr.signatures.verifier.date).toLocaleDateString()})</span>
+                    ) : (
+                      <span className="text-text-muted">—</span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <div className="k">General Manager</div>
+                  <div className="v">
+                    {pr.signatures?.gm ? (
+                      <span className="text-teal font-medium">✓ Signed: {pr.signatures.gm.name} ({new Date(pr.signatures.gm.date).toLocaleDateString()})</span>
+                    ) : (
+                      <span className="text-text-muted">—</span>
+                    )}
+                  </div>
                 </div>
               </div>
-            </Card>
-          )}
-
-          <Card header={<span className="text-sm font-medium">Line Items</span>}>
-            <div className="space-y-2 text-xs">
-              {pr.lineItems.map((li) => (
-                <div key={li.ref} className="flex justify-between items-center p-2 rounded-lg bg-bg-surface">
-                  <span className="text-text-primary">{li.ref}. {li.description}</span>
-                  <span className="text-text-muted">
-                    ×{li.quantity} {li.uom} · {li.kind}
-                    {li.assignedSupplierIds?.length ? ` · RFQ: ${li.assignedSupplierIds.map(supName).join(', ')}` : ''}
-                    {li.selectedSupplierId ? ` · ✓ ${supName(li.selectedSupplierId)} @ ${li.selectedUnitPrice ?? '—'}` : ''}
-                  </span>
-                </div>
-              ))}
             </div>
-          </Card>
+          </div>
+
+          <div className="dcard">
+            <div className="dcard-h"><h3>Line Items</h3></div>
+            <div className="dcard-b">
+              <div className="space-y-2 text-xs">
+                {pr.lineItems.map((li) => (
+                  <div key={li.ref} className="flex justify-between items-center p-2 rounded-lg bg-bg-surface">
+                    <span className="text-text-primary">{li.ref}. {li.description}</span>
+                    <span className="text-text-muted">
+                      ×{li.quantity} {li.uom} · {li.kind}
+                      {li.estimatedUnitPrice != null ? ` · Est: MVR ${li.estimatedUnitPrice.toLocaleString()}` : ''}
+                      {li.assignedSupplierIds?.length ? ` · RFQ: ${li.assignedSupplierIds.map(supName).join(', ')}` : ''}
+                      {li.selectedSupplierId ? ` · ✓ ${supName(li.selectedSupplierId)} @ ${li.selectedUnitPrice ?? '—'}` : ''}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Sourcing matrix — suppliers (columns) × items (rows); cell = quoted unit price */}
           {canEnterQuotes && (() => {
             const cols = [...new Set([...union, ...extraCols])];
             const addable = suppliers.filter((s) => !cols.includes(s.id));
             return (
-              <Card header={
-                <div className="flex items-center justify-between w-full">
-                  <span className="text-sm font-medium">Sourcing — suppliers × items</span>
+              <div className="dcard">
+                <div className="dcard-h">
+                  <h3>Sourcing — suppliers × items</h3>
                   {addable.length > 0 && (
                     <select className="text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary" value=""
                       onChange={(e) => { if (e.target.value) setExtraCols((c) => [...c, e.target.value]); }}>
@@ -228,123 +297,124 @@ export function PurchaseRequestDetail() {
                     </select>
                   )}
                 </div>
-              }>
-                {cols.length === 0 ? (
-                  <p className="text-xs text-text-muted">Add a supplier to start issuing RFQs for these items.</p>
-                ) : (
-                  <>
-                    {/* Desktop: table layout */}
-                    <div className="overflow-x-auto d-md">
-                      <table className="w-full text-[11px] border-collapse">
-                        <thead>
-                          <tr className="text-text-muted">
-                            <th className="text-left p-1.5">Item</th>
-                            <th className="p-1.5 whitespace-nowrap">Req. qty</th>
-                            {cols.map((sid) => (
-                              <th key={sid} className="p-1.5 text-center min-w-[100px]">
-                                <div className="text-text-primary">{supName(sid)}</div>
-                                {union.includes(sid)
-                                  ? <button onClick={() => downloadRfq(sid)} className="text-blue text-[10px]">RFQ ↓</button>
-                                  : <span className="text-[9px] text-text-muted">not solicited</span>}
-                              </th>
+                <div className="dcard-b">
+                  {cols.length === 0 ? (
+                    <p className="text-xs text-text-muted">Add a supplier to start issuing RFQs for these items.</p>
+                  ) : (
+                    <>
+                      {/* Desktop: table layout */}
+                      <div className="overflow-x-auto d-md">
+                        <table className="w-full text-[11px] border-collapse">
+                          <thead>
+                            <tr className="text-text-muted">
+                              <th className="text-left p-1.5">Item</th>
+                              <th className="p-1.5 whitespace-nowrap">Req. qty</th>
+                              {cols.map((sid) => (
+                                <th key={sid} className="p-1.5 text-center min-w-[100px]">
+                                  <div className="text-text-primary">{supName(sid)}</div>
+                                  {union.includes(sid)
+                                    ? <button onClick={() => downloadRfq(sid)} className="text-blue text-[10px]">RFQ ↓</button>
+                                    : <span className="text-[9px] text-text-muted">not solicited</span>}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pr.lineItems.map((li) => (
+                              <tr key={li.ref} className="border-t border-border">
+                                <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
+                                <td className="p-1.5 text-center text-text-secondary whitespace-nowrap">{li.quantity} {li.uom}</td>
+                                {cols.map((sid) => {
+                                  const assigned = (li.assignedSupplierIds ?? []).includes(sid);
+                                  if (!assigned) return (
+                                    <td key={sid} className="p-1 text-center">
+                                      <button onClick={() => assignSupplier(li.ref, sid)} disabled={busy}
+                                        className="text-[10px] px-2 py-1 rounded border border-dashed border-border text-text-muted hover:text-blue hover:border-blue">+ RFQ</button>
+                                    </td>
+                                  );
+                                  return (
+                                    <td key={sid} className="p-1">
+                                      <input type="number" min="0" step="0.01" placeholder="price"
+                                        className="w-full text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary text-right"
+                                        value={quoteDraft[sid]?.[li.ref] ?? ''}
+                                        onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
+                                    </td>
+                                  );
+                                })}
+                              </tr>
                             ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pr.lineItems.map((li) => (
-                            <tr key={li.ref} className="border-t border-border">
-                              <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
-                              <td className="p-1.5 text-center text-text-secondary whitespace-nowrap">{li.quantity} {li.uom}</td>
+                            <tr className="border-t border-border font-medium">
+                              <td className="p-1.5 text-text-muted" colSpan={2}>Quote total (MVR)</td>
+                              {cols.map((sid) => {
+                                const total = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid))
+                                  .reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
+                                return <td key={sid} className="p-1.5 text-center text-text-secondary">{total ? total.toLocaleString() : '—'}</td>;
+                              })}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      {/* Mobile: card-per-item layout */}
+                      <div className="d-sm space-y-3">
+                        {pr.lineItems.map((li) => (
+                          <div key={li.ref} className="rounded-lg border border-border bg-bg-surface p-3">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <div className="text-xs font-medium text-text-primary">{li.ref}. {li.description}</div>
+                                <div className="text-[10px] text-text-muted mt-0.5">Qty: {li.quantity} {li.uom}</div>
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
                               {cols.map((sid) => {
                                 const assigned = (li.assignedSupplierIds ?? []).includes(sid);
                                 if (!assigned) return (
-                                  <td key={sid} className="p-1 text-center">
+                                  <div key={sid} className="flex items-center justify-between">
+                                    <span className="text-[10px] text-text-muted">{supName(sid)}</span>
                                     <button onClick={() => assignSupplier(li.ref, sid)} disabled={busy}
                                       className="text-[10px] px-2 py-1 rounded border border-dashed border-border text-text-muted hover:text-blue hover:border-blue">+ RFQ</button>
-                                  </td>
+                                  </div>
                                 );
                                 return (
-                                  <td key={sid} className="p-1">
+                                  <div key={sid} className="flex items-center justify-between gap-2">
+                                    <span className="text-[10px] text-text-muted flex-1">{supName(sid)}</span>
                                     <input type="number" min="0" step="0.01" placeholder="price"
-                                      className="w-full text-[11px] p-1 rounded bg-bg-surface border border-border text-text-primary text-right"
+                                      className="w-24 text-[11px] p-1 rounded bg-bg-base border border-border text-text-primary text-right"
                                       value={quoteDraft[sid]?.[li.ref] ?? ''}
                                       onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
-                                  </td>
+                                  </div>
                                 );
                               })}
-                            </tr>
-                          ))}
-                          <tr className="border-t border-border font-medium">
-                            <td className="p-1.5 text-text-muted" colSpan={2}>Quote total (MVR)</td>
+                            </div>
+                          </div>
+                        ))}
+                        <div className="rounded-lg border border-border-soft bg-bg-surface p-3">
+                          <div className="text-[10px] font-medium text-text-muted mb-1">Quote Totals (MVR)</div>
+                          <div className="space-y-1">
                             {cols.map((sid) => {
                               const total = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid))
                                 .reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
-                              return <td key={sid} className="p-1.5 text-center text-text-secondary">{total ? total.toLocaleString() : '—'}</td>;
-                            })}
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                    {/* Mobile: card-per-item layout */}
-                    <div className="d-sm space-y-3">
-                      {pr.lineItems.map((li) => (
-                        <div key={li.ref} className="rounded-lg border border-border bg-bg-surface p-3">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <div className="text-xs font-medium text-text-primary">{li.ref}. {li.description}</div>
-                              <div className="text-[10px] text-text-muted mt-0.5">Qty: {li.quantity} {li.uom}</div>
-                            </div>
-                          </div>
-                          <div className="space-y-1.5">
-                            {cols.map((sid) => {
-                              const assigned = (li.assignedSupplierIds ?? []).includes(sid);
-                              if (!assigned) return (
-                                <div key={sid} className="flex items-center justify-between">
-                                  <span className="text-[10px] text-text-muted">{supName(sid)}</span>
-                                  <button onClick={() => assignSupplier(li.ref, sid)} disabled={busy}
-                                    className="text-[10px] px-2 py-1 rounded border border-dashed border-border text-text-muted hover:text-blue hover:border-blue">+ RFQ</button>
-                                </div>
-                              );
                               return (
-                                <div key={sid} className="flex items-center justify-between gap-2">
-                                  <span className="text-[10px] text-text-muted flex-1">{supName(sid)}</span>
-                                  <input type="number" min="0" step="0.01" placeholder="price"
-                                    className="w-24 text-[11px] p-1 rounded bg-bg-base border border-border text-text-primary text-right"
-                                    value={quoteDraft[sid]?.[li.ref] ?? ''}
-                                    onChange={(e) => setQuoteDraft((d) => ({ ...d, [sid]: { ...d[sid], [li.ref]: Number(e.target.value) } }))} />
+                                <div key={sid} className="flex justify-between text-[11px]">
+                                  <span className="text-text-muted">{supName(sid)}</span>
+                                  <span className="text-text-secondary">{total ? total.toLocaleString() : '—'}</span>
                                 </div>
                               );
                             })}
                           </div>
-                        </div>
-                      ))}
-                      <div className="rounded-lg border border-border-soft bg-bg-surface p-3">
-                        <div className="text-[10px] font-medium text-text-muted mb-1">Quote Totals (MVR)</div>
-                        <div className="space-y-1">
-                          {cols.map((sid) => {
-                            const total = pr.lineItems.filter((li) => (li.assignedSupplierIds ?? []).includes(sid))
-                              .reduce((s, li) => s + (Number(quoteDraft[sid]?.[li.ref]) || 0) * li.quantity, 0);
-                            return (
-                              <div key={sid} className="flex justify-between text-[11px]">
-                                <span className="text-text-muted">{supName(sid)}</span>
-                                <span className="text-text-secondary">{total ? total.toLocaleString() : '—'}</span>
-                              </div>
-                            );
-                          })}
                         </div>
                       </div>
-                    </div>
-                  </>
-                )}
-                <p className="text-[10px] text-text-muted mt-2">Each column is a supplier. <b>+ RFQ</b> issues an RFQ for that item; enter the quoted unit price when received. Qty is fixed from the request.</p>
-                {err && <p className="text-xs text-red mt-2">{err}</p>}
-                <div className="flex justify-end gap-2 mt-3">
-                  <Button variant="secondary" size="sm" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
-                  {status === 'rfq_sent' && can('open_review') && union.length > 0 && (
-                    <Button variant="primary" size="sm" onClick={forwardToGm} disabled={busy}>Forward to GM</Button>
+                    </>
                   )}
+                  <p className="text-[10px] text-text-muted mt-2">Each column is a supplier. <b>+ RFQ</b> issues an RFQ for that item; enter the quoted unit price when received. Qty is fixed from the request.</p>
+                  {err && <p className="text-xs text-red mt-2">{err}</p>}
+                  <div className="flex justify-end gap-2 mt-3">
+                    <Button variant="secondary" size="sm" onClick={saveQuotes} disabled={busy}>Save Quotes</Button>
+                    {status === 'rfq_sent' && can('open_review') && union.length > 0 && (
+                      <Button variant="primary" size="sm" onClick={forwardToGm} disabled={busy}>Forward to GM</Button>
+                    )}
+                  </div>
                 </div>
-              </Card>
+              </div>
             );
           })()}
 
@@ -362,152 +432,161 @@ export function PurchaseRequestDetail() {
               setLineSel(next);
             };
             return (
-              <Card header={<span className="text-sm font-medium">Price Comparison</span>}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[11px] border-collapse">
-                    <thead><tr>
-                      <th className="text-left p-1.5 text-text-muted font-medium">Item</th>
-                      {cols.map((c) => <th key={c} className="p-1.5 text-text-muted font-medium">{supName(c)}</th>)}
-                    </tr></thead>
-                    <tbody>
-                      {pr.lineItems.map((li) => {
-                        const prices = cols.map((c) => priceFor(c, li.ref));
-                        const lowest = Math.min(...prices.filter((p): p is number => p != null));
-                        return (
-                          <tr key={li.ref} className="border-t border-border">
-                            <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
-                            {cols.map((c, i) => {
-                              const p = prices[i];
-                              if (p == null) return <td key={c} className="p-1.5 text-center text-text-muted">—</td>;
-                              const sel = lineSel[li.ref] === c;
-                              const low = p === lowest;
-                              return (
-                                <td key={c} className="p-1 text-center">
-                                  <button onClick={() => setLineSel((m) => ({ ...m, [li.ref]: c }))}
-                                    className={`px-2 py-1 rounded w-full ${sel ? 'bg-blue text-white' : low ? 'bg-teal/15 text-teal' : 'bg-bg-surface text-text-secondary'} hover:opacity-80`}>
-                                    {p.toLocaleString()}{low ? ' ★' : ''}
-                                  </button>
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <p className="text-[10px] text-text-muted mt-2">★ = lowest quote · click a price to select that supplier for the item (split allowed)</p>
+              <div className="dcard">
+                <div className="dcard-h"><h3>Price Comparison</h3></div>
+                <div className="dcard-b">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-[11px] border-collapse">
+                      <thead><tr>
+                        <th className="text-left p-1.5 text-text-muted font-medium">Item</th>
+                        {cols.map((c) => <th key={c} className="p-1.5 text-text-muted font-medium">{supName(c)}</th>)}
+                      </tr></thead>
+                      <tbody>
+                        {pr.lineItems.map((li) => {
+                          const prices = cols.map((c) => priceFor(c, li.ref));
+                          const lowest = Math.min(...prices.filter((p): p is number => p != null));
+                          return (
+                            <tr key={li.ref} className="border-t border-border">
+                              <td className="p-1.5 text-text-primary">{li.ref}. {li.description}</td>
+                              {cols.map((c, i) => {
+                                const p = prices[i];
+                                if (p == null) return <td key={c} className="p-1.5 text-center text-text-muted">—</td>;
+                                const sel = lineSel[li.ref] === c;
+                                const low = p === lowest;
+                                return (
+                                  <td key={c} className="p-1 text-center">
+                                    <button onClick={() => setLineSel((m) => ({ ...m, [li.ref]: c }))}
+                                      className={`px-2 py-1 rounded w-full ${sel ? 'bg-blue text-white' : low ? 'bg-teal/15 text-teal' : 'bg-bg-surface text-text-secondary'} hover:opacity-80`}>
+                                      {p.toLocaleString()}{low ? ' ★' : ''}
+                                    </button>
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <p className="text-[10px] text-text-muted mt-2">★ = lowest quote · click a price to select that supplier for the item (split allowed)</p>
 
-                {/* AI recommendation (advisory) */}
-                {isAiConfigured() && (() => {
-                  const buildAiPrompt = () => {
-                    const lines = pr.lineItems.map((li) => {
-                      const quotes = cols
-                        .map((c) => { const p = priceFor(c, li.ref); return p != null ? `${supName(c)} ${p}` : null; })
-                        .filter(Boolean).join(', ');
-                      return `- ${li.description} (qty ${li.quantity} ${li.uom}): ${quotes || 'no quotes'}`;
-                    }).join('\n');
-                    return [
-                      'You are a procurement advisor for Well Land Investment, a heavy-equipment',
-                      'rental company in the Maldives. Below are supplier unit-price quotes (MVR) per',
-                      'line item. Recommend which supplier to award each line to, and whether to',
-                      'consolidate to one supplier or split the award. Lead with total cost, but note',
-                      'if consolidating to a single supplier is worth a small premium for simpler',
-                      'logistics/delivery. Be concise: one short line per item, then a one-line summary.',
-                      'Plain prose, no markdown.',
-                      '',
-                      'Line items and quotes:',
-                      lines,
-                    ].join('\n');
-                  };
-                  return (
-                    <div className="mt-3 pt-3 border-t border-border-soft">
-                      <button
-                        onClick={() => runAi(buildAiPrompt())}
-                        disabled={aiBusy || busy}
-                        className="flex items-center gap-1.5 text-[11px] text-amber hover:opacity-80 disabled:opacity-40"
-                      >
-                        <Sparkles size={12} /> {aiBusy ? 'Analysing quotes…' : 'Ask AI to recommend'}
-                      </button>
-                      {aiErr && <p className="text-[11px] text-red mt-1">{aiErr}</p>}
-                      {aiRec && (
-                        <div className="mt-2 rounded-lg bg-bg-surface border border-border p-2.5">
-                          <p className="text-[10px] font-semibold text-amber mb-1 flex items-center gap-1">
-                            <Sparkles size={10} /> AI RECOMMENDATION
-                          </p>
-                          <p className="text-[11px] text-text-secondary whitespace-pre-line leading-snug">{aiRec}</p>
-                          <p className="text-[9px] text-text-muted mt-1.5">Advisory only — you decide the award below.</p>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
+                  {/* AI recommendation (advisory) */}
+                  {isAiConfigured() && (() => {
+                    const buildAiPrompt = () => {
+                      const lines = pr.lineItems.map((li) => {
+                        const quotes = cols
+                          .map((c) => { const p = priceFor(c, li.ref); return p != null ? `${supName(c)} ${p}` : null; })
+                          .filter(Boolean).join(', ');
+                        return `- ${li.description} (qty ${li.quantity} ${li.uom}): ${quotes || 'no quotes'}`;
+                      }).join('\n');
+                      return [
+                        'You are a procurement advisor for Well Land Investment, a heavy-equipment',
+                        'rental company in the Maldives. Below are supplier unit-price quotes (MVR) per',
+                        'line item. Recommend which supplier to award each line to, and whether to',
+                        'consolidate to one supplier or split the award. Lead with total cost, but note',
+                        'if consolidating to a single supplier is worth a small premium for simpler',
+                        'logistics/delivery. Be concise: one short line per item, then a one-line summary.',
+                        'Plain prose, no markdown.',
+                        '',
+                        'Line items and quotes:',
+                        lines,
+                      ].join('\n');
+                    };
+                    return (
+                      <div className="mt-3 pt-3 border-t border-border-soft">
+                        <button
+                          onClick={() => runAi(buildAiPrompt())}
+                          disabled={aiBusy || busy}
+                          className="flex items-center gap-1.5 text-[11px] text-amber hover:opacity-80 disabled:opacity-40"
+                        >
+                          <Sparkles size={12} /> {aiBusy ? 'Analysing quotes…' : 'Ask AI to recommend'}
+                        </button>
+                        {aiErr && <p className="text-[11px] text-red mt-1">{aiErr}</p>}
+                        {aiRec && (
+                          <div className="mt-2 rounded-lg bg-bg-surface border border-border p-2.5">
+                            <p className="text-[10px] font-semibold text-amber mb-1 flex items-center gap-1">
+                              <Sparkles size={10} /> AI RECOMMENDATION
+                            </p>
+                            <p className="text-[11px] text-text-secondary whitespace-pre-line leading-snug">{aiRec}</p>
+                            <p className="text-[9px] text-text-muted mt-1.5">Advisory only — you decide the award below.</p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
-                {err && <p className="text-xs text-red mt-2">{err}</p>}
-                <div className="flex gap-2 mt-3">
-                  <Button variant="secondary" size="sm" onClick={autoLowest} disabled={busy}>Auto-pick lowest</Button>
-                  <Button variant="primary" size="sm" className="flex-1" onClick={approveSuppliers} disabled={busy}>Approve Supplier(s)</Button>
-                  <Button variant="secondary" size="sm" onClick={() => run('rfq_sent', undefined, 'Need more quotes')} disabled={busy}>More Quotes</Button>
+                  {err && <p className="text-xs text-red mt-2">{err}</p>}
+                  <div className="flex gap-2 mt-3">
+                    <Button variant="secondary" size="sm" onClick={autoLowest} disabled={busy}>Auto-pick lowest</Button>
+                    <Button variant="primary" size="sm" className="flex-1" onClick={approveSuppliers} disabled={busy}>Approve Supplier(s)</Button>
+                    <Button variant="secondary" size="sm" onClick={() => run('rfq_sent', undefined, 'Need more quotes')} disabled={busy}>More Quotes</Button>
+                  </div>
                 </div>
-              </Card>
+              </div>
             );
           })()}
 
           {pr.purchaseOrderIds?.length > 0 && (
-            <Card header={<span className="text-sm font-medium">Purchase Orders</span>}>
-              <div className="space-y-1 text-xs">
-                {pr.purchaseOrderIds.map((poId) => (
-                  <Link key={poId} to={inHolding ? `/holding/approvals/${poId}` : `/wli/procurement/orders/${poId}`} className="block p-2 rounded-lg bg-bg-surface text-blue hover:bg-bg-base">View PO →</Link>
-                ))}
+            <div className="dcard">
+              <div className="dcard-h"><h3>Purchase Orders</h3></div>
+              <div className="dcard-b">
+                <div className="space-y-1 text-xs">
+                  {pr.purchaseOrderIds.map((poId) => (
+                    <Link key={poId} to={inHolding ? `/holding/approvals/${poId}` : `/wli/procurement/orders/${poId}`} className="block p-2 rounded-lg bg-bg-surface text-blue hover:bg-bg-base">View PO →</Link>
+                  ))}
+                </div>
               </div>
-            </Card>
+            </div>
           )}
 
           <Timeline collection="purchaseRequests" entityId={pr.id} />
         </div>
 
-        <div className="space-y-4">
-          <Card header={<span className="text-sm font-medium">Actions</span>}>
-            {err && <p className="text-xs text-red mb-2">{err}</p>}
+        <div className="dcol">
+          <div className="dcard action-card">
+            <div className="dcard-h"><h3>Actions</h3></div>
+            <div className="dcard-b">
+              {err && <p className="text-xs text-red mb-2">{err}</p>}
 
-            {/* Direct-PR approval gate — GM approves or declines before sourcing */}
-            {pr.origin === 'direct' && status === 'on_hold' && can('activate') && (
-              <Button variant="primary" size="sm" className="w-full mb-2" onClick={() => run('approved')} disabled={busy}>Approve Request</Button>
-            )}
-            {pr.origin === 'direct' && status === 'on_hold' && can('decline_request') && (
-              <Button variant="danger" size="sm" className="w-full mb-2" onClick={declineRequest} disabled={busy}>Decline</Button>
-            )}
-            {pr.origin === 'direct' && status === 'on_hold' && getAvailableTransitions(prWf, status, role).length === 0 && (
-              <p className="text-xs text-text-muted">Submitted — awaiting GM approval.</p>
-            )}
+              {/* Direct-PR approval gate — GM approves or declines before sourcing */}
+              {pr.origin === 'direct' && status === 'on_hold' && can('activate') && (
+                <Button variant="primary" size="sm" className="w-full mb-2" onClick={() => run('approved')} disabled={busy}>Approve Request</Button>
+              )}
+              {pr.origin === 'direct' && status === 'on_hold' && can('decline_request') && (
+                <Button variant="danger" size="sm" className="w-full mb-2" onClick={declineRequest} disabled={busy}>Decline</Button>
+              )}
+              {pr.origin === 'direct' && status === 'on_hold' && getAvailableTransitions(prWf, status, role).length === 0 && (
+                <p className="text-xs text-text-muted">Submitted — awaiting GM approval.</p>
+              )}
 
-            {can('accept_pr') && (
-              <Button variant="primary" size="sm" className="w-full" onClick={() => run('pr_accepted')} disabled={busy}>Accept PR</Button>
-            )}
+              {can('accept_pr') && (
+                <Button variant="primary" size="sm" className="w-full" onClick={() => run('pr_accepted')} disabled={busy}>Accept PR</Button>
+              )}
 
-            {/* Stage 6 — begin sourcing */}
-            {can('send_rfq') && (
-              <Button variant="primary" size="sm" className="w-full" onClick={() => run('rfq_sent')} disabled={busy}>Start Sourcing</Button>
-            )}
+              {/* Stage 6 — begin sourcing */}
+              {can('send_rfq') && (
+                <Button variant="primary" size="sm" className="w-full" onClick={() => run('rfq_sent')} disabled={busy}>Start Sourcing</Button>
+              )}
 
-            {canEnterQuotes && (
-              <p className="text-xs text-text-muted">Use the <b>Sourcing</b> matrix on the left to add suppliers, issue RFQs and record quotes.</p>
-            )}
+              {canEnterQuotes && (
+                <p className="text-xs text-text-muted">Use the <b>Sourcing</b> matrix on the left to add suppliers, issue RFQs and record quotes.</p>
+              )}
 
-            {can('approve_supplier') && (
-              <p className="text-xs text-text-muted">Review the <b>Price Comparison</b> on the left to select suppliers and approve.</p>
-            )}
+              {can('approve_supplier') && (
+                <p className="text-xs text-text-muted">Review the <b>Price Comparison</b> on the left to select suppliers and approve.</p>
+              )}
 
-            {can('raise_po') && (
-              <Button variant="primary" size="sm" className="w-full" onClick={() => run('po_raised')} disabled={busy}>Raise PO(s)</Button>
-            )}
-            {can('close_pr') && (
-              <Button variant="primary" size="sm" className="w-full" onClick={() => run('closed')} disabled={busy}>Close PR</Button>
-            )}
-            {getAvailableTransitions(prWf, status, role).length === 0 && (
-              <p className="text-xs text-text-muted">No actions for your role at this stage.</p>
-            )}
-          </Card>
+              {can('raise_po') && (
+                <Button variant="primary" size="sm" className="w-full" onClick={() => run('po_raised')} disabled={busy}>Raise PO(s)</Button>
+              )}
+              {can('close_pr') && (
+                <Button variant="primary" size="sm" className="w-full" onClick={() => run('closed')} disabled={busy}>Close PR</Button>
+              )}
+              {getAvailableTransitions(prWf, status, role).length === 0 && (
+                <p className="text-xs text-text-muted">No actions for your role at this stage.</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
