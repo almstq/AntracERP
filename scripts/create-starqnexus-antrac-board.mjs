@@ -763,6 +763,121 @@ const tasks = [
       ],
     },
   ),
+
+  task(
+    'ERP-SNP-001',
+    'Phase 10 - Snapshot Registry and Document Control',
+    'Snapshot Registry',
+    'Universal registry serials for every operational document',
+    'todo',
+    ['ERP-SHIP-001', 'ERP-SEC-005'],
+    ['codex'],
+    'Create one governed serial-number system for every record created by the app: tickets, PRs, POs, RFQs, work orders, invoices, payments, assets, staff, suppliers, stores, stock transfers, fuel requests, deployments, documents, notes, and knowledge/event captures. Each registry entry needs prefix, sequence, fiscal period/site/SBU dimensions, status, owner, createdBy, createdAt, and immutable audit trail.',
+    {
+      priority: 'P0',
+      acceptance: [
+        'Every new business object receives a human-readable serial number',
+        'Serials are unique, monotonic per registry policy, and never reused',
+        'Serial format supports SBU/site/year prefixes where needed',
+        'Registry can search any serial and open its source record',
+      ],
+    },
+  ),
+  task(
+    'ERP-SNP-002',
+    'Phase 10 - Snapshot Registry and Document Control',
+    'Snapshot Registry',
+    'Mandatory field schemas and workflow completion gates',
+    'todo',
+    ['ERP-SNP-001', 'ERP-SEC-003'],
+    ['codex', 'claude'],
+    'Define mandatory field schemas by entity and workflow state. A record cannot move to the next gate unless required fields, attachments, approvals, comments, cost/asset/site/customer links, and proof metadata are complete. Each incomplete record must show missing-field checklist and block reason.',
+    {
+      priority: 'P0',
+      acceptance: [
+        'Ticket/PR/PO/work order gates have explicit required fields',
+        'UI shows missing mandatory fields before transition',
+        'Server-side workflow executor rejects incomplete transitions',
+        'Gate checklist is printable/auditable with the record',
+      ],
+    },
+  ),
+  task(
+    'ERP-SNP-003',
+    'Phase 10 - Snapshot Registry and Document Control',
+    'Snapshot Registry',
+    'Print-ready templates for tickets, PRs, POs, work orders, invoices',
+    'todo',
+    ['ERP-SNP-001', 'ERP-SNP-002'],
+    ['elder', 'codex'],
+    'Create print/PDF-ready document layouts for all primary records. Each document should include logo/header, serial, dates, parties, site/SBU, asset/staff/customer/supplier links, line items, approvals, notes, attachments index, QR/deep link, current status, and full workflow history summary.',
+    {
+      priority: 'P0',
+      acceptance: [
+        'Ticket print view is clean enough for field/legal/audit use',
+        'PR and PO print views include approval chain and quote basis',
+        'Invoice/work order print views include commercial terms',
+        'Print output works from browser without layout breakage',
+      ],
+    },
+  ),
+  task(
+    'ERP-SNP-004',
+    'Phase 10 - Snapshot Registry and Document Control',
+    'Snapshot Registry',
+    'Event snapshots and version history for every workflow object',
+    'todo',
+    ['ERP-SNP-002'],
+    ['claude'],
+    'Every important event must capture a point-in-time snapshot: before/after state, actor, acted role, entity fields, linked records, required-field status, comments, attachments, and workflow gate result. Users should be able to enter any event and see progress at that moment.',
+    {
+      priority: 'P0',
+      acceptance: [
+        'Each workflow transition stores a compact immutable snapshot',
+        'Snapshot viewer can replay progress by event',
+        'Before/after deltas are visible for key fields',
+        'Snapshots link to printable record state',
+      ],
+    },
+  ),
+  task(
+    'ERP-SNP-005',
+    'Phase 10 - Snapshot Registry and Document Control',
+    'Snapshot Registry',
+    'Knowledge capture registry - notes become governed records',
+    'todo',
+    ['ERP-SNP-001', 'ERP-SNP-004'],
+    ['codex', 'elder'],
+    'Treat user-created knowledge, notes, correction comments, site observations, asset facts, supplier facts, and customer notes as first-class registry records. Each gets serial, category, linked entity, author, status, review state, snapshot, and promotion path into master data or workflow correction.',
+    {
+      priority: 'P0',
+      acceptance: [
+        'Every note/comment can be linked to an asset/site/ticket/PR/PO/customer/supplier',
+        'Knowledge records have serial numbers and review status',
+        'Approved knowledge can update master data with audit trail',
+        'Rejected/superseded knowledge remains searchable',
+      ],
+    },
+  ),
+  task(
+    'ERP-SNP-006',
+    'Phase 10 - Snapshot Registry and Document Control',
+    'Snapshot Registry',
+    'Progress snapshot console - StarqOS-style operational memory',
+    'todo',
+    ['ERP-SNP-004', 'ERP-SNP-005'],
+    ['codex'],
+    'Build an operational memory console inspired by StarqOS but scaled to Antrac ERP: event stream, record snapshots, gate progress, who changed what, what is missing, what was approved, and what knowledge changed the registry. This becomes the audit cockpit for live data collection.',
+    {
+      priority: 'P1',
+      acceptance: [
+        'User can search by serial, person, site, asset, workflow, or date',
+        'Each event opens a snapshot of record progress',
+        'Incomplete gates and pending comments are visible',
+        'Console supports export for audit/handover',
+      ],
+    },
+  ),
 ];
 
 const epics = [
@@ -776,6 +891,7 @@ const epics = [
   { id: 'ERP-E07', phase: 'Phase 7 - Commercial and Rental Operations', title: 'Rental order-to-cash and reservation controls', window: 'Final Form Revenue', status: 'planned' },
   { id: 'ERP-E08', phase: 'Phase 8 - CFO and Owner Reporting Pack', title: 'Owner cockpit and CFO-grade reports', window: 'Final Form Intelligence', status: 'planned' },
   { id: 'ERP-E09', phase: 'Phase 9 - UX Industrialization', title: 'Exception-first role UX and field mobility', window: 'Continuous', status: 'planned' },
+  { id: 'ERP-E10', phase: 'Phase 10 - Snapshot Registry and Document Control', title: 'Serial-numbered document registry, gates, print views, event snapshots, and governed knowledge capture', window: 'Final Form Governance', status: 'planned' },
 ];
 
 const counts = {
@@ -813,6 +929,12 @@ const board = {
       title: 'Client permissions are UX only',
       status: 'active',
       description: 'Industry ERP posture requires server-side rules/functions to enforce access, transitions, SoD, and audit.',
+    },
+    {
+      id: 'ERP-IMP-003',
+      title: 'Every business fact must become a governed snapshot',
+      status: 'active',
+      description: 'Tickets, PRs, POs, work orders, invoices, notes, and knowledge comments need serials, mandatory fields, workflow gates, print-ready views, and event snapshots so the app becomes operational memory, not just forms.',
     },
   ],
 };
